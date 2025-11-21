@@ -43,7 +43,7 @@ poetry run uvicorn app.main:app --reload --port 8000
 
 The backend will run at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). Press CTRL + C to exit.
 
-Next, set up the frontend:
+Lastly, set up the frontend:
 
 ```bash
 cd ../frontend
