@@ -4,8 +4,11 @@ frontend/.next/
 
 # Python
 backend/.venv/
-backend/__pycache__/
-backend/*.pyc
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+**/__pycache__/
 
 # OS
 .DS_Store
