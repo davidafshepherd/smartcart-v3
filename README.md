@@ -4,6 +4,8 @@
 - `backend/` – FastAPI API + ML pipeline
 - `docs/` – architecture diagrams, API contracts, notes
 
+This project requires `python >=3.12`.
+
 ## Getting Started
 
 First, download [Node.js v24.11.1 (LTS)](https://nodejs.org/en/download) and verify it is installed:
