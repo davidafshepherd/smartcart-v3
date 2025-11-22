@@ -4,7 +4,7 @@
 - `backend/` – FastAPI API + ML pipeline
 - `docs/` – architecture diagrams, API contracts, notes
 
-This project requires `python >=3.12`.
+This project requires `python>=3.12`.
 
 ## Getting Started
 
