@@ -38,7 +38,7 @@ def get_menu_items(
 
 
 # POST endpoint to create a new menu item.
-@router.get("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_menu_item(
     name: str = Body(...),
     ingredients: List[str] = Body(...),
@@ -134,7 +134,7 @@ def delete_menu_item(
     must exist. The menu item must not be in use by a meal.
     
     Args:
-        patient_id: The ID of the menu item to delete.
+        menu_item_id: The ID of the menu item to delete.
         db: SQLAlchemy database session.
 
     Raises:

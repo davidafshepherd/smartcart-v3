@@ -24,7 +24,7 @@ def get_patient_ids(
         A list of dictionaries, each containing a patient ID under the key "id".
     """
 
-    patients = db.query(Patient).all
+    patients = db.query(Patient).all()
     return [{"id": p.id} for p in patients]
 
 
