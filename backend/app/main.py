@@ -1,19 +1,16 @@
-from fastapi import FastAPI, UploadFile, File
+from app.db import Base, engine
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .routers import patients, menu
 
-from .ml_pipeline import run_pipeline  # stub for now
+
+# Create tables if they don't exist already
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Allow the Next.js frontend to call this API
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-@app.post("/analyze")
-async def analyze_meal(image: UploadFile = File(...)):
-    items, totals = run_pipeline("dummy_path")
-    return {"items": items, "totals": totals}
+app.include_router(patients.router, prefix="/patients", tags=["patients"])
+app.include_router(menu.router, prefix="/menu", tags=["menu"])
