@@ -51,8 +51,8 @@ def create_patient(
     """
 
     # Check if the patient ID is already in use.    
-    existing = db.query(Patient).filter(Patient.id == patient_id).first()
-    if existing is not None:
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if patient is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail=f"Patient {patient_id} already exists.",

@@ -1,3 +1,3 @@
-from .database import engine, SessionLocal, Base, get_db
+from .database import BACKEND_DIR, engine, SessionLocal, Base, get_db
 
-__all__ = ["engine", "SessionLocal", "Base,", "get_db"]
+__all__ = ["BACKEND_DIR", "engine", "SessionLocal", "Base,", "get_db"]
