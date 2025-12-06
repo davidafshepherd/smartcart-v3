@@ -1,3 +1,3 @@
-from . import patients, menu, meals
+from . import patients, menu, meals, uploads
 
-__all__ = ["patients", "menu"]
+__all__ = ["patients", "menu", "meals", "uploads"]
