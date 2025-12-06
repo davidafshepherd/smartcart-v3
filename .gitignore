@@ -9,6 +9,9 @@ backend/.venv/
 *.pyd
 __pycache__/
 **/__pycache__/
+backend/uploads/
+backend/meal_images/
+backend/smartcart.db
 
 # OS
 .DS_Store
