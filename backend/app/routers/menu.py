@@ -4,7 +4,7 @@ from typing import List
 
 from app.db import get_db
 from app.models.db_models import MenuItem, Meal
-from app.schemas import MenuItemResponse, CreateMenuItemRequest, UpdateMenuItemRequest,
+from app.schemas import MenuItemResponse, CreateMenuItemRequest, UpdateMenuItemRequest
 
 
 # Create a new API router to group menu item-related endpoints.
