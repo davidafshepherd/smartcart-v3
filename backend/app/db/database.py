@@ -1,8 +1,7 @@
+from app.constants import BACKEND_DIR
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from collections.abc import Generator
-
-from app.constants import BACKEND_DIR
 
 
 # Path to the SQLite database

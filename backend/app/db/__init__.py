@@ -1,3 +1,3 @@
-from .database import Base, engine, get_db
+from .database import engine, Base, get_db
 
-__all__ = ["Base", "engine", "get_db"]
+__all__ = ["engine", "Base", "get_db"]
