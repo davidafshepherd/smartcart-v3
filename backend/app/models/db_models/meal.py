@@ -23,6 +23,7 @@ class Meal(Base):
         menu_item_id (int): Foreign key referencing the associated menu item.
     """
 
+    # Table name.
     __tablename__ = "meals"
 
     # Primary key for the meal record.

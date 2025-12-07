@@ -13,6 +13,7 @@ class MenuItem(Base):
         meals (list[Meal]): Meals whose contents are described by the menu item.
     """
 
+    # Table name.
     __tablename__ = "menu"
 
     # Primary key for the menu item record.

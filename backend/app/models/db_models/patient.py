@@ -11,6 +11,7 @@ class Patient(Base):
         meals (list[Meal]): Meals consumed by the patient.
     """
 
+    # Table name.
     __tablename__ = "patients"
 
     # Primary key for the patient record.

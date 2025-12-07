@@ -1,6 +1,5 @@
-"""Application-wide constants."""
-
 from pathlib import Path
+
 
 # Directory paths
 BACKEND_DIR = Path(__file__).resolve().parents[1]
