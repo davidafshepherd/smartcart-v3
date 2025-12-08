@@ -1,9 +1,15 @@
-from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.db import get_db
 from typing import List
-from app.schemas import MenuItemResponse, CreateMenuItemRequest, UpdateMenuItemRequest
-from app.models.db_models import MenuItem, Meal
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.db import get_db
+from app.models.db_models import Meal, MenuItem
+from app.schemas import (
+    CreateMenuItemRequest, 
+    MenuItemResponse, 
+    UpdateMenuItemRequest,
+)
 
 
 # Create a new API router to group menu item-related endpoints.
@@ -11,7 +17,7 @@ router = APIRouter()
 
 
 # GET endpoint to retrieve all menu items.
-@router.get("/", status_code=status.HTTP_200_OK)
+@router.get("/", status_code=status.HTTP_200_OK, )
 def get_menu_items(db: Session = Depends(get_db)) -> List[MenuItemResponse]:
     """Retrieves all menu items.
 
@@ -22,10 +28,17 @@ def get_menu_items(db: Session = Depends(get_db)) -> List[MenuItemResponse]:
         A list of all menu items.
     """
 
+    # Fetch all menu items.
     menu_items = db.query(MenuItem).all()
+
+    # Return a list of all menu items.
     return [
-        MenuItemResponse(id=i.id, name=i.name, ingredients=i.ingredients)
-        for i in menu_items
+        MenuItemResponse(
+            id=item.id, 
+            name=item.name, 
+            ingredients=item.ingredients
+        ) 
+        for item in menu_items
     ]
 
 
@@ -48,17 +61,17 @@ def get_menu_item(
         HTTPException: If the menu item does not exist.
     """
 
-    # Fetch the menu item
+    # Fetch the menu item.
     menu_item = db.query(MenuItem).filter(MenuItem.id == menu_item_id).first()
     
-    # Check if the menu item exists
+    # Check if the menu item exists.
     if menu_item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Menu item {menu_item_id} not found.",
         )
     
-    # Return the menu item
+    # Return the menu item.
     return MenuItemResponse(
         id=menu_item.id,
         name=menu_item.name,
@@ -75,7 +88,7 @@ def create_menu_item(
     """Creates a new menu item.
 
     Args:
-        request: The request containing the menu item's name and ingredients.
+        request: A request containing the menu item's name and ingredients.
         db: SQLAlchemy database session.
 
     Returns:
@@ -107,7 +120,7 @@ def update_menu_item(
 
     Args:
         menu_item_id: The ID of the menu item to update.
-        request: The request containing the menu item's new name / ingredients.
+        request: A request containing the menu item's new name / ingredients.
         db: SQLAlchemy database session.
 
     Returns:
@@ -117,19 +130,25 @@ def update_menu_item(
         HTTPException: If the menu item does not exist.
     """
 
-    # Check if the menu item exists.
+    # Fetch the menu item.
     menu_item = db.query(MenuItem).filter(MenuItem.id == menu_item_id).first()
+
+    # Check if the menu item exists.
     if menu_item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Menu item {menu_item_id} not found.",
         )
 
-    # Update and persist the menu item.
+    # Update the menu item's name if requested.
     if request.name is not None:
         menu_item.name = request.name
+
+    # Update the menu item's ingredients if requested.
     if request.ingredients is not None:
         menu_item.ingredients = request.ingredients
+
+    # Persist the menu item.
     db.commit()
     db.refresh(menu_item)
 
@@ -143,10 +162,7 @@ def update_menu_item(
 
 # DELETE endpoint to delete a menu item.
 @router.delete("/{menu_item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_menu_item(
-    menu_item_id: int, 
-    db: Session = Depends(get_db),
-) -> None:
+def delete_menu_item(menu_item_id: int, db: Session = Depends(get_db)) -> None:
     """Deletes a menu item.
 
     Deletes a menu item record if the menu item is not in use by a meal.
@@ -159,16 +175,20 @@ def delete_menu_item(
         HTTPException: If the menu item does not exist or is in use by a meal.
     """
 
-    # Check if the menu item exists.
+    # Fetch the menu item.
     menu_item = db.query(MenuItem).filter(MenuItem.id == menu_item_id).first()
+
+    # Check if the menu item exists.
     if menu_item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Menu item {menu_item_id} not found.",
         )
 
-    # Check if the menu item is in use by any meal.
+    # Fetch any meal using the menu item.
     in_use = db.query(Meal).filter(Meal.menu_item_id == menu_item_id).first()
+
+    # Check if any meal is using the menu item.
     if in_use is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

@@ -1,6 +1,7 @@
-from app.db import Base
-from sqlalchemy import Column, Integer, ForeignKey, Date, Time, Float, String
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, Time
 from sqlalchemy.orm import relationship
+
+from app.db import Base
 
 
 class Meal(Base):
