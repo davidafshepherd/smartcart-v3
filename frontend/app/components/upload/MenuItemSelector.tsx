@@ -155,7 +155,7 @@ export function MenuItemSelector({
         <div className="space-y-3">
           <input
             type="text"
-            placeholder="Menu item name (e.g., Chicken & Vegetables)"
+            placeholder="Menu item name (e.g. Fish & Chips)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -163,7 +163,7 @@ export function MenuItemSelector({
           />
           <input
             type="text"
-            placeholder="Ingredients (comma-separated)"
+            placeholder="Ingredients (e.g. fried fish, french fry, carrot)"
             value={newIngredients}
             onChange={(e) => setNewIngredients(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"

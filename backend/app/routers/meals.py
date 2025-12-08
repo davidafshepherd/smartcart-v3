@@ -93,7 +93,9 @@ def create_meal(
         The newly created meal.
 
     Raises:
-        HTTPException: If the meal snapshots don't exist or can't be validated.
+        HTTPException: If the meal snapshots don't exist or can't be validated
+        or if a meal with the same patient ID, date, start time and end time 
+        already exists.
     """
 
     # Fetch the before meal snapshot and the after meal snapshot.
@@ -102,6 +104,25 @@ def create_meal(
     
     # Validate the meal snapshots.
     _validate_snapshots(before_snapshot, after_snapshot)
+
+    # Fetch any meal with the same patient ID, date and time range.
+    existing = (
+        db.query(Meal)
+        .filter(
+            Meal.patient_id == before_snapshot.patient_id,
+            Meal.date == before_snapshot.date,
+            Meal.start_time == before_snapshot.time,
+            Meal.end_time == after_snapshot.time,
+        )
+        .first()
+    )
+
+     # Check if a meal with the same patient ID, date and time range exists.
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A meal with the same patient ID, date and time range already exists.",
+        )
 
     # Fetch the meal's menu item.
     menu_item = (

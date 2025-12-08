@@ -1,4 +1,13 @@
-from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, Time
+from sqlalchemy import (
+    Column,
+    Date, 
+    Float, 
+    ForeignKey, 
+    Integer, 
+    String, 
+    Time, 
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db import Base
@@ -26,6 +35,14 @@ class Meal(Base):
 
     # Table name.
     __tablename__ = "meals"
+
+    # Prevent duplicate meals.
+    __table_args__ = (
+        UniqueConstraint(
+            "patient_id", "date", "start_time", "end_time",
+            name="uq_meal_patient_date_time"
+        ),
+    )
 
     # Primary key for the meal record.
     id = Column(Integer, primary_key=True, index=True)
