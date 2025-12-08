@@ -1,5 +1,6 @@
-from .patient import Patient
-from .menu_item import MenuItem
 from .meal import Meal
+from .menu_item import MenuItem
+from .patient import Patient
+from .snapshot import MealSnapshot
 
-__all__ = ["Patient", "MenuItem", "Meal"]
+__all__ = ["Meal", "MealSnapshot", "MenuItem", "Patient"]
