@@ -1,12 +1,12 @@
 'use client';
 
-import type { MealSnapshot } from '../../lib/types';
+import type { Snapshot } from '../../lib/types';
 import { uploadApi } from '../../lib/api';
 
 interface SnapshotPreviewProps {
   label: string;
   number: number;
-  snapshot: MealSnapshot | null;
+  snapshot: Snapshot | null;
   color: string;
 }
 
@@ -39,7 +39,7 @@ export function SnapshotPreview({ label, number, snapshot, color }: SnapshotPrev
             className="w-full h-32 object-cover rounded-lg mb-2"
           />
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Patient: {snapshot.patient_id} | {snapshot.date_str} {snapshot.time_str}
+            Patient: {snapshot.patient_id} | {snapshot.date} {snapshot.time}
           </p>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             Weight: {snapshot.weight}g

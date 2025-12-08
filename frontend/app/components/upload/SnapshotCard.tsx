@@ -1,10 +1,10 @@
 'use client';
 
-import type { MealSnapshot } from '../../lib/types';
+import type { Snapshot } from '../../lib/types';
 import { uploadApi } from '../../lib/api';
 
 interface SnapshotCardProps {
-  snapshot: MealSnapshot;
+  snapshot: Snapshot;
   isSelected: boolean;
   selectionIndex: number;
   animationDelay: number;
@@ -70,7 +70,7 @@ export function SnapshotCard({
           </span>
         </div>
         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          {snapshot.date_str} at {snapshot.time_str}
+          {snapshot.date} at {snapshot.time}
         </p>
 
         {/* Discard Button */}

@@ -1,12 +1,12 @@
 'use client';
 
-import type { MealSnapshot, MenuItem } from '../../lib/types';
+import type { Snapshot, MenuItem } from '../../lib/types';
 import { SnapshotPreview } from './SnapshotPreview';
 import { MenuItemSelector } from './MenuItemSelector';
 
 interface MatchingPanelProps {
-  beforeSnapshot: MealSnapshot | null;
-  afterSnapshot: MealSnapshot | null;
+  beforeSnapshot: Snapshot | null;
+  afterSnapshot: Snapshot | null;
   menuItems: MenuItem[];
   selectedMenuItemId: number | null;
   onMenuItemSelect: (id: number | null) => void;

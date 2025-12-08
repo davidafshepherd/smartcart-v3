@@ -37,29 +37,27 @@ export function MealDetail({ meal, onDelete }: MealDetailProps) {
       </div>
 
       {/* Menu Item */}
-      {meal.menu_item && (
-        <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
-          <h3 className="font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-            Menu Item
-          </h3>
-          <span className="text-lg font-semibold" style={{ color: 'var(--accent-primary)' }}>
-            {meal.menu_item.name}
-          </span>
-          {meal.menu_item.ingredients.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {meal.menu_item.ingredients.map((ing, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1 rounded-full text-sm"
-                  style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
-                >
-                  {ing}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
+        <h3 className="font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+          Menu Item
+        </h3>
+        <span className="text-lg font-semibold" style={{ color: 'var(--accent-primary)' }}>
+          {meal.menu_item.name}
+        </span>
+        {meal.menu_item.ingredients.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {meal.menu_item.ingredients.map((ing, idx) => (
+              <span
+                key={idx}
+                className="px-3 py-1 rounded-full text-sm"
+                style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
+              >
+                {ing}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Weight Info */}
       <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>

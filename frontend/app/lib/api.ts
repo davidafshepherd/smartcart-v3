@@ -3,7 +3,7 @@
  */
 
 import { config } from './config';
-import type { UploadResponse, MenuItem, MealsData } from './types';
+import type { UploadResponse, MenuItem, MealsData, MealData } from './types';
 
 class ApiError extends Error {
   constructor(
@@ -54,11 +54,11 @@ export const uploadApi = {
   },
 
   /**
-   * Discards a specific meal snapshot entry.
+   * Discards a specific snapshot.
    */
-  async discardEntry(uploadId: string, entryId: string): Promise<void> {
+  async discardSnapshot(snapshotId: number): Promise<void> {
     const response = await fetch(
-      `${config.apiUrl}/uploads/${uploadId}/entries/${entryId}`,
+      `${config.apiUrl}/uploads/snapshots/${snapshotId}`,
       { method: 'DELETE' },
     );
 
@@ -108,30 +108,46 @@ export const mealsApi = {
    */
   async getAll(): Promise<MealsData> {
     const response = await fetch(`${config.apiUrl}/meals`);
-    return handleResponse<MealsData>(response);
+    const meals = await handleResponse<MealData[]>(response);
+
+    // Transform flat list to hierarchical structure for tree view
+    const result: MealsData = {};
+    for (const meal of meals) {
+      const patientId = String(meal.patient_id);
+      const date = meal.date;
+      const timeRange = `${meal.start_time.slice(0, 5)}-${meal.end_time.slice(0, 5)}`;
+
+      if (!result[patientId]) {
+        result[patientId] = {};
+      }
+      if (!result[patientId][date]) {
+        result[patientId][date] = {};
+      }
+      result[patientId][date][timeRange] = meal;
+    }
+
+    return result;
   },
 
   /**
    * Creates a new meal from matched snapshots.
    */
   async create(
-    uploadId: string,
-    beforeEntryId: string,
-    afterEntryId: string,
+    beforeSnapshotId: number,
+    afterSnapshotId: number,
     menuItemId: number,
-  ): Promise<unknown> {
+  ): Promise<MealData> {
     const response = await fetch(`${config.apiUrl}/meals`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        upload_id: uploadId,
-        before_entry_id: beforeEntryId,
-        after_entry_id: afterEntryId,
+        before_snapshot_id: beforeSnapshotId,
+        after_snapshot_id: afterSnapshotId,
         menu_item_id: menuItemId,
       }),
     });
 
-    return handleResponse<unknown>(response);
+    return handleResponse<MealData>(response);
   },
 
   /**

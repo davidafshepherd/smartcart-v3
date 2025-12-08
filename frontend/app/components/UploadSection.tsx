@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useState, useEffect } from 'react';
-import { useUploadStore, getEntryKey, parseEntryKey } from '../store/uploadStore';
+import { useUploadStore } from '../store/uploadStore';
 import { uploadApi, menuApi, mealsApi, ApiError } from '../lib/api';
-import type { MenuItem, MealSnapshot } from '../lib/types';
+import type { MenuItem, Snapshot } from '../lib/types';
 import { SnapshotCard } from './upload/SnapshotCard';
 import { MatchingPanel } from './upload/MatchingPanel';
 import { UploadZone } from './upload/UploadZone';
@@ -11,16 +11,16 @@ import { AlertMessage } from './ui/AlertMessage';
 
 export default function UploadSection() {
   const {
-    entries,
-    invalidEntries,
-    selectedKeys,
+    snapshots,
+    invalidSnapshots,
+    selectedIds,
     isUploading,
     addUpload,
-    removeEntry,
-    getEntryByKey,
+    removeSnapshot,
+    getSnapshotById,
     toggleSelection,
     clearSelection,
-    clearInvalidEntries,
+    clearInvalidSnapshots,
     setUploading,
   } = useUploadStore();
 
@@ -43,8 +43,8 @@ export default function UploadSection() {
 
     try {
       const data = await uploadApi.uploadZip(file);
-      addUpload(data.upload_id, data.entries, data.invalid_entries);
-      setSuccessMessage(`Added ${data.entries.length} snapshot${data.entries.length !== 1 ? 's' : ''}`);
+      addUpload(data.snapshots, data.invalid_snapshots);
+      setSuccessMessage(`Added ${data.snapshots.length} snapshot${data.snapshots.length !== 1 ? 's' : ''}`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Upload failed');
@@ -53,14 +53,12 @@ export default function UploadSection() {
     }
   }, [addUpload, setUploading]);
 
-  const handleDiscard = async (key: string) => {
-    const { uploadId, entryId } = parseEntryKey(key);
-
+  const handleDiscard = async (snapshotId: number) => {
     try {
-      await uploadApi.discardEntry(uploadId, entryId);
-      removeEntry(key);
+      await uploadApi.discardSnapshot(snapshotId);
+      removeSnapshot(snapshotId);
     } catch (err) {
-      console.error('Failed to discard entry:', err);
+      console.error('Failed to discard snapshot:', err);
     }
   };
 
@@ -70,26 +68,25 @@ export default function UploadSection() {
   };
 
   const handleSaveMeal = async () => {
-    if (selectedKeys.length !== 2 || !selectedMenuItemId) return;
+    if (selectedIds.length !== 2 || !selectedMenuItemId) return;
 
-    const beforeEntry = getEntryByKey(selectedKeys[0]);
-    const afterEntry = getEntryByKey(selectedKeys[1]);
+    const beforeSnapshot = getSnapshotById(selectedIds[0]);
+    const afterSnapshot = getSnapshotById(selectedIds[1]);
     
-    if (!beforeEntry || !afterEntry) return;
+    if (!beforeSnapshot || !afterSnapshot) return;
 
     setIsSaving(true);
     setError(null);
 
     try {
       await mealsApi.create(
-        beforeEntry.upload_id,
-        beforeEntry.id,
-        afterEntry.id,
+        beforeSnapshot.id,
+        afterSnapshot.id,
         selectedMenuItemId,
       );
 
-      removeEntry(selectedKeys[0]);
-      removeEntry(selectedKeys[1]);
+      removeSnapshot(selectedIds[0]);
+      removeSnapshot(selectedIds[1]);
       clearSelection();
       setSelectedMenuItemId(null);
       setSuccessMessage('Meal saved successfully!');
@@ -101,13 +98,13 @@ export default function UploadSection() {
     }
   };
 
-  const getSelectedEntry = (index: number): MealSnapshot | null => {
-    if (selectedKeys.length <= index) return null;
-    return getEntryByKey(selectedKeys[index]) || null;
+  const getSelectedSnapshot = (index: number): Snapshot | null => {
+    if (selectedIds.length <= index) return null;
+    return getSnapshotById(selectedIds[index]) || null;
   };
 
-  const beforeSnapshot = getSelectedEntry(0);
-  const afterSnapshot = getSelectedEntry(1);
+  const beforeSnapshot = getSelectedSnapshot(0);
+  const afterSnapshot = getSelectedSnapshot(1);
 
   return (
     <div className="p-8 animate-fade-in">
@@ -130,16 +127,16 @@ export default function UploadSection() {
         <UploadZone
           onFileSelect={handleFileUpload}
           isUploading={isUploading}
-          hasExistingSnapshots={entries.length > 0}
+          hasExistingSnapshots={snapshots.length > 0}
           className="mb-8"
         />
 
-        {/* Invalid Entries Warning */}
-        {invalidEntries.length > 0 && (
+        {/* Invalid Snapshots Warning */}
+        {invalidSnapshots.length > 0 && (
           <div className="mb-6 p-4 rounded-xl border relative"
             style={{ background: '#fefce8', borderColor: 'var(--warning)' }}>
             <button
-              onClick={clearInvalidEntries}
+              onClick={clearInvalidSnapshots}
               className="absolute top-3 right-3 p-1 rounded-lg hover:bg-yellow-200 transition-colors"
               style={{ color: 'var(--warning)' }}
               aria-label="Dismiss"
@@ -149,10 +146,10 @@ export default function UploadSection() {
               </svg>
             </button>
             <h3 className="font-medium mb-2" style={{ color: 'var(--warning)' }}>
-              {invalidEntries.length} Invalid Snapshot{invalidEntries.length > 1 ? 's' : ''} Skipped
+              {invalidSnapshots.length} Invalid Snapshot{invalidSnapshots.length > 1 ? 's' : ''} Skipped
             </h3>
             <ul className="text-sm space-y-1">
-              {invalidEntries.map((entry, idx) => (
+              {invalidSnapshots.map((entry, idx) => (
                 <li key={idx} style={{ color: 'var(--text-secondary)' }}>
                   <span className="font-mono">{entry.folder}</span>: {entry.error}
                 </li>
@@ -162,7 +159,7 @@ export default function UploadSection() {
         )}
 
         {/* Matching Section */}
-        {selectedKeys.length > 0 && (
+        {selectedIds.length > 0 && (
           <MatchingPanel
             beforeSnapshot={beforeSnapshot}
             afterSnapshot={afterSnapshot}
@@ -173,32 +170,31 @@ export default function UploadSection() {
             onSave={handleSaveMeal}
             onClearSelection={clearSelection}
             isSaving={isSaving}
-            canSave={selectedKeys.length === 2 && !!selectedMenuItemId}
+            canSave={selectedIds.length === 2 && !!selectedMenuItemId}
             className="mb-8"
           />
         )}
 
         {/* Snapshot Grid */}
-        {entries.length > 0 && (
+        {snapshots.length > 0 && (
           <div>
             <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-              Available Snapshots ({entries.length})
+              Available Snapshots ({snapshots.length})
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {entries.map((entry, index) => {
-                const key = getEntryKey(entry);
-                const selectionIndex = selectedKeys.indexOf(key);
+              {snapshots.map((snapshot, index) => {
+                const selectionIndex = selectedIds.indexOf(snapshot.id);
                 const isSelected = selectionIndex !== -1;
 
                 return (
                   <SnapshotCard
-                    key={key}
-                    snapshot={entry}
+                    key={snapshot.id}
+                    snapshot={snapshot}
                     isSelected={isSelected}
                     selectionIndex={selectionIndex}
                     animationDelay={index * 50}
-                    onSelect={() => toggleSelection(key)}
-                    onDiscard={() => handleDiscard(key)}
+                    onSelect={() => toggleSelection(snapshot.id)}
+                    onDiscard={() => handleDiscard(snapshot.id)}
                   />
                 );
               })}

@@ -2,15 +2,16 @@
  * Shared type definitions.
  */
 
-export interface MealSnapshot {
-  id: string;
+export interface Snapshot {
+  id: number;
+  upload_id: string;
+  folder_name: string;
   patient_id: number;
-  date_str: string;
-  time_str: string;
+  date: string;
+  time: string;
   weight: number;
   rgb_path: string;
   depth_path: string;
-  upload_id: string; // Track which upload this snapshot belongs to
 }
 
 export interface InvalidSnapshot {
@@ -36,13 +37,13 @@ export interface MealData {
   after_rgb_path: string;
   after_depth_path: string;
   patient_id: number;
-  menu_item: MenuItem | null;
+  menu_item: MenuItem;
 }
 
 export interface UploadResponse {
   upload_id: string;
-  entries: Omit<MealSnapshot, 'upload_id'>[];
-  invalid_entries: InvalidSnapshot[];
+  snapshots: Snapshot[];
+  invalid_snapshots: InvalidSnapshot[];
 }
 
 export interface MealsData {

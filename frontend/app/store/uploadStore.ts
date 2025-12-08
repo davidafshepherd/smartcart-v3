@@ -3,95 +3,77 @@
  */
 
 import { create } from 'zustand';
-import type { MealSnapshot, InvalidSnapshot } from '../lib/types';
-
-// Helper to create a unique key for an entry
-export const getEntryKey = (entry: MealSnapshot): string => 
-  `${entry.upload_id}::${entry.id}`;
-
-export const parseEntryKey = (key: string): { uploadId: string; entryId: string } => {
-  const [uploadId, entryId] = key.split('::');
-  return { uploadId, entryId };
-};
+import type { Snapshot, InvalidSnapshot } from '../lib/types';
 
 interface UploadState {
-  entries: MealSnapshot[];
-  invalidEntries: InvalidSnapshot[];
-  selectedKeys: string[]; // Now stores composite keys
+  snapshots: Snapshot[];
+  invalidSnapshots: InvalidSnapshot[];
+  selectedIds: number[]; // Snapshot IDs
   isUploading: boolean;
 }
 
 interface UploadActions {
-  addUpload: (uploadId: string, entries: Omit<MealSnapshot, 'upload_id'>[], invalidEntries: InvalidSnapshot[]) => void;
-  removeEntry: (key: string) => void;
-  getEntryByKey: (key: string) => MealSnapshot | undefined;
-  toggleSelection: (key: string) => void;
+  addUpload: (snapshots: Snapshot[], invalidSnapshots: InvalidSnapshot[]) => void;
+  removeSnapshot: (id: number) => void;
+  getSnapshotById: (id: number) => Snapshot | undefined;
+  toggleSelection: (id: number) => void;
   clearSelection: () => void;
-  clearInvalidEntries: () => void;
+  clearInvalidSnapshots: () => void;
   setUploading: (isUploading: boolean) => void;
   clearAll: () => void;
 }
 
 export const useUploadStore = create<UploadState & UploadActions>((set, get) => ({
   // State
-  entries: [],
-  invalidEntries: [],
-  selectedKeys: [],
+  snapshots: [],
+  invalidSnapshots: [],
+  selectedIds: [],
   isUploading: false,
 
   // Actions
-  addUpload: (uploadId, newEntries, newInvalidEntries) =>
+  addUpload: (newSnapshots, newInvalidSnapshots) =>
     set((state) => ({
-      entries: [
-        ...state.entries,
-        ...newEntries.map((entry) => ({ ...entry, upload_id: uploadId })),
-      ],
-      invalidEntries: [...state.invalidEntries, ...newInvalidEntries],
+      snapshots: [...state.snapshots, ...newSnapshots],
+      invalidSnapshots: [...state.invalidSnapshots, ...newInvalidSnapshots],
     })),
 
-  removeEntry: (key: string) =>
-    set((state) => {
-      const { uploadId, entryId } = parseEntryKey(key);
-      return {
-        entries: state.entries.filter(
-          (e) => !(e.upload_id === uploadId && e.id === entryId)
-        ),
-        selectedKeys: state.selectedKeys.filter((k) => k !== key),
-      };
-    }),
+  removeSnapshot: (id: number) =>
+    set((state) => ({
+      snapshots: state.snapshots.filter((s) => s.id !== id),
+      selectedIds: state.selectedIds.filter((selectedId) => selectedId !== id),
+    })),
 
-  getEntryByKey: (key: string) => {
-    const { uploadId, entryId } = parseEntryKey(key);
-    return get().entries.find((e) => e.upload_id === uploadId && e.id === entryId);
+  getSnapshotById: (id: number) => {
+    return get().snapshots.find((s) => s.id === id);
   },
 
-  toggleSelection: (key: string) =>
+  toggleSelection: (id: number) =>
     set((state) => {
-      const isSelected = state.selectedKeys.includes(key);
+      const isSelected = state.selectedIds.includes(id);
 
       if (isSelected) {
-        return { selectedKeys: state.selectedKeys.filter((k) => k !== key) };
+        return { selectedIds: state.selectedIds.filter((selectedId) => selectedId !== id) };
       }
 
       // Max 2 selections - replace oldest if at limit
-      if (state.selectedKeys.length >= 2) {
-        return { selectedKeys: [state.selectedKeys[1], key] };
+      if (state.selectedIds.length >= 2) {
+        return { selectedIds: [state.selectedIds[1], id] };
       }
 
-      return { selectedKeys: [...state.selectedKeys, key] };
+      return { selectedIds: [...state.selectedIds, id] };
     }),
 
-  clearSelection: () => set({ selectedKeys: [] }),
+  clearSelection: () => set({ selectedIds: [] }),
 
-  clearInvalidEntries: () => set({ invalidEntries: [] }),
+  clearInvalidSnapshots: () => set({ invalidSnapshots: [] }),
 
   setUploading: (isUploading) => set({ isUploading }),
 
   clearAll: () =>
     set({
-      entries: [],
-      invalidEntries: [],
-      selectedKeys: [],
+      snapshots: [],
+      invalidSnapshots: [],
+      selectedIds: [],
       isUploading: false,
     }),
 }));
