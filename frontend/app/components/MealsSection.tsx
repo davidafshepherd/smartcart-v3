@@ -43,6 +43,7 @@ export default function MealsSection() {
   const [mealsData, setMealsData] = useState<MealsData>({});
   const [loading, setLoading] = useState(true);
   const [selectedMeal, setSelectedMeal] = useState<MealData | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Effects
@@ -84,17 +85,23 @@ export default function MealsSection() {
    * Handles meal deletion.
    *
    * Deletes the meal from the backend, clears the selection, and
-   * refreshes the meal list.
+   * refreshes the meal list. Prevents double-clicks.
    *
    * @param mealId - The ID of the meal to delete.
    */
   const handleDeleteMeal = async (mealId: number) => {
+    // Prevent double-clicks.
+    if (isDeleting) return;
+
+    setIsDeleting(true);
     try {
       await mealsApi.delete(mealId);
       setSelectedMeal(null);
       fetchMeals();
     } catch (err) {
       console.error('Failed to delete meal:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -142,6 +149,7 @@ export default function MealsSection() {
               <MealDetail
                 meal={selectedMeal}
                 onDelete={() => handleDeleteMeal(selectedMeal.id)}
+                isDeleting={isDeleting}
               />
             ) : (
               <EmptySelection />

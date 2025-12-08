@@ -30,6 +30,8 @@ interface SnapshotCardProps {
   onSelect: () => void;
   /** Callback invoked when the discard button is clicked. */
   onDiscard: () => void;
+  /** Whether this snapshot is currently being discarded. */
+  isDiscarding?: boolean;
 }
 
 // =============================================================================
@@ -47,7 +49,8 @@ interface SnapshotCardProps {
  * - Discard button
  *
  * Visual feedback includes border color changes and a selection badge
- * to indicate the before/after order.
+ * to indicate the before/after order. The discard button shows loading
+ * state when the snapshot is being discarded.
  *
  * @param props - The component props.
  * @returns A snapshot card element.
@@ -61,6 +64,7 @@ interface SnapshotCardProps {
  *   animationDelay={index * 50}
  *   onSelect={() => toggleSelection(snapshot.id)}
  *   onDiscard={() => handleDiscard(snapshot.id)}
+ *   isDiscarding={discardingIds.has(snapshot.id)}
  * />
  * ```
  */
@@ -71,6 +75,7 @@ export function SnapshotCard({
   animationDelay,
   onSelect,
   onDiscard,
+  isDiscarding = false,
 }: SnapshotCardProps) {
   // Determine border and badge colors based on selection state.
   const borderColor = isSelected
@@ -129,10 +134,11 @@ export function SnapshotCard({
             e.stopPropagation();
             onDiscard();
           }}
-          className="mt-3 w-full py-2 rounded-lg text-sm font-medium transition-colors hover:bg-red-50"
+          disabled={isDiscarding}
+          className="mt-3 w-full py-2 rounded-lg text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ color: 'var(--danger)' }}
         >
-          Discard
+          {isDiscarding ? 'Discarding...' : 'Discard'}
         </button>
       </div>
     </div>

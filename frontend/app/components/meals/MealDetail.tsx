@@ -22,6 +22,8 @@ interface MealDetailProps {
   meal: MealData;
   /** Callback invoked when the delete button is clicked. */
   onDelete: () => void;
+  /** Whether a delete operation is in progress. */
+  isDeleting?: boolean;
 }
 
 /** Props for the WeightCard sub-component. */
@@ -77,10 +79,11 @@ interface ImageCardProps {
  * <MealDetail
  *   meal={selectedMeal}
  *   onDelete={() => handleDeleteMeal(selectedMeal.id)}
+ *   isDeleting={isDeleting}
  * />
  * ```
  */
-export function MealDetail({ meal, onDelete }: MealDetailProps) {
+export function MealDetail({ meal, onDelete, isDeleting = false }: MealDetailProps) {
   return (
     <div
       className="rounded-2xl border overflow-hidden shadow-sm"
@@ -101,10 +104,11 @@ export function MealDetail({ meal, onDelete }: MealDetailProps) {
         </div>
         <button
           onClick={onDelete}
-          className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-red-50"
+          disabled={isDeleting}
+          className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ color: 'var(--danger)' }}
         >
-          Delete Meal
+          {isDeleting ? 'Deleting...' : 'Delete Meal'}
         </button>
       </div>
 

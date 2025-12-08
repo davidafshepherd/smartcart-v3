@@ -24,6 +24,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  /* Always reserve space for scrollbar to prevent layout shift */
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

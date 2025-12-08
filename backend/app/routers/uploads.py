@@ -66,8 +66,8 @@ async def upload_zip(
         and the list of invalid snapshots.
 
     Raises:
-        HTTPException: If the file is not a ZIP file, if the ZIP file is invalid
-        or if the ZIP file contains no valid meal snapshot.
+        HTTPException: If the file is not a ZIP file or if the ZIP file is 
+            invalid.
     """
 
     # Check if the uploaded file is a ZIP file.
@@ -87,21 +87,11 @@ async def upload_zip(
 
     # Create a list of meal snapshots and invalid snapshots.
     snapshots = _build_meal_snapshots(upload_directory, upload_id, db)
-    meal_snapshots, invald_snapshots = snapshots
+    meal_snapshots, invalid_snapshots = snapshots
 
-    # Raise an HTTPException if no meal snapshots were created.
+    # Delete upload directory if no meal snapshots were created.
     if not meal_snapshots:
         _safe_delete(upload_directory)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "No valid meal snapshot was found in the ZIP file.",
-                "invalid_snapshots": [
-                    {"folder": s.folder, "error": s.error} 
-                    for s in invald_snapshots
-                ],
-            },
-        )
 
     # Create an upload response containing the upload ID and the snapshots.
     upload_response = UploadResponse(
@@ -112,7 +102,7 @@ async def upload_zip(
         ],
         invalid_snapshots=[
             InvalidSnapshotResponse(folder=s.folder, error=s.error) 
-            for s in invald_snapshots
+            for s in invalid_snapshots
         ],
     )
 
@@ -406,7 +396,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
     if not metadata_path.is_file():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Missing {METADATA_FILENAME} in '{folder.name}'.",
+            detail=f"Missing '{METADATA_FILENAME}'.",
         )
     
     # Load the JSON object.
@@ -416,7 +406,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid JSON in '{METADATA_FILENAME}' in '{folder.name}'.",
+            detail=f"Invalid JSON in '{METADATA_FILENAME}'.",
         )
     
     # Extract the fields.
@@ -428,7 +418,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
     except (KeyError, ValueError, TypeError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Incomplete or invalid {METADATA_FILENAME} in '{folder.name}'.",
+            detail=f"Invalid '{METADATA_FILENAME}'.",
         )
     
     # Convert the date and time into their expected data types.
@@ -438,7 +428,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid date/time in {METADATA_FILENAME} in '{folder.name}'.",
+            detail=f"Invalid date or time in '{METADATA_FILENAME}'.",
         )
     
     # Return the patient ID, the snapshot date and time and the meal weight.
@@ -469,14 +459,14 @@ def _get_image_paths(folder: Path) -> Tuple[Path, Path]:
     if not rgb_path.is_file():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Missing {RGB_FILENAME} in '{folder.name}'.",
+            detail=f"Missing '{RGB_FILENAME}'.",
         )
     
     # Check if the depth image exists.
     if not depth_path.is_file():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Missing {DEPTH_FILENAME} in '{folder.name}'.",
+            detail=f"Missing '{DEPTH_FILENAME}'.",
         )
     
     # Check if the RGB image and the depth image are valid images.

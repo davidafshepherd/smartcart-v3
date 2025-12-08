@@ -3,7 +3,7 @@
  *
  * Manages the state of uploaded meal snapshots during the meal creation
  * workflow. This includes tracking uploaded snapshots, invalid entries,
- * user selections, and upload progress.
+ * user selections, upload progress, and feedback messages.
  *
  * The store uses Zustand for lightweight, hook-based state management
  * without the boilerplate of Redux.
@@ -39,17 +39,21 @@ import type { Snapshot, InvalidSnapshot } from '../lib/types';
  * State shape for the upload store.
  *
  * Contains all data related to the current upload session, including
- * snapshots awaiting meal creation and user selections.
+ * snapshots awaiting meal creation, user selections, and feedback messages.
  */
 interface UploadState {
   /** List of successfully uploaded snapshots awaiting meal creation. */
   snapshots: Snapshot[];
-  /** List of snapshots that failed validation during upload. */
+  /** List of snapshots that failed validation during the last upload. */
   invalidSnapshots: InvalidSnapshot[];
   /** IDs of currently selected snapshots (max 2 for before/after pairing). */
   selectedIds: number[];
   /** Whether a file upload is currently in progress. */
   isUploading: boolean;
+  /** Success message to display to the user. */
+  successMessage: string | null;
+  /** Error message to display to the user. */
+  errorMessage: string | null;
 }
 
 /**
@@ -61,6 +65,9 @@ interface UploadState {
 interface UploadActions {
   /**
    * Adds newly uploaded snapshots to the store.
+   *
+   * Appends valid snapshots to existing ones, but replaces invalid
+   * snapshots (only shows errors from the most recent upload).
    *
    * @param snapshots - Valid snapshots from the upload.
    * @param invalidSnapshots - Invalid snapshots that failed validation.
@@ -108,6 +115,20 @@ interface UploadActions {
    */
   setUploading: (isUploading: boolean) => void;
 
+  /**
+   * Sets the success message.
+   *
+   * @param message - The message to display, or null to clear.
+   */
+  setSuccessMessage: (message: string | null) => void;
+
+  /**
+   * Sets the error message.
+   *
+   * @param message - The message to display, or null to clear.
+   */
+  setErrorMessage: (message: string | null) => void;
+
   /** Resets the entire store to its initial state. */
   clearAll: () => void;
 }
@@ -135,6 +156,8 @@ export const useUploadStore = create<UploadState & UploadActions>((set, get) => 
   invalidSnapshots: [],
   selectedIds: [],
   isUploading: false,
+  successMessage: null,
+  errorMessage: null,
 
   // -------------------------------------------------------------------------
   // Actions
@@ -142,7 +165,8 @@ export const useUploadStore = create<UploadState & UploadActions>((set, get) => 
   addUpload: (newSnapshots, newInvalidSnapshots) =>
     set((state) => ({
       snapshots: [...state.snapshots, ...newSnapshots],
-      invalidSnapshots: [...state.invalidSnapshots, ...newInvalidSnapshots],
+      // Replace invalid snapshots (only show errors from latest upload)
+      invalidSnapshots: newInvalidSnapshots,
     })),
 
   removeSnapshot: (id: number) =>
@@ -179,11 +203,17 @@ export const useUploadStore = create<UploadState & UploadActions>((set, get) => 
 
   setUploading: (isUploading) => set({ isUploading }),
 
+  setSuccessMessage: (message) => set({ successMessage: message }),
+
+  setErrorMessage: (message) => set({ errorMessage: message }),
+
   clearAll: () =>
     set({
       snapshots: [],
       invalidSnapshots: [],
       selectedIds: [],
       isUploading: false,
+      successMessage: null,
+      errorMessage: null,
     }),
 }));

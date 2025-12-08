@@ -16,6 +16,7 @@ import { SnapshotCard } from './upload/SnapshotCard';
 import { MatchingPanel } from './upload/MatchingPanel';
 import { UploadZone } from './upload/UploadZone';
 import { AlertMessage } from './ui/AlertMessage';
+import { Spinner } from './ui/Spinner';
 
 // =============================================================================
 // Component
@@ -32,8 +33,7 @@ import { AlertMessage } from './ui/AlertMessage';
  * - Meal creation from matched snapshots
  *
  * State is managed through a combination of Zustand (for snapshot/selection
- * state) and local React state (for UI-specific concerns like menu items
- * and messages).
+ * state and messages) and local React state (for UI-specific concerns).
  *
  * @returns The upload section element.
  *
@@ -52,6 +52,8 @@ export default function UploadSection() {
     invalidSnapshots,
     selectedIds,
     isUploading,
+    successMessage,
+    errorMessage,
     addUpload,
     removeSnapshot,
     getSnapshotById,
@@ -59,6 +61,8 @@ export default function UploadSection() {
     clearSelection,
     clearInvalidSnapshots,
     setUploading,
+    setSuccessMessage,
+    setErrorMessage,
   } = useUploadStore();
 
   // ---------------------------------------------------------------------------
@@ -67,8 +71,7 @@ export default function UploadSection() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedMenuItemId, setSelectedMenuItemId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [discardingIds, setDiscardingIds] = useState<Set<number>>(new Set());
 
   // ---------------------------------------------------------------------------
   // Effects
@@ -100,35 +103,57 @@ export default function UploadSection() {
    */
   const handleFileUpload = useCallback(async (file: File) => {
     setUploading(true);
-    setError(null);
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       const data = await uploadApi.uploadZip(file);
       addUpload(data.meal_snapshots, data.invalid_snapshots);
       
-      const count = data.meal_snapshots.length;
-      setSuccessMessage(`Added ${count} snapshot${count !== 1 ? 's' : ''}`);
-      setTimeout(() => setSuccessMessage(null), 3000);
+      const validCount = data.meal_snapshots.length;
+      const invalidCount = data.invalid_snapshots.length;
+
+      // Show appropriate message based on results.
+      if (validCount === 0 && invalidCount > 0) {
+        // No valid snapshots - the invalid list will show details.
+        setErrorMessage('No valid snapshots found.');
+      } else if (validCount > 0) {
+        setSuccessMessage(`Added ${validCount} meal snapshot${validCount !== 1 ? 's' : ''}.`);
+      }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Upload failed');
+      setErrorMessage(err instanceof ApiError ? err.message : 'Upload failed.');
     } finally {
       setUploading(false);
     }
-  }, [addUpload, setUploading]);
+  }, [addUpload, setUploading, setErrorMessage, setSuccessMessage]);
 
   /**
    * Handles discarding a snapshot.
    *
    * Deletes the snapshot from the backend and removes it from the store.
+   * Prevents double-clicks by tracking which snapshots are being discarded.
    *
    * @param snapshotId - The ID of the snapshot to discard.
    */
   const handleDiscard = async (snapshotId: number) => {
+    // Prevent double-clicks by checking if already discarding.
+    if (discardingIds.has(snapshotId)) return;
+
+    // Mark as discarding.
+    setDiscardingIds((prev) => new Set(prev).add(snapshotId));
+
     try {
       await uploadApi.discardSnapshot(snapshotId);
       removeSnapshot(snapshotId);
     } catch (err) {
       console.error('Failed to discard snapshot:', err);
+    } finally {
+      // Remove from discarding set.
+      setDiscardingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(snapshotId);
+        return next;
+      });
     }
   };
 
@@ -159,7 +184,8 @@ export default function UploadSection() {
     if (!beforeSnapshot || !afterSnapshot) return;
 
     setIsSaving(true);
-    setError(null);
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       await mealsApi.create(beforeSnapshot.id, afterSnapshot.id, selectedMenuItemId);
@@ -171,9 +197,8 @@ export default function UploadSection() {
       setSelectedMenuItemId(null);
       
       setSuccessMessage('Meal saved successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to save meal');
+      setErrorMessage(err instanceof ApiError ? err.message : 'Failed to save meal.');
     } finally {
       setIsSaving(false);
     }
@@ -196,6 +221,7 @@ export default function UploadSection() {
 
   const beforeSnapshot = getSelectedSnapshot(0);
   const afterSnapshot = getSelectedSnapshot(1);
+  const hasExistingSnapshots = snapshots.length > 0;
 
   // ---------------------------------------------------------------------------
   // Render
@@ -204,46 +230,99 @@ export default function UploadSection() {
   return (
     <div className="p-8 animate-fade-in">
       <div className="max-w-7xl mx-auto">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-            Upload Meal Snapshots
-          </h1>
-          <p style={{ color: 'var(--text-muted)' }}>
-            Upload ZIP files containing meal snapshot folders, then match before and after snapshots to create meals.
-          </p>
+        {/* Page Header with Add More button */}
+        <div className="mb-8 relative">
+          <div className="pr-48">
+            <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
+              Upload Meal Snapshots
+            </h1>
+            <p className="mt-2" style={{ color: 'var(--text-muted)' }}>
+              Upload ZIP files containing meal snapshots, then match before and after snapshots to create meals.
+            </p>
+          </div>
+          
+          {/* Add More Snapshots button (absolutely positioned to prevent layout shift) */}
+          {hasExistingSnapshots && (
+            <label
+              className={`absolute top-0 right-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${
+                isUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-blue-50 hover:border-blue-300'
+              }`}
+              style={{
+                borderColor: 'var(--card-border)',
+                background: 'var(--card-bg)',
+              }}
+            >
+              <input
+                type="file"
+                accept=".zip"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleFileUpload(file);
+                    e.target.value = '';
+                  }
+                }}
+                className="hidden"
+                disabled={isUploading}
+              />
+              {isUploading ? (
+                <Spinner size="sm" />
+              ) : (
+                <svg
+                  className="w-4 h-4"
+                  style={{ color: 'var(--accent-primary)' }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              )}
+              <span style={{ color: 'var(--accent-primary)' }} className="font-medium">
+                {isUploading ? 'Uploading...' : 'Add More Snapshots'}
+              </span>
+            </label>
+          )}
         </div>
 
         {/* Feedback Messages */}
-        {error && <AlertMessage type="error" message={error} className="mb-6" />}
-        {successMessage && <AlertMessage type="success" message={successMessage} className="mb-6" />}
+        {errorMessage && (
+          <AlertMessage
+            type="error"
+            message={errorMessage}
+            onDismiss={() => setErrorMessage(null)}
+            className="mb-6"
+          />
+        )}
+        {successMessage && (
+          <AlertMessage
+            type="success"
+            message={successMessage}
+            onDismiss={() => setSuccessMessage(null)}
+            className="mb-6"
+          />
+        )}
 
-        {/* Upload Zone */}
-        <UploadZone
-          onFileSelect={handleFileUpload}
-          isUploading={isUploading}
-          hasExistingSnapshots={snapshots.length > 0}
-          className="mb-8"
-        />
-
-        {/* Invalid Snapshots Warning */}
+        {/* Invalid Snapshots Warning (directly below error/success) */}
         {invalidSnapshots.length > 0 && (
           <div
             className="mb-6 p-4 rounded-xl border relative"
-            style={{ background: '#fefce8', borderColor: 'var(--warning)' }}
+            style={{ background: '#fffbeb', borderColor: '#fbbf24' }}
           >
             <button
               onClick={clearInvalidSnapshots}
-              className="absolute top-3 right-3 p-1 rounded-lg hover:bg-yellow-200 transition-colors"
-              style={{ color: 'var(--warning)' }}
+              className="absolute top-3 right-3 p-1 rounded-lg transition-colors"
+              style={{ color: '#d97706' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#fef3c7')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               aria-label="Dismiss"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <h3 className="font-medium mb-2" style={{ color: 'var(--warning)' }}>
-              {invalidSnapshots.length} Invalid Snapshot{invalidSnapshots.length > 1 ? 's' : ''} Skipped
+            <h3 className="font-medium mb-2" style={{ color: '#d97706' }}>
+              {invalidSnapshots.length} invalid snapshot{invalidSnapshots.length > 1 ? 's' : ''} skipped.
             </h3>
             <ul className="text-sm space-y-1">
               {invalidSnapshots.map((entry, idx) => (
@@ -253,6 +332,16 @@ export default function UploadSection() {
               ))}
             </ul>
           </div>
+        )}
+
+        {/* Upload Zone (only show full zone when no snapshots exist) */}
+        {!hasExistingSnapshots && (
+          <UploadZone
+            onFileSelect={handleFileUpload}
+            isUploading={isUploading}
+            hasExistingSnapshots={false}
+            className="mb-8"
+          />
         )}
 
         {/* Matching Panel (shown when snapshots are selected) */}
@@ -282,6 +371,7 @@ export default function UploadSection() {
               {snapshots.map((snapshot, index) => {
                 const selectionIndex = selectedIds.indexOf(snapshot.id);
                 const isSelected = selectionIndex !== -1;
+                const isDiscarding = discardingIds.has(snapshot.id);
 
                 return (
                   <SnapshotCard
@@ -292,6 +382,7 @@ export default function UploadSection() {
                     animationDelay={index * 50}
                     onSelect={() => toggleSelection(snapshot.id)}
                     onDiscard={() => handleDiscard(snapshot.id)}
+                    isDiscarding={isDiscarding}
                   />
                 );
               })}
