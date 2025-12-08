@@ -24,7 +24,7 @@ export function MealDetail({ meal, onDelete }: MealDetailProps) {
             Meal Details
           </h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Patient #{meal.patient_id} • {meal.date} • {meal.start_time} - {meal.end_time}
+            Patient #{meal.patient.id} • {meal.date} • {meal.start_time} - {meal.end_time}
           </p>
         </div>
         <button

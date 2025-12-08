@@ -113,7 +113,7 @@ export const mealsApi = {
     // Transform flat list to hierarchical structure for tree view
     const result: MealsData = {};
     for (const meal of meals) {
-      const patientId = String(meal.patient_id);
+      const patientId = String(meal.patient.id);
       const date = meal.date;
       const timeRange = `${meal.start_time.slice(0, 5)}-${meal.end_time.slice(0, 5)}`;
 

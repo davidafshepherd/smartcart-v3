@@ -43,8 +43,8 @@ export default function UploadSection() {
 
     try {
       const data = await uploadApi.uploadZip(file);
-      addUpload(data.snapshots, data.invalid_snapshots);
-      setSuccessMessage(`Added ${data.snapshots.length} snapshot${data.snapshots.length !== 1 ? 's' : ''}`);
+      addUpload(data.meal_snapshots, data.invalid_snapshots);
+      setSuccessMessage(`Added ${data.meal_snapshots.length} snapshot${data.meal_snapshots.length !== 1 ? 's' : ''}`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Upload failed');

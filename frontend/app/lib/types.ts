@@ -5,7 +5,7 @@
 export interface Snapshot {
   id: number;
   upload_id: string;
-  folder_name: string;
+  folder: string;
   patient_id: number;
   date: string;
   time: string;
@@ -25,6 +25,10 @@ export interface MenuItem {
   ingredients: string[];
 }
 
+export interface Patient {
+  id: number;
+}
+
 export interface MealData {
   id: number;
   date: string;
@@ -36,13 +40,13 @@ export interface MealData {
   before_depth_path: string;
   after_rgb_path: string;
   after_depth_path: string;
-  patient_id: number;
+  patient: Patient;
   menu_item: MenuItem;
 }
 
 export interface UploadResponse {
   upload_id: string;
-  snapshots: Snapshot[];
+  meal_snapshots: Snapshot[];
   invalid_snapshots: InvalidSnapshot[];
 }
 
