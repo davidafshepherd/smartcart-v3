@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Main meals section component for viewing saved meals.
+ *
+ * Displays a hierarchical tree view of all saved meals and a detail
+ * panel for the selected meal. Provides meal browsing and deletion
+ * functionality.
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,15 +14,57 @@ import type { MealsData, MealData } from '../lib/types';
 import { MealsTreeView } from './meals/MealsTreeView';
 import { MealDetail } from './meals/MealDetail';
 
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * Renders the meals section of the application.
+ *
+ * This component provides a two-panel interface:
+ * - Left panel: Tree view for browsing meals by patient/date/time
+ * - Right panel: Detailed view of the selected meal
+ *
+ * Meals are fetched from the API on mount and when changes occur
+ * (e.g., after deletion).
+ *
+ * @returns The meals section element.
+ *
+ * @example
+ * ```tsx
+ * // Used in the main page
+ * <MealsSection />
+ * ```
+ */
 export default function MealsSection() {
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
   const [mealsData, setMealsData] = useState<MealsData>({});
   const [loading, setLoading] = useState(true);
   const [selectedMeal, setSelectedMeal] = useState<MealData | null>(null);
 
+  // ---------------------------------------------------------------------------
+  // Effects
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Fetches meals on component mount.
+   */
   useEffect(() => {
     fetchMeals();
   }, []);
 
+  // ---------------------------------------------------------------------------
+  // Data Fetching
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Fetches all meals from the API.
+   *
+   * The API returns meals organized in a hierarchical structure
+   * suitable for the tree view component.
+   */
   const fetchMeals = async () => {
     try {
       const data = await mealsApi.getAll();
@@ -26,6 +76,18 @@ export default function MealsSection() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Event Handlers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Handles meal deletion.
+   *
+   * Deletes the meal from the backend, clears the selection, and
+   * refreshes the meal list.
+   *
+   * @param mealId - The ID of the meal to delete.
+   */
   const handleDeleteMeal = async (mealId: number) => {
     try {
       await mealsApi.delete(mealId);
@@ -36,6 +98,10 @@ export default function MealsSection() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Loading State
+  // ---------------------------------------------------------------------------
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
@@ -44,10 +110,14 @@ export default function MealsSection() {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   return (
     <div className="p-8 animate-fade-in">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
             Saved Meals
@@ -57,15 +127,16 @@ export default function MealsSection() {
           </p>
         </div>
 
+        {/* Two-Panel Layout */}
         <div className="flex gap-8">
-          {/* Tree View */}
+          {/* Left Panel: Tree View */}
           <MealsTreeView
             mealsData={mealsData}
             selectedMealId={selectedMeal?.id ?? null}
             onMealSelect={setSelectedMeal}
           />
 
-          {/* Meal Detail */}
+          {/* Right Panel: Meal Detail or Empty State */}
           <div className="flex-1">
             {selectedMeal ? (
               <MealDetail
@@ -82,6 +153,15 @@ export default function MealsSection() {
   );
 }
 
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+/**
+ * Renders an empty state when no meal is selected.
+ *
+ * Prompts the user to select a meal from the tree view.
+ */
 function EmptySelection() {
   return (
     <div

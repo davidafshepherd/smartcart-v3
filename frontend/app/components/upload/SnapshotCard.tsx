@@ -1,17 +1,69 @@
+/**
+ * @fileoverview Card component for displaying an individual meal snapshot.
+ *
+ * Renders a snapshot's image, metadata (patient, date, time, weight),
+ * and provides selection and discard functionality. Used in the snapshot
+ * grid on the upload page.
+ */
+
 'use client';
 
 import type { Snapshot } from '../../lib/types';
 import { uploadApi } from '../../lib/api';
+import { NumberBadge } from '../ui/NumberBadge';
 
+// =============================================================================
+// Type Definitions
+// =============================================================================
+
+/** Props for the SnapshotCard component. */
 interface SnapshotCardProps {
+  /** The snapshot data to display. */
   snapshot: Snapshot;
+  /** Whether this snapshot is currently selected. */
   isSelected: boolean;
+  /** The selection order index (0 = first/before, 1 = second/after). -1 if not selected. */
   selectionIndex: number;
+  /** Animation delay in milliseconds for staggered grid entrance. */
   animationDelay: number;
+  /** Callback invoked when the card is clicked to toggle selection. */
   onSelect: () => void;
+  /** Callback invoked when the discard button is clicked. */
   onDiscard: () => void;
 }
 
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * Renders a card displaying a meal snapshot with selection capabilities.
+ *
+ * The card displays:
+ * - RGB image thumbnail
+ * - Selection badge (1 or 2) when selected
+ * - Patient ID and weight
+ * - Date and time
+ * - Discard button
+ *
+ * Visual feedback includes border color changes and a selection badge
+ * to indicate the before/after order.
+ *
+ * @param props - The component props.
+ * @returns A snapshot card element.
+ *
+ * @example
+ * ```tsx
+ * <SnapshotCard
+ *   snapshot={snapshot}
+ *   isSelected={selectedIds.includes(snapshot.id)}
+ *   selectionIndex={selectedIds.indexOf(snapshot.id)}
+ *   animationDelay={index * 50}
+ *   onSelect={() => toggleSelection(snapshot.id)}
+ *   onDiscard={() => handleDiscard(snapshot.id)}
+ * />
+ * ```
+ */
 export function SnapshotCard({
   snapshot,
   isSelected,
@@ -20,6 +72,7 @@ export function SnapshotCard({
   onSelect,
   onDiscard,
 }: SnapshotCardProps) {
+  // Determine border and badge colors based on selection state.
   const borderColor = isSelected
     ? selectionIndex === 0
       ? 'var(--accent-primary)'
@@ -39,7 +92,7 @@ export function SnapshotCard({
       }}
       onClick={onSelect}
     >
-      {/* Image */}
+      {/* Image Section */}
       <div className="relative h-40">
         <img
           src={uploadApi.getImageUrl(snapshot.rgb_path)}
@@ -47,16 +100,13 @@ export function SnapshotCard({
           className="w-full h-full object-cover"
         />
         {isSelected && (
-          <div
-            className="absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold"
-            style={{ background: badgeColor, color: 'white' }}
-          >
-            {selectionIndex + 1}
+          <div className="absolute top-3 left-3">
+            <NumberBadge number={selectionIndex + 1} color={badgeColor} />
           </div>
         )}
       </div>
 
-      {/* Info */}
+      {/* Info Section */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="font-medium" style={{ color: 'var(--foreground)' }}>

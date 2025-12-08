@@ -1,20 +1,92 @@
+/**
+ * @fileoverview Detailed view component for a single meal.
+ *
+ * Displays comprehensive information about a meal including menu item,
+ * weight data, and before/after images. Provides functionality to
+ * delete the meal.
+ */
+
 'use client';
 
 import type { MealData } from '../../lib/types';
 import { uploadApi } from '../../lib/api';
+import { NumberBadge } from '../ui/NumberBadge';
 
+// =============================================================================
+// Type Definitions
+// =============================================================================
+
+/** Props for the MealDetail component. */
 interface MealDetailProps {
+  /** The meal data to display. */
   meal: MealData;
+  /** Callback invoked when the delete button is clicked. */
   onDelete: () => void;
 }
 
+/** Props for the WeightCard sub-component. */
+interface WeightCardProps {
+  /** Label text (e.g., "Before", "After", "Consumed"). */
+  label: string;
+  /** Weight value in grams. */
+  value: number;
+  /** Color for the value text. */
+  color: string;
+}
+
+/** Props for the ImageColumn sub-component. */
+interface ImageColumnProps {
+  /** Column label (e.g., "Before (Pre-meal)"). */
+  label: string;
+  /** Order number (1 or 2). */
+  number: number;
+  /** Accent color for the number badge. */
+  color: string;
+  /** Path to the RGB image. */
+  rgbPath: string;
+  /** Path to the depth image. */
+  depthPath: string;
+}
+
+/** Props for the ImageCard sub-component. */
+interface ImageCardProps {
+  /** Image type label ("RGB" or "Depth"). */
+  label: string;
+  /** Path to the image file. */
+  path: string;
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+/**
+ * Renders a detailed view of a meal.
+ *
+ * The detail view includes:
+ * - Header with patient ID, date, time range, and delete button
+ * - Menu item name and ingredients
+ * - Weight comparison (before, after, consumed)
+ * - Before and after images (RGB and depth)
+ *
+ * @param props - The component props.
+ * @returns The meal detail element.
+ *
+ * @example
+ * ```tsx
+ * <MealDetail
+ *   meal={selectedMeal}
+ *   onDelete={() => handleDeleteMeal(selectedMeal.id)}
+ * />
+ * ```
+ */
 export function MealDetail({ meal, onDelete }: MealDetailProps) {
   return (
     <div
       className="rounded-2xl border overflow-hidden shadow-sm"
       style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
     >
-      {/* Header */}
+      {/* Header Section */}
       <div
         className="p-6 border-b flex items-center justify-between"
         style={{ borderColor: 'var(--card-border)' }}
@@ -36,7 +108,7 @@ export function MealDetail({ meal, onDelete }: MealDetailProps) {
         </button>
       </div>
 
-      {/* Menu Item */}
+      {/* Menu Item Section */}
       <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
         <h3 className="font-medium mb-2" style={{ color: 'var(--foreground)' }}>
           Menu Item
@@ -46,20 +118,20 @@ export function MealDetail({ meal, onDelete }: MealDetailProps) {
         </span>
         {meal.menu_item.ingredients.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {meal.menu_item.ingredients.map((ing, idx) => (
+            {meal.menu_item.ingredients.map((ingredient, idx) => (
               <span
                 key={idx}
                 className="px-3 py-1 rounded-full text-sm"
                 style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
               >
-                {ing}
+                {ingredient}
               </span>
             ))}
           </div>
         )}
       </div>
 
-      {/* Weight Info */}
+      {/* Weight Data Section */}
       <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
         <h3 className="font-medium mb-4" style={{ color: 'var(--foreground)' }}>
           Weight Data
@@ -75,12 +147,11 @@ export function MealDetail({ meal, onDelete }: MealDetailProps) {
         </div>
       </div>
 
-      {/* Images */}
+      {/* Images Section */}
       <div className="p-6">
         <h3 className="font-medium mb-4" style={{ color: 'var(--foreground)' }}>
           Meal Images
         </h3>
-
         <div className="grid grid-cols-2 gap-6">
           <ImageColumn
             label="Before (Pre-meal)"
@@ -102,7 +173,17 @@ export function MealDetail({ meal, onDelete }: MealDetailProps) {
   );
 }
 
-function WeightCard({ label, value, color }: { label: string; value: number; color: string }) {
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+/**
+ * Renders a card displaying a weight value.
+ *
+ * @param props - The component props.
+ * @returns A weight display card.
+ */
+function WeightCard({ label, value, color }: WeightCardProps) {
   return (
     <div className="p-4 rounded-xl" style={{ background: 'var(--background)' }}>
       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -115,28 +196,23 @@ function WeightCard({ label, value, color }: { label: string; value: number; col
   );
 }
 
-interface ImageColumnProps {
-  label: string;
-  number: number;
-  color: string;
-  rgbPath: string;
-  depthPath: string;
-}
-
+/**
+ * Renders a column of images (RGB and depth) for before or after.
+ *
+ * @param props - The component props.
+ * @returns An image column with header and two image cards.
+ */
 function ImageColumn({ label, number, color, rgbPath, depthPath }: ImageColumnProps) {
   return (
     <div>
+      {/* Column Header */}
       <div className="flex items-center gap-2 mb-3">
-        <div
-          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-          style={{ background: color, color: 'white' }}
-        >
-          {number}
-        </div>
+        <NumberBadge number={number} color={color} size="sm" />
         <span className="font-medium" style={{ color: 'var(--foreground)' }}>
           {label}
         </span>
       </div>
+      {/* Image Cards */}
       <div className="space-y-3">
         <ImageCard label="RGB" path={rgbPath} />
         <ImageCard label="Depth" path={depthPath} />
@@ -145,7 +221,13 @@ function ImageColumn({ label, number, color, rgbPath, depthPath }: ImageColumnPr
   );
 }
 
-function ImageCard({ label, path }: { label: string; path: string }) {
+/**
+ * Renders a single image with a label.
+ *
+ * @param props - The component props.
+ * @returns An image card with label and image.
+ */
+function ImageCard({ label, path }: ImageCardProps) {
   return (
     <div
       className="rounded-xl overflow-hidden border"

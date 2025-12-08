@@ -1,28 +1,83 @@
+/**
+ * @fileoverview File upload zone component for ZIP file selection.
+ *
+ * Provides a drag-and-drop style interface for selecting ZIP files
+ * containing meal snapshots. Adapts its appearance based on whether
+ * snapshots already exist (compact mode) or not (full mode).
+ */
+
 'use client';
 
+import { Spinner } from '../ui/Spinner';
+
+// =============================================================================
+// Type Definitions
+// =============================================================================
+
+/** Props for the UploadZone component. */
 interface UploadZoneProps {
+  /**
+   * Callback invoked when a file is selected.
+   *
+   * @param file - The selected ZIP file.
+   */
   onFileSelect: (file: File) => void;
+  /** Whether a file upload is currently in progress. */
   isUploading: boolean;
+  /** Whether snapshots already exist (triggers compact mode). */
   hasExistingSnapshots?: boolean;
+  /** Optional additional CSS classes. */
   className?: string;
 }
 
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * Renders a file upload zone for ZIP file selection.
+ *
+ * The component has two display modes:
+ * - **Full mode**: Large dashed border area with upload icon, shown when
+ *   no snapshots exist yet.
+ * - **Compact mode**: Small inline button, shown when snapshots already
+ *   exist to allow adding more without taking up much space.
+ *
+ * During upload, displays a spinner and disables further interaction.
+ *
+ * @param props - The component props.
+ * @returns The upload zone element.
+ *
+ * @example
+ * ```tsx
+ * <UploadZone
+ *   onFileSelect={handleUpload}
+ *   isUploading={isUploading}
+ *   hasExistingSnapshots={snapshots.length > 0}
+ * />
+ * ```
+ */
 export function UploadZone({ 
   onFileSelect, 
   isUploading, 
   hasExistingSnapshots = false,
   className = '' 
 }: UploadZoneProps) {
+  /**
+   * Handles file input change events.
+   *
+   * Extracts the first file and passes it to the callback.
+   * Resets the input value to allow re-selecting the same file.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       onFileSelect(file);
-      // Reset input so same file can be selected again
       e.target.value = '';
     }
   };
 
-  // Compact version when there are existing snapshots
+  // Compact mode: small button when snapshots exist.
   if (hasExistingSnapshots) {
     return (
       <div className={className}>
@@ -43,19 +98,7 @@ export function UploadZone({
             disabled={isUploading}
           />
           {isUploading ? (
-            <svg
-              className="w-4 h-4 animate-spin"
-              style={{ color: 'var(--accent-primary)' }}
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
+            <Spinner size="sm" />
           ) : (
             <svg
               className="w-4 h-4"
@@ -75,7 +118,7 @@ export function UploadZone({
     );
   }
 
-  // Full upload zone when no snapshots exist
+  // Full mode: large drop zone when no snapshots exist.
   return (
     <div className={className}>
       <label
@@ -99,19 +142,7 @@ export function UploadZone({
           style={{ background: 'var(--accent-light)' }}
         >
           {isUploading ? (
-            <svg
-              className="w-8 h-8 animate-spin"
-              style={{ color: 'var(--accent-primary)' }}
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
+            <Spinner size="md" />
           ) : (
             <svg
               className="w-8 h-8"

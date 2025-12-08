@@ -1,23 +1,115 @@
+/**
+ * @fileoverview Hierarchical tree view component for browsing meals.
+ *
+ * Displays meals organized by patient, date, and time range in an
+ * expandable/collapsible tree structure. Allows selection of individual
+ * meals for detailed viewing.
+ */
+
 'use client';
 
 import { useState } from 'react';
 import type { MealsData, MealData } from '../../lib/types';
 
+// =============================================================================
+// Type Definitions
+// =============================================================================
+
+/** Props for the MealsTreeView component. */
 interface MealsTreeViewProps {
+  /** Hierarchical meals data organized by patient → date → time. */
   mealsData: MealsData;
+  /** ID of the currently selected meal, or null. */
   selectedMealId: number | null;
+  /**
+   * Callback invoked when a meal is selected.
+   *
+   * @param meal - The selected meal data.
+   */
   onMealSelect: (meal: MealData) => void;
 }
 
+/** Props for the PatientNode sub-component. */
+interface PatientNodeProps {
+  /** The patient ID string. */
+  patientId: string;
+  /** Meals data for this patient, organized by date → time. */
+  data: { [date: string]: { [timeRange: string]: MealData } };
+  /** Total number of meals for this patient. */
+  mealCount: number;
+  /** Whether this patient node is expanded. */
+  isExpanded: boolean;
+  /** Set of expanded date keys for this patient. */
+  expandedDates: Set<string>;
+  /** Currently selected meal ID, or null. */
+  selectedMealId: number | null;
+  /** Callback to toggle expansion of this patient node. */
+  onToggle: () => void;
+  /** Callback to toggle expansion of a date node. */
+  onToggleDate: (key: string) => void;
+  /** Callback to select a meal. */
+  onMealSelect: (meal: MealData) => void;
+}
+
+/** Props for the DateNode sub-component. */
+interface DateNodeProps {
+  /** The patient ID (for generating unique keys). */
+  patientId: string;
+  /** The date string (YYYY-MM-DD). */
+  date: string;
+  /** Meals data for this date, organized by time range. */
+  data: { [timeRange: string]: MealData };
+  /** Whether this date node is expanded. */
+  isExpanded: boolean;
+  /** Currently selected meal ID, or null. */
+  selectedMealId: number | null;
+  /** Callback to toggle expansion of this date node. */
+  onToggle: () => void;
+  /** Callback to select a meal. */
+  onMealSelect: (meal: MealData) => void;
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+/**
+ * Renders a hierarchical tree view of all meals.
+ *
+ * The tree structure is:
+ * - Patient (expandable)
+ *   - Date (expandable)
+ *     - Time Range (selectable)
+ *
+ * By default, the first patient is expanded. Clicking on a time range
+ * selects that meal for detailed viewing.
+ *
+ * @param props - The component props.
+ * @returns The tree view element.
+ *
+ * @example
+ * ```tsx
+ * <MealsTreeView
+ *   mealsData={mealsData}
+ *   selectedMealId={selectedMeal?.id ?? null}
+ *   onMealSelect={setSelectedMeal}
+ * />
+ * ```
+ */
 export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: MealsTreeViewProps) {
+  // Sort patient IDs numerically.
   const patientIds = Object.keys(mealsData).sort((a, b) => Number(a) - Number(b));
 
+  // Expansion state: auto-expand first patient.
   const [expandedPatients, setExpandedPatients] = useState<Set<string>>(() => {
     const first = patientIds[0];
     return first ? new Set([first]) : new Set();
   });
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
+  /**
+   * Toggles the expansion state of a patient node.
+   */
   const togglePatient = (patientId: string) => {
     setExpandedPatients((prev) => {
       const next = new Set(prev);
@@ -30,6 +122,9 @@ export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: Meals
     });
   };
 
+  /**
+   * Toggles the expansion state of a date node.
+   */
   const toggleDate = (key: string) => {
     setExpandedDates((prev) => {
       const next = new Set(prev);
@@ -42,9 +137,12 @@ export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: Meals
     });
   };
 
-  const getMealCount = (patientId: string) => {
+  /**
+   * Calculates the total number of meals for a patient.
+   */
+  const getMealCount = (patientId: string): number => {
     return Object.values(mealsData[patientId]).reduce(
-      (acc, d) => acc + Object.keys(d).length,
+      (acc, dateData) => acc + Object.keys(dateData).length,
       0
     );
   };
@@ -55,12 +153,14 @@ export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: Meals
         className="rounded-2xl border overflow-hidden shadow-sm"
         style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
       >
+        {/* Header */}
         <div className="p-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
           <h2 className="font-semibold" style={{ color: 'var(--foreground)' }}>
             Patients & Meals
           </h2>
         </div>
 
+        {/* Tree Content */}
         {patientIds.length === 0 ? (
           <EmptyState />
         ) : (
@@ -86,6 +186,13 @@ export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: Meals
   );
 }
 
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+/**
+ * Renders an empty state when no meals exist.
+ */
 function EmptyState() {
   return (
     <div className="p-8 text-center">
@@ -113,18 +220,9 @@ function EmptyState() {
   );
 }
 
-interface PatientNodeProps {
-  patientId: string;
-  data: { [date: string]: { [timeRange: string]: MealData } };
-  mealCount: number;
-  isExpanded: boolean;
-  expandedDates: Set<string>;
-  selectedMealId: number | null;
-  onToggle: () => void;
-  onToggleDate: (key: string) => void;
-  onMealSelect: (meal: MealData) => void;
-}
-
+/**
+ * Renders a patient node in the tree.
+ */
 function PatientNode({
   patientId,
   data,
@@ -136,10 +234,12 @@ function PatientNode({
   onToggleDate,
   onMealSelect,
 }: PatientNodeProps) {
+  // Sort dates in reverse chronological order.
   const dates = Object.keys(data).sort().reverse();
 
   return (
     <div className="mb-1">
+      {/* Patient Header */}
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-blue-50"
@@ -159,6 +259,7 @@ function PatientNode({
         <CountBadge count={mealCount} />
       </button>
 
+      {/* Date Children */}
       {isExpanded && (
         <div className="ml-6 mt-1">
           {dates.map((date) => (
@@ -179,16 +280,9 @@ function PatientNode({
   );
 }
 
-interface DateNodeProps {
-  patientId: string;
-  date: string;
-  data: { [timeRange: string]: MealData };
-  isExpanded: boolean;
-  selectedMealId: number | null;
-  onToggle: () => void;
-  onMealSelect: (meal: MealData) => void;
-}
-
+/**
+ * Renders a date node in the tree.
+ */
 function DateNode({
   date,
   data,
@@ -197,10 +291,12 @@ function DateNode({
   onToggle,
   onMealSelect,
 }: DateNodeProps) {
+  // Sort time ranges chronologically.
   const timeRanges = Object.keys(data).sort();
 
   return (
     <div className="mb-1">
+      {/* Date Header */}
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-blue-50"
@@ -224,6 +320,7 @@ function DateNode({
         <CountBadge count={timeRanges.length} />
       </button>
 
+      {/* Time Range Children (Meals) */}
       {isExpanded && (
         <div className="ml-6 mt-1">
           {timeRanges.map((timeRange) => {
@@ -260,6 +357,9 @@ function DateNode({
   );
 }
 
+/**
+ * Renders an expand/collapse chevron icon.
+ */
 function ChevronIcon({ isExpanded }: { isExpanded: boolean }) {
   return (
     <svg
@@ -274,6 +374,9 @@ function ChevronIcon({ isExpanded }: { isExpanded: boolean }) {
   );
 }
 
+/**
+ * Renders a count badge (e.g., number of meals).
+ */
 function CountBadge({ count }: { count: number }) {
   return (
     <span

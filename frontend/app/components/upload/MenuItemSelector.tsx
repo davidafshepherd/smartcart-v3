@@ -1,17 +1,69 @@
+/**
+ * @fileoverview Menu item selector component with inline creation.
+ *
+ * Provides a dropdown for selecting existing menu items and a form
+ * for creating new ones without leaving the current workflow.
+ */
+
 'use client';
 
 import { useState } from 'react';
 import type { MenuItem } from '../../lib/types';
 import { menuApi } from '../../lib/api';
 
+// =============================================================================
+// Type Definitions
+// =============================================================================
+
+/** Props for the MenuItemSelector component. */
 interface MenuItemSelectorProps {
+  /** List of available menu items. */
   menuItems: MenuItem[];
+  /** Currently selected menu item ID, or null. */
   selectedId: number | null;
+  /**
+   * Callback invoked when a menu item is selected.
+   *
+   * @param id - The selected menu item ID, or null to clear.
+   */
   onSelect: (id: number | null) => void;
+  /**
+   * Callback invoked when a new menu item is successfully created.
+   *
+   * @param item - The newly created menu item.
+   */
   onItemCreated: (item: MenuItem) => void;
+  /** Optional additional CSS classes. */
   className?: string;
 }
 
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * Renders a menu item selector with inline creation capability.
+ *
+ * The component has two modes:
+ * - **Select mode**: Dropdown list of existing menu items with a "New" button
+ * - **Create mode**: Form with name and ingredients inputs
+ *
+ * When a new item is created, it is automatically selected and the
+ * parent component is notified via the onItemCreated callback.
+ *
+ * @param props - The component props.
+ * @returns The menu item selector element.
+ *
+ * @example
+ * ```tsx
+ * <MenuItemSelector
+ *   menuItems={menuItems}
+ *   selectedId={selectedMenuItemId}
+ *   onSelect={setSelectedMenuItemId}
+ *   onItemCreated={handleMenuItemCreated}
+ * />
+ * ```
+ */
 export function MenuItemSelector({
   menuItems,
   selectedId,
@@ -19,16 +71,24 @@ export function MenuItemSelector({
   onItemCreated,
   className = '',
 }: MenuItemSelectorProps) {
+  // Form state for creating new menu items.
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newIngredients, setNewIngredients] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+  /**
+   * Handles the creation of a new menu item.
+   *
+   * Parses the comma-separated ingredients string, calls the API,
+   * and notifies the parent on success.
+   */
   const handleCreate = async () => {
     if (!newName.trim()) return;
 
     setIsCreating(true);
     try {
+      // Parse comma-separated ingredients into an array.
       const ingredients = newIngredients
         .split(',')
         .map((s) => s.trim())
@@ -36,9 +96,7 @@ export function MenuItemSelector({
 
       const newItem = await menuApi.create(newName, ingredients);
       onItemCreated(newItem);
-      setShowNewForm(false);
-      setNewName('');
-      setNewIngredients('');
+      resetForm();
     } catch (err) {
       console.error('Failed to create menu item:', err);
     } finally {
@@ -46,12 +104,16 @@ export function MenuItemSelector({
     }
   };
 
-  const handleCancel = () => {
+  /**
+   * Resets the creation form to its initial state.
+   */
+  const resetForm = () => {
     setShowNewForm(false);
     setNewName('');
     setNewIngredients('');
   };
 
+  /** Shared input styling for consistent appearance. */
   const inputStyles = {
     background: 'var(--background)',
     borderColor: 'var(--card-border)',
@@ -65,6 +127,7 @@ export function MenuItemSelector({
       </label>
 
       {!showNewForm ? (
+        // Select Mode: Dropdown with "New" button
         <div className="flex gap-3">
           <select
             value={selectedId || ''}
@@ -88,6 +151,7 @@ export function MenuItemSelector({
           </button>
         </div>
       ) : (
+        // Create Mode: Name and ingredients form
         <div className="space-y-3">
           <input
             type="text"
@@ -115,7 +179,7 @@ export function MenuItemSelector({
               {isCreating ? 'Creating...' : 'Create Menu Item'}
             </button>
             <button
-              onClick={handleCancel}
+              onClick={resetForm}
               className="px-4 py-2 rounded-xl border transition-colors hover:bg-gray-50"
               style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
             >
