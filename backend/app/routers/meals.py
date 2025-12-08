@@ -131,16 +131,16 @@ def create_meal(
         before_weight=before_snapshot.weight,
         after_weight=after_snapshot.weight,
         before_rgb_path=image_paths["before_rgb"],
-        before_depth_path=image_paths["before_rgb"],
-        after_rgb_path=image_paths["before_rgb"],
-        after_depth_path=image_paths["before_rgb"],
+        before_depth_path=image_paths["before_depth"],
+        after_rgb_path=image_paths["after_rgb"],
+        after_depth_path=image_paths["after_depth"],
         patient_id=patient.id,
         menu_item_id=request.menu_item_id,
     )
     db.add(new_meal)
 
     # Delete the meal snapshots.
-    _delete_snapshots(before_snapshot, after_snapshot, db)
+    _delete_snapshots(before_snapshot, after_snapshot, db=db)
 
     # Persist the new meal.
     db.commit()
@@ -409,11 +409,11 @@ def _save_images(before: MealSnapshot, after: MealSnapshot) -> Dict[str, str]:
             BACKEND_DIR / before.depth_path, 
             meal_directory / f"before_{DEPTH_FILENAME}",
         ),
-        "before_rgb": (
+        "after_rgb": (
             BACKEND_DIR / after.rgb_path, 
             meal_directory / f"after_{RGB_FILENAME}",
         ),
-        "before_rgb": (
+        "after_depth": (
             BACKEND_DIR / after.depth_path, 
             meal_directory / f"after_{DEPTH_FILENAME}",
         ),

@@ -108,9 +108,9 @@ async def upload_zip(
         upload_id=upload_id, 
         meal_snapshots=[
             MealSnapshotResponse.model_validate(s) 
-            for s in snapshots
+            for s in meal_snapshots
         ],
-        invalid_snapshots= [
+        invalid_snapshots=[
             InvalidSnapshotResponse(folder=s.folder, error=s.error) 
             for s in invald_snapshots
         ],
