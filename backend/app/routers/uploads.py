@@ -1,49 +1,35 @@
-from dataclasses import dataclass, asdict
-from fastapi import APIRouter, UploadFile, File, status, HTTPException
-from fastapi.responses import FileResponse
-from typing import Dict, Any, Tuple, List
+from datetime import date, time
+import json
 from pathlib import Path
+import shutil
+from typing import List, Tuple
 import uuid
 import zipfile
-import shutil
-import json
-from datetime import date, time
+
+from fastapi import APIRouter, Depends, File, HTTPException, status, UploadFile
+from fastapi.responses import FileResponse
+from dataclasses import dataclass
 from PIL import Image
+from sqlalchemy.orm import Session
 
 from app.constants import (
     BACKEND_DIR,
-    UPLOAD_DIR,
+    DEPTH_FILENAME,
     METADATA_FILENAME,
     RGB_FILENAME,
-    DEPTH_FILENAME,
+    UPLOAD_DIR,
 )
+from app.db import get_db
+from app.schemas import (
+    InvalidSnapshotResponse,
+    MealSnapshotResponse, 
+    UploadResponse,
+)
+from app.models.db_models import MealSnapshot
 
 
-# Create a new API router to group upload-related endpoints
+# Create a new API router to group upload-related endpoints.
 router = APIRouter()
-
-
-@dataclass
-class MealSnapshot:
-    """Represents the state of a meal at a specific point in time.
-
-    Attributes:
-        id: Unique identifier for the snapshot.
-        patient_id: ID of the patient who consumed the meal.
-        date_str: Date of the snapshot.
-        time_str: Time of the snapshot.
-        weight: Weight of the meal.
-        rgb_path: Path (relative to BACKEND_DIR) to an RGB image of the meal.
-        depth_path: Path (relative to BACKEND_DIR) to a depth image of the meal.
-    """
-
-    id: str
-    patient_id: int
-    date_str: str
-    time_str: str
-    weight: float
-    rgb_path: str
-    depth_path: str
 
 
 @dataclass
@@ -61,7 +47,10 @@ class InvalidSnapshot:
 
 # POST endpoint to upload a ZIP file.
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def upload_zip(file: UploadFile = File(...)) -> Dict[str, Any]:
+async def upload_zip(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    ) -> UploadResponse:
     """Stores the meal snapshots within an uploaded ZIP file.
 
     Extracts all folders within an uploaded ZIP file into a directory named 
@@ -70,10 +59,11 @@ async def upload_zip(file: UploadFile = File(...)) -> Dict[str, Any]:
 
     Args:
         file: The ZIP file uploaded by the user.
+        db: SQLAlchemy database session.
     
     Returns:
-        A dictionary containing the upload ID, a list of each meal snapshot and
-        a list of each invalid snapshot.
+        An upload response containing the upload ID, the list of meal snapshots
+        and the list of invalid snapshots.
 
     Raises:
         HTTPException: If the file is not a ZIP file, if the ZIP file is invalid
@@ -96,135 +86,166 @@ async def upload_zip(file: UploadFile = File(...)) -> Dict[str, Any]:
     _extract_zip_file(file, upload_directory)
 
     # Create a list of meal snapshots and invalid snapshots.
-    entries, invalid_entries = _build_meal_snapshots(upload_directory)
+    snapshots = _build_meal_snapshots(upload_directory, upload_id, db)
+    meal_snapshots, invald_snapshots = snapshots
 
-    # Check if the list of meal snapshots is not empty.
-    if not entries:
+    # Raise an HTTPException if no meal snapshots were created.
+    if not meal_snapshots:
         _safe_delete(upload_directory)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "message": "No valid meal snapshot was found in the ZIP file.",
-                "invalid_entries": [asdict(e) for e in invalid_entries],
+                "invalid_snapshots": [
+                    {"folder": s.folder, "error": s.error} 
+                    for s in invald_snapshots
+                ],
             },
         )
 
-    return {
-        "upload_id": upload_id, 
-        "entries": [asdict(e) for e in entries],
-        "invalid_entries": [asdict(e) for e in invalid_entries],
-    }
+    # Create an upload response containing the upload ID and the snapshots.
+    upload_response = UploadResponse(
+        upload_id=upload_id, 
+        meal_snapshots=[
+            MealSnapshotResponse.model_validate(s) 
+            for s in snapshots
+        ],
+        invalid_snapshots= [
+            InvalidSnapshotResponse(folder=s.folder, error=s.error) 
+            for s in invald_snapshots
+        ],
+    )
+
+    # Return the upload response.
+    return upload_response
 
 
-# GET endpoint to retrieve entries for an upload.
-@router.get("/{upload_id}/entries", status_code=status.HTTP_200_OK)
-def get_upload_entries(upload_id: str) -> Dict[str, Any]:
-    """Gets the entries for an upload.
-
-    Retrieves all meal snapshot entries that belong to a specific upload.
-
+# GET endpoint to retrieve all meal snapshots belonging to an upload.
+@router.get("/{upload_id}/snapshots", status_code=status.HTTP_200_OK)
+def get_upload_snapshots(
+    upload_id: str,
+    db: Session = Depends(get_db),
+) -> List[MealSnapshotResponse]:
+    """Retrieves all meal snapshots belonging to an upload.
+    
     Args:
-        upload_id: The unique identifier of the upload.
+        upload_id: The ID of the upload.
+        db: SQLAlchemy database session.
 
     Returns:
-        A dictionary containing the upload ID and a list of entry IDs.
+        A list of the meal snapshots.
     """
-    upload_directory = _get_upload_directory(upload_id)
-    
-    entries = []
-    for folder in sorted(upload_directory.iterdir()):
-        if folder.is_dir():
-            entries.append(folder.name)
-    
-    return {"upload_id": upload_id, "entries": entries}
+
+    # Fetch the meal snapshots.
+    snapshots = (
+        db.query(MealSnapshot)
+        .filter(MealSnapshot.upload_id == upload_id)
+        .all()
+    )
+
+    # Return a list of the meal snapshots.
+    return [MealSnapshotResponse.model_validate(s) for s in snapshots]
 
 
-# DELETE endpoint to discard a meal snapshot entry.
-@router.delete("/{upload_id}/entries/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_entry(upload_id: str, entry_id: str) -> None:
-    """Discards a meal snapshot entry.
+# DELETE endpoint to delete a meal snapshot.
+@router.delete("/snapshots/{snapshot_id}")
+def delete_snapshot(snapshot_id: int, db: Session = Depends(get_db)) -> None:
+    """Deletes a meal snapshot.
 
-    Deletes a specific meal snapshot folder from an upload.
+    Deletes a meal snapshot from the database and its associated files from 
+    disk.
 
     Args:
-        upload_id: The unique identifier of the upload.
-        entry_id: The unique identifier of the entry to delete.
+        snapshot_id: The ID of the meal snapshot to delete.
+        db: SQLAlchemy database session.
 
     Raises:
-        HTTPException: If the upload or entry does not exist.
+        HTTPException: If the meal snapshot does not exist.
     """
-    upload_directory = _get_upload_directory(upload_id)
-    entry_path = upload_directory / entry_id
-    
-    if not entry_path.exists() or not entry_path.is_dir():
+
+    # Fetch the meal snapshot.
+    snapshot = (
+        db.query(MealSnapshot)
+        .filter(MealSnapshot.id == snapshot_id)
+        .first()
+    )
+
+    # Check if the meal snapshot exists.
+    if snapshot is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Entry '{entry_id}' not found in upload '{upload_id}'.",
+            detail=f"Snapshot {snapshot_id} not found.",
         )
+
+    # Delete the meal snapshot's folder and its files from disk.
+    snapshot_directory = UPLOAD_DIR / snapshot.upload_id / snapshot.folder
+    shutil.rmtree(snapshot_directory)
+
+    # Delete the meal snapshot's record from the database.
+    db.delete(snapshot)
+    db.commit()
     
-    _safe_delete(entry_path)
 
-
-# DELETE endpoint to delete an entire upload.
+# DELETE endpoint to delete all meal snapshots belonging to an upload.
 @router.delete("/{upload_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_upload(upload_id: str) -> None:
-    """Deletes an entire upload and all its entries.
+def delete_upload(upload_id: str, db: Session = Depends(get_db)) -> None:
+    """Deletes all meal snapshots belonging to an upload.
+
+        Deletes all meal snapshots belonging to an upload from the database and 
+        their associated files from disk.
 
     Args:
-        upload_id: The unique identifier of the upload.
-
-    Raises:
-        HTTPException: If the upload does not exist.
+        upload_id: The ID of the upload.
+        db: SQLAlchemy database session.
     """
-    upload_directory = _get_upload_directory(upload_id)
-    _safe_delete(upload_directory)
+
+    # Delete the upload's meal snapshots from the database.
+    db.query(MealSnapshot).filter(MealSnapshot.upload_id == upload_id).delete()
+    db.commit()
+
+    # Delete the upload's folder and its files from disk.
+    upload_directory = UPLOAD_DIR / upload_id
+    shutil.rmtree(upload_directory)
 
 
-# GET endpoint to serve an image file.
+# GET endpoint to serve a meal's image.
 @router.get("/images/{path:path}", status_code=status.HTTP_200_OK)
 def get_image(path: str) -> FileResponse:
-    """Serves an image file from the uploads or meal_images directory.
+    """Serves a meal's image.
 
     Args:
-        path: The relative path to the image file.
+        path: Path to the image.
 
     Returns:
-        The image file.
+        A file response containing the image's path and media type.
 
     Raises:
         HTTPException: If the image does not exist.
     """
+
+    # Store the absolute path to the image.
     image_path = BACKEND_DIR / path
     
+    # Check if the image exists.
     if not image_path.exists() or not image_path.is_file():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Image not found: {path}",
         )
     
-    # Determine the media type based on file extension.
-    suffix = image_path.suffix.lower()
-    media_types = {
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".gif": "image/gif",
-        ".webp": "image/webp",
-    }
-    media_type = media_types.get(suffix, "application/octet-stream")
-    
+    # Store the media type of the image.
+    media_type = (
+        "image/png" if image_path.suffix.lower() == ".png" else "image/jpeg"
+    )
+
+    # Return a file response containing the image's path and media type.
     return FileResponse(image_path, media_type=media_type)
 
 
 # === Helpers ===
 
 def _safe_delete(path: Path) -> None:
-    """Safely deletes a directory or file.
-    
-    Args:
-        path: Path to the directory or file.
-    """
-
+    """Safely deletes a directory or file."""
     if path.is_dir():
         shutil.rmtree(path)  # Delete directory.
     elif path.exists():
@@ -232,20 +253,11 @@ def _safe_delete(path: Path) -> None:
 
 
 def _extract_zip_file(file: UploadFile, directory: Path) -> None:
-    """Extracts an uploaded ZIP file into a given directory.
-
-    Args:
-        file: The uploaded ZIP file.
-        directory: The directory to extract the ZIP file to.
-
-    Raises:
-        HTTPException: If the ZIP file is invalid.
-    """
-
+    """Extracts an uploaded ZIP file into a given directory."""
     try:
         file.file.seek(0)   
         with zipfile.ZipFile(file.file) as zip_ref:
-            zip_ref.extractall(directory)
+            zip_ref.extractall(directory)        
     except zipfile.BadZipFile as exception:
         shutil.rmtree(directory)
         raise HTTPException(
@@ -255,7 +267,9 @@ def _extract_zip_file(file: UploadFile, directory: Path) -> None:
 
 
 def _build_meal_snapshots(
-    upload_directory: Path
+    upload_directory: Path,
+    upload_id: str,
+    db: Session,
 ) -> Tuple[List[MealSnapshot], List[InvalidSnapshot]]:
     """Builds a list of meal snapshots from an uploaded ZIP file.
 
@@ -266,54 +280,49 @@ def _build_meal_snapshots(
 
     Args:
         upload_directory: The directory containing the extracted folders. 
+        upload_id: The name of the directory containing the extracted folders.
+        db: SQLAlchemy database session.
 
     Returns:
-        A list of each meal snapshot and a list of each invalid snapshot.
+        The list of meal snapshots and the list invalid snapshots.
     """
 
     # Create lists to store each meal snapshot and each invalid snapshot.
-    upload_entries = []
-    invalid_entries = []
+    meal_snapshots = []
+    invalid_snapshots = []
     
     # Iterate over each folder in the ZIP file.
     for folder in sorted(upload_directory.iterdir()):
         # Delete the folder if the folder is a file.
-        if folder.is_file():
-            invalid_entry = InvalidSnapshot(
+        if not folder.is_dir():
+            invalid_snapshots.append(InvalidSnapshot(
                 folder=folder.name, 
                 error="Unexpected file in the ZIP file."
-            )
-            invalid_entries.append(invalid_entry)
-            _safe_delete(folder)
-            continue
-
-        # Delete the folder if the folder is a filesystem.
-        if not folder.is_dir():
-            invalid_entry = InvalidSnapshot(
-                folder=folder.name, 
-                error="Unexpected filesystem in the ZIP file."
-            )
-            invalid_entries.append(invalid_entry)
+            ))
             _safe_delete(folder)
             continue
  
         # Create a meal snapshot from the folder.
         try:
-            upload_entry = _build_meal_snapshot(folder)
-            upload_entries.append(upload_entry)
+            meal_snapshot = _build_meal_snapshot(folder, upload_id, db)
+            meal_snapshots.append(meal_snapshot)
         except HTTPException as exception:
-            invalid_entry = InvalidSnapshot(
+            invalid_snapshots.append(InvalidSnapshot(
                 folder=folder.name, 
                 error=str(exception.detail),
-            )
-            invalid_entries.append(invalid_entry)
+            ))
             _safe_delete(folder)
             continue
 
-    return upload_entries, invalid_entries
+    # Return the list of meal snapshots and the list of invalid snapshots.
+    return meal_snapshots, invalid_snapshots
 
 
-def _build_meal_snapshot(folder: Path) -> MealSnapshot:
+def _build_meal_snapshot(
+    folder: Path,
+    upload_id: str,
+    db: Session,
+) -> MealSnapshot:
     """Builds a meal snapshot from an extracted folder.
 
     Given a folder extracted from an uploaded ZIP file, a meal snaphshot is 
@@ -322,7 +331,9 @@ def _build_meal_snapshot(folder: Path) -> MealSnapshot:
     HTTPException detailing why the meal snapshot cannot be created is raised.
 
     Args:
-        folder: The extracted folder. 
+        folder: The extracted folder.
+        upload_id: The name of the directory containing the extracted folder.
+        db: SQLAlchemy database session. 
 
     Returns:
         The meal snapshot.
@@ -331,23 +342,35 @@ def _build_meal_snapshot(folder: Path) -> MealSnapshot:
         HTTPException: If there is an issue with the metadata or the images.
     """
 
-    # Store the patient ID, meal date, meal time meal weight and image paths.
+    # Get the metadata.
     patient_id, meal_date, meal_time, meal_weight = _get_metadata(folder)
+
+    # Get the image paths.
     rgb_path, depth_path = _get_image_paths(folder)
 
-    # Store the image paths relative to BACKEND_DIR.
-    rgb_relative_path = rgb_path.relative_to(BACKEND_DIR)
-    depth_relative_path = depth_path.relative_to(BACKEND_DIR)
+    # Get the image paths relative to BACKEND_DIR.
+    rgb_relative_path = str(rgb_path.relative_to(BACKEND_DIR))
+    depth_relative_path = str(depth_path.relative_to(BACKEND_DIR))
 
-    return MealSnapshot(
-        folder.name,
-        patient_id,
-        str(meal_date),
-        str(meal_time),
-        meal_weight,
-        str(rgb_relative_path),
-        str(depth_relative_path)
+    # Create the meal snapshot.
+    snapshot = MealSnapshot(
+        upload_id=upload_id,
+        folder=folder.name,
+        date=meal_date,
+        time=meal_time,
+        patient_id=patient_id,
+        weight=meal_weight,
+        rgb_path=rgb_relative_path,
+        depth_path=depth_relative_path,
     )
+
+    # Persist the meal snapshot.
+    db.add(snapshot)
+    db.commit()
+    db.refresh(snapshot)
+
+    # Return the meal snapshot.
+    return snapshot
 
 
 def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
@@ -369,7 +392,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
         folder: The extracted folder.
 
     Returns:
-        A tuple containing the patient ID, snapshot date, snapshot time and meal
+        The patient ID, the snapshot date, the snapshot time and the meal 
         weight.
 
     Raises:
@@ -408,7 +431,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
             detail=f"Incomplete or invalid {METADATA_FILENAME} in '{folder.name}'.",
         )
     
-    # Convert the date and the time into their expected data types.
+    # Convert the date and time into their expected data types.
     try:
         meal_date = date.fromisoformat(date_str)
         meal_time = time.fromisoformat(time_str)
@@ -418,6 +441,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
             detail=f"Invalid date/time in {METADATA_FILENAME} in '{folder.name}'.",
         )
     
+    # Return the patient ID, the snapshot date and time and the meal weight.
     return patient_id, meal_date, meal_time, weight
 
 
@@ -431,13 +455,13 @@ def _get_image_paths(folder: Path) -> Tuple[Path, Path]:
         folder: The extracted folder.
 
     Returns:
-        A tuple containing the paths to the RGB and depth images, respectively.
+        The path to the RGB image and the path to the depth image.
 
     Raises:
         HTTPException: If the images are missing, misnamed or invalid.
     """
 
-    # Store the paths to the RGB image and the depth image.
+    # Store the paths to the RGB image and to the depth image.
     rgb_path = folder / RGB_FILENAME
     depth_path = folder / DEPTH_FILENAME
 
@@ -459,47 +483,17 @@ def _get_image_paths(folder: Path) -> Tuple[Path, Path]:
     _validate_image(rgb_path)
     _validate_image(depth_path)
 
+    # Return the paths to the RGB image and to the depth image.
     return rgb_path, depth_path
     
 
 def _validate_image(path: Path) -> None:
-    """Verifies if a file is a valid image.
-    
-    Args:
-        path: Path to the file.
-
-    Raises:
-        HTTPException: If a file is not a valid image.
-    """
-
+    """Verifies if a file is a valid image."""
     try:
         with Image.open(path) as img:
             img.verify()
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File '{path.name}' is not a valid image."
+            detail=f"File '{path.name}' is not a valid image.",
         )
-
-
-def _get_upload_directory(upload_id: str) -> Path:
-    """Gets an upload directory.
-
-    Args:
-        upload_id: Name of the upload directory.
-
-    Returns:
-        Path to the upload directory.
-    """
-
-    # Store the path to the upload directory.
-    upload_directory = UPLOAD_DIR / upload_id
-
-    # Check if the upload directory exists.
-    if not upload_directory.exists() or not upload_directory.is_dir():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Upload directory '{upload_id}' not found.",
-        )
-    
-    return upload_directory
