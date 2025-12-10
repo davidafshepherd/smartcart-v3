@@ -82,12 +82,20 @@ export function UploadZone({
     return (
       <div className={className}>
         <label
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition-all duration-200 ${
-            isUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-blue-50 hover:border-blue-300'
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 ${
+            isUploading ? 'opacity-50 pointer-events-none' : ''
           }`}
           style={{
             borderColor: 'var(--card-border)',
             background: 'var(--card-bg)',
+          }}
+          onMouseEnter={(e) => {
+            if (!isUploading) {
+              e.currentTarget.style.background = '#eff6ff';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--card-bg)';
           }}
         >
           <input

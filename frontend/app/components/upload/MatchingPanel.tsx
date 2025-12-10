@@ -96,8 +96,8 @@ export function MatchingPanel({
   canSave,
   className = '',
 }: MatchingPanelProps) {
-  // Show menu selector only when both snapshots are selected.
-  const showMenuSelector = beforeSnapshot && afterSnapshot;
+  // Show menu selector when at least one snapshot is selected.
+  const showMenuSelector = beforeSnapshot || afterSnapshot;
 
   return (
     <div

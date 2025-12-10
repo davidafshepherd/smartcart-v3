@@ -78,16 +78,23 @@ export default function UploadSection() {
   // ---------------------------------------------------------------------------
 
   /**
-   * Fetches menu items on component mount.
+   * Resets UI state and fetches menu items on component mount.
    *
-   * Menu items are needed for the meal creation workflow, so we load
-   * them proactively when the upload section is shown.
+   * Clears any lingering selections and messages from previous sessions,
+   * and loads menu items for the meal creation workflow.
    */
   useEffect(() => {
+    // Clear selections and messages when switching to this section
+    clearSelection();
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    clearInvalidSnapshots();
+
+    // Fetch menu items
     menuApi.getAll()
       .then(setMenuItems)
       .catch((err) => console.error('Failed to fetch menu items:', err));
-  }, []);
+  }, [clearSelection, setSuccessMessage, setErrorMessage, clearInvalidSnapshots]);
 
   // ---------------------------------------------------------------------------
   // Event Handlers
@@ -244,12 +251,20 @@ export default function UploadSection() {
           {/* Add More Snapshots button (absolutely positioned to prevent layout shift) */}
           {hasExistingSnapshots && (
             <label
-              className={`absolute top-0 right-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${
-                isUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-blue-50 hover:border-blue-300'
+              className={`absolute top-0 right-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl border transition-all duration-200 ${
+                isUploading ? 'opacity-50 pointer-events-none' : ''
               }`}
               style={{
                 borderColor: 'var(--card-border)',
                 background: 'var(--card-bg)',
+              }}
+              onMouseEnter={(e) => {
+                if (!isUploading) {
+                  e.currentTarget.style.background = '#eff6ff';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--card-bg)';
               }}
             >
               <input

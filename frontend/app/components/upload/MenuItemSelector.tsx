@@ -1,15 +1,15 @@
 /**
- * @fileoverview Menu item selector component with inline creation.
+ * @fileoverview Menu item selector component with modal creation.
  *
- * Provides a dropdown for selecting existing menu items and a form
- * for creating new ones without leaving the current workflow.
+ * Provides a dropdown for selecting existing menu items and a button
+ * to open a modal for creating new ones.
  */
 
 'use client';
 
 import { useState } from 'react';
 import type { MenuItem } from '../../lib/types';
-import { menuApi } from '../../lib/api';
+import { CreateMenuItemModal } from './CreateMenuItemModal';
 
 // =============================================================================
 // Type Definitions
@@ -42,11 +42,10 @@ interface MenuItemSelectorProps {
 // =============================================================================
 
 /**
- * Renders a menu item selector with inline creation capability.
+ * Renders a menu item selector with modal creation capability.
  *
- * The component has two modes:
- * - **Select mode**: Dropdown list of existing menu items with a "New" button
- * - **Create mode**: Form with name and ingredients inputs
+ * The component shows a dropdown list of existing menu items with a
+ * "New" button that opens a modal dialog for creating new items.
  *
  * When a new item is created, it is automatically selected and the
  * parent component is notified via the onItemCreated callback.
@@ -71,47 +70,7 @@ export function MenuItemSelector({
   onItemCreated,
   className = '',
 }: MenuItemSelectorProps) {
-  // Form state for creating new menu items.
-  const [showNewForm, setShowNewForm] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newIngredients, setNewIngredients] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-
-  /**
-   * Handles the creation of a new menu item.
-   *
-   * Parses the comma-separated ingredients string, calls the API,
-   * and notifies the parent on success.
-   */
-  const handleCreate = async () => {
-    if (!newName.trim()) return;
-
-    setIsCreating(true);
-    try {
-      // Parse comma-separated ingredients into an array.
-      const ingredients = newIngredients
-        .split(',')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-
-      const newItem = await menuApi.create(newName, ingredients);
-      onItemCreated(newItem);
-      resetForm();
-    } catch (err) {
-      console.error('Failed to create menu item:', err);
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  /**
-   * Resets the creation form to its initial state.
-   */
-  const resetForm = () => {
-    setShowNewForm(false);
-    setNewName('');
-    setNewIngredients('');
-  };
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   /** Shared input styling for consistent appearance. */
   const inputStyles = {
@@ -126,68 +85,39 @@ export function MenuItemSelector({
         Select Menu Item
       </label>
 
-      {!showNewForm ? (
-        // Select Mode: Dropdown with "New" button
-        <div className="flex gap-3">
-          <select
-            value={selectedId || ''}
-            onChange={(e) => onSelect(e.target.value ? Number(e.target.value) : null)}
-            className="flex-1 px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
-            style={inputStyles}
-          >
-            <option value="">Choose a menu item...</option>
-            {menuItems.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => setShowNewForm(true)}
-            className="px-4 py-3 rounded-xl border transition-colors hover:bg-blue-50"
-            style={{ borderColor: 'var(--card-border)', color: 'var(--accent-primary)' }}
-          >
-            + New
-          </button>
-        </div>
-      ) : (
-        // Create Mode: Name and ingredients form
-        <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="Menu item name (e.g. Fish & Chips)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
-            style={inputStyles}
-          />
-          <input
-            type="text"
-            placeholder="Ingredients (e.g. fried fish, french fry, carrot)"
-            value={newIngredients}
-            onChange={(e) => setNewIngredients(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
-            style={inputStyles}
-          />
-          <div className="flex gap-3">
-            <button
-              onClick={handleCreate}
-              disabled={isCreating || !newName.trim()}
-              className="px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
-              style={{ background: 'var(--accent-primary)', color: 'white' }}
-            >
-              {isCreating ? 'Creating...' : 'Create Menu Item'}
-            </button>
-            <button
-              onClick={resetForm}
-              className="px-4 py-2 rounded-xl border transition-colors hover:bg-gray-50"
-              style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="flex gap-3">
+        <select
+          value={selectedId || ''}
+          onChange={(e) => onSelect(e.target.value ? Number(e.target.value) : null)}
+          className="flex-1 pl-4 pr-12 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+          style={{
+            ...inputStyles,
+            background: `var(--background) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 1rem center`,
+            backgroundSize: '1.25rem',
+          }}
+        >
+          <option value="">Choose a menu item...</option>
+          {menuItems.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-3 rounded-xl border transition-colors hover:bg-blue-50"
+          style={{ borderColor: 'var(--card-border)', color: 'var(--accent-primary)' }}
+        >
+          + New
+        </button>
+      </div>
+
+      {/* Create Menu Item Modal */}
+      <CreateMenuItemModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCreated={onItemCreated}
+      />
     </div>
   );
 }
