@@ -129,10 +129,23 @@ function NavButton({ label, icon, isActive, onClick }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+      className={`nav-button w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+        isActive ? 'nav-button-active' : 'nav-button-inactive'
+      }`}
       style={{
-        background: isActive ? 'var(--accent-primary)' : 'transparent',
-        color: isActive ? 'white' : 'var(--text-secondary)',
+        ['--nav-bg' as string]: isActive ? 'var(--accent-primary)' : 'transparent',
+        ['--nav-bg-hover' as string]: isActive ? 'var(--accent-primary)' : 'rgba(0, 0, 0, 0.05)',
+        ['--nav-color' as string]: isActive ? 'white' : 'var(--text-secondary)',
+        background: 'var(--nav-bg)',
+        color: 'var(--nav-color)',
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.background = 'var(--nav-bg-hover)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'var(--nav-bg)';
       }}
     >
       {icon}
