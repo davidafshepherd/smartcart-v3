@@ -9,10 +9,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { mealsApi } from '../lib/api';
-import type { MealsData, MealData } from '../lib/types';
-import { MealsTreeView } from './meals/MealsTreeView';
+import { mealsApi, menuApi, patientsApi, ApiError } from '../lib/api';
+import type { MealsData, MealData, MenuItem, Patient } from '../lib/types';
+import { MealsPanel } from './meals/MealsPanel';
 import { MealDetail } from './meals/MealDetail';
+import { PatientsPanel } from './meals/PatientsPanel';
+import { MenuPanel } from './meals/MenuPanel';
 
 // =============================================================================
 // Component
@@ -41,24 +43,52 @@ export default function MealsSection() {
   // State
   // ---------------------------------------------------------------------------
   const [mealsData, setMealsData] = useState<MealsData>({});
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMeal, setSelectedMeal] = useState<MealData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  // Tree view expansion state (lifted up to preserve across patient ID changes)
+  const [expandedPatients, setExpandedPatients] = useState<Set<string>>(new Set());
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
   // ---------------------------------------------------------------------------
   // Effects
   // ---------------------------------------------------------------------------
 
   /**
-   * Fetches meals on component mount.
+   * Fetches meals, patients, and menu items on component mount.
    */
   useEffect(() => {
-    fetchMeals();
+    fetchAllData();
   }, []);
 
   // ---------------------------------------------------------------------------
   // Data Fetching
   // ---------------------------------------------------------------------------
+
+  /**
+   * Fetches all required data from the API.
+   */
+  const fetchAllData = async () => {
+    try {
+      const [mealsResult, patientsResult, menuItemsResult] = await Promise.all([
+        mealsApi.getAll(),
+        patientsApi.getAll(),
+        menuApi.getAll(),
+      ]);
+      setMealsData(mealsResult);
+      setPatients(patientsResult);
+      setMenuItems(menuItemsResult);
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /**
    * Fetches all meals from the API.
@@ -72,9 +102,41 @@ export default function MealsSection() {
       setMealsData(data);
     } catch (err) {
       console.error('Failed to fetch meals:', err);
-    } finally {
-      setLoading(false);
     }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Tree View Handlers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Toggles the expansion state of a patient node.
+   */
+  const togglePatient = (patientId: string) => {
+    setExpandedPatients((prev) => {
+      const next = new Set(prev);
+      if (next.has(patientId)) {
+        next.delete(patientId);
+      } else {
+        next.add(patientId);
+      }
+      return next;
+    });
+  };
+
+  /**
+   * Toggles the expansion state of a date node.
+   */
+  const toggleDate = (key: string) => {
+    setExpandedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -105,6 +167,121 @@ export default function MealsSection() {
     }
   };
 
+  /**
+   * Handles meal updates.
+   *
+   * Updates the meal's patient and/or menu item, then refreshes the data.
+   *
+   * @param mealId - The ID of the meal to update.
+   * @param patientId - Optional new patient ID.
+   * @param menuItemId - Optional new menu item ID.
+   */
+  const handleUpdateMeal = async (
+    mealId: number,
+    patientId?: number,
+    menuItemId?: number,
+  ) => {
+    // Prevent double-clicks.
+    if (isUpdating) return;
+
+    setIsUpdating(true);
+    setUpdateError(null);
+    try {
+      const updatedMeal = await mealsApi.update(mealId, patientId, menuItemId);
+      setSelectedMeal(updatedMeal);
+      fetchMeals();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setUpdateError(err.message);
+        setTimeout(() => setUpdateError(null), 5000);
+      } else {
+        console.error('Failed to update meal:', err);
+        setUpdateError('Failed to update meal');
+      }
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  /**
+   * Handles data changes from child components (e.g., PatientsPanel).
+   *
+   * Refreshes all data. Updates the selected meal with fresh data if it
+   * still exists (e.g., patient ID changed), or clears it if deleted.
+   * Also preserves tree expansion state when patient IDs change.
+   *
+   * @param patientIdChange - Optional info about a patient ID change.
+   */
+  const handleDataChange = async (patientIdChange?: { oldId: number; newId: number }) => {
+    // Fetch fresh data first
+    const [mealsResult, patientsResult, menuItemsResult] = await Promise.all([
+      mealsApi.getAll(),
+      patientsApi.getAll(),
+      menuApi.getAll(),
+    ]);
+
+    // Update all state together to avoid visual flicker
+    // If a patient ID changed, update the expansion state to use the new ID
+    if (patientIdChange) {
+      const { oldId, newId } = patientIdChange;
+      const oldIdStr = String(oldId);
+      const newIdStr = String(newId);
+
+      // Update expanded patients
+      setExpandedPatients((prev) => {
+        if (prev.has(oldIdStr)) {
+          const next = new Set(prev);
+          next.delete(oldIdStr);
+          next.add(newIdStr);
+          return next;
+        }
+        return prev;
+      });
+
+      // Update expanded dates (keys are "patientId-date")
+      setExpandedDates((prev) => {
+        const next = new Set<string>();
+        let changed = false;
+        for (const key of prev) {
+          if (key.startsWith(`${oldIdStr}-`)) {
+            next.add(key.replace(`${oldIdStr}-`, `${newIdStr}-`));
+            changed = true;
+          } else {
+            next.add(key);
+          }
+        }
+        return changed ? next : prev;
+      });
+    }
+
+    // Update data state
+    setMealsData(mealsResult);
+    setPatients(patientsResult);
+    setMenuItems(menuItemsResult);
+
+    // If a meal is selected, find it by ID in the fresh data and update it
+    if (selectedMeal) {
+      let foundMeal: MealData | null = null;
+
+      // Search through all meals to find one with matching ID
+      for (const patientMeals of Object.values(mealsResult)) {
+        for (const dateMeals of Object.values(patientMeals)) {
+          for (const meal of Object.values(dateMeals)) {
+            if (meal.id === selectedMeal.id) {
+              foundMeal = meal;
+              break;
+            }
+          }
+          if (foundMeal) break;
+        }
+        if (foundMeal) break;
+      }
+
+      // Update with fresh data or clear if meal no longer exists
+      setSelectedMeal(foundMeal);
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // Loading State
   // ---------------------------------------------------------------------------
@@ -130,18 +307,26 @@ export default function MealsSection() {
             Saved Meals
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            View and manage meals organized by patient, date, and time.
+            View and manage meals organized by patient, date and time.
           </p>
         </div>
 
         {/* Two-Panel Layout */}
         <div className="flex gap-8">
-          {/* Left Panel: Tree View */}
-          <MealsTreeView
-            mealsData={mealsData}
-            selectedMealId={selectedMeal?.id ?? null}
-            onMealSelect={setSelectedMeal}
-          />
+          {/* Left Panel: Tree View, Patients, and Menu Items */}
+          <div className="w-80 shrink-0 space-y-4">
+            <MealsPanel
+              mealsData={mealsData}
+              selectedMealId={selectedMeal?.id ?? null}
+              onMealSelect={setSelectedMeal}
+              expandedPatients={expandedPatients}
+              expandedDates={expandedDates}
+              onTogglePatient={togglePatient}
+              onToggleDate={toggleDate}
+            />
+            <PatientsPanel onDataChange={handleDataChange} />
+            <MenuPanel onDataChange={handleDataChange} />
+          </div>
 
           {/* Right Panel: Meal Detail or Empty State */}
           <div className="flex-1">
@@ -149,7 +334,14 @@ export default function MealsSection() {
               <MealDetail
                 meal={selectedMeal}
                 onDelete={() => handleDeleteMeal(selectedMeal.id)}
+                onUpdate={(patientId, menuItemId) =>
+                  handleUpdateMeal(selectedMeal.id, patientId, menuItemId)
+                }
                 isDeleting={isDeleting}
+                isUpdating={isUpdating}
+                updateError={updateError}
+                patients={patients}
+                menuItems={menuItems}
               />
             ) : (
               <EmptySelection />

@@ -21,7 +21,7 @@
  */
 
 import { config } from './config';
-import type { UploadResponse, MenuItem, MealsData, MealData } from './types';
+import type { UploadResponse, MenuItem, MealsData, MealData, Patient } from './types';
 
 // =============================================================================
 // Error Handling
@@ -181,6 +181,44 @@ export const menuApi = {
 
     return handleResponse<MenuItem>(response);
   },
+
+  /**
+   * Updates a menu item.
+   *
+   * @param menuItemId - The ID of the menu item to update.
+   * @param name - Optional new name.
+   * @param ingredients - Optional new ingredients list.
+   * @returns A promise resolving to the updated menu item.
+   * @throws {ApiError} If the menu item doesn't exist.
+   */
+  async update(
+    menuItemId: number,
+    name?: string,
+    ingredients?: string[],
+  ): Promise<MenuItem> {
+    const response = await fetch(`${config.apiUrl}/menu/${menuItemId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, ingredients }),
+    });
+
+    return handleResponse<MenuItem>(response);
+  },
+
+  /**
+   * Deletes a menu item.
+   *
+   * @param menuItemId - The ID of the menu item to delete.
+   * @returns A promise that resolves when the menu item is deleted.
+   * @throws {ApiError} If the menu item doesn't exist or is in use by a meal.
+   */
+  async delete(menuItemId: number): Promise<void> {
+    const response = await fetch(`${config.apiUrl}/menu/${menuItemId}`, {
+      method: 'DELETE',
+    });
+
+    return handleResponse<void>(response);
+  },
 };
 
 // =============================================================================
@@ -267,6 +305,104 @@ export const mealsApi = {
    */
   async delete(mealId: number): Promise<void> {
     const response = await fetch(`${config.apiUrl}/meals/${mealId}`, {
+      method: 'DELETE',
+    });
+
+    return handleResponse<void>(response);
+  },
+
+  /**
+   * Updates a meal's patient and/or menu item.
+   *
+   * @param mealId - The ID of the meal to update.
+   * @param patientId - Optional new patient ID.
+   * @param menuItemId - Optional new menu item ID.
+   * @returns A promise resolving to the updated meal.
+   * @throws {ApiError} If the meal, patient, or menu item doesn't exist.
+   */
+  async update(
+    mealId: number,
+    patientId?: number,
+    menuItemId?: number,
+  ): Promise<MealData> {
+    const response = await fetch(`${config.apiUrl}/meals/${mealId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: patientId,
+        menu_item_id: menuItemId,
+      }),
+    });
+
+    return handleResponse<MealData>(response);
+  },
+};
+
+// =============================================================================
+// Patients API
+// =============================================================================
+
+/**
+ * API client for patient operations.
+ *
+ * Handles retrieval of patient records.
+ */
+export const patientsApi = {
+  /**
+   * Retrieves all patients from the database.
+   *
+   * @returns A promise resolving to an array of all patients.
+   * @throws {ApiError} If the request fails.
+   */
+  async getAll(): Promise<Patient[]> {
+    const response = await fetch(`${config.apiUrl}/patients`);
+    return handleResponse<Patient[]>(response);
+  },
+
+  /**
+   * Creates a new patient.
+   *
+   * @param id - The ID for the new patient.
+   * @returns A promise resolving to the newly created patient.
+   * @throws {ApiError} If creation fails (e.g., ID already exists).
+   */
+  async create(id: number): Promise<Patient> {
+    const response = await fetch(`${config.apiUrl}/patients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+
+    return handleResponse<Patient>(response);
+  },
+
+  /**
+   * Updates a patient's ID.
+   *
+   * @param patientId - The current ID of the patient to update.
+   * @param newId - The new ID for the patient.
+   * @returns A promise resolving to the updated patient.
+   * @throws {ApiError} If the patient doesn't exist or new ID is taken.
+   */
+  async update(patientId: number, newId: number): Promise<Patient> {
+    const response = await fetch(`${config.apiUrl}/patients/${patientId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: newId }),
+    });
+
+    return handleResponse<Patient>(response);
+  },
+
+  /**
+   * Deletes a patient and all their associated meals.
+   *
+   * @param patientId - The ID of the patient to delete.
+   * @returns A promise that resolves when the patient is deleted.
+   * @throws {ApiError} If the patient doesn't exist or deletion fails.
+   */
+  async delete(patientId: number): Promise<void> {
+    const response = await fetch(`${config.apiUrl}/patients/${patientId}`, {
       method: 'DELETE',
     });
 

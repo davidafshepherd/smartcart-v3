@@ -8,7 +8,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import type { MealsData, MealData } from '../../lib/types';
 
 // =============================================================================
@@ -27,6 +26,14 @@ interface MealsTreeViewProps {
    * @param meal - The selected meal data.
    */
   onMealSelect: (meal: MealData) => void;
+  /** Set of expanded patient IDs (controlled). */
+  expandedPatients: Set<string>;
+  /** Set of expanded date keys (controlled). */
+  expandedDates: Set<string>;
+  /** Callback to toggle patient expansion. */
+  onTogglePatient: (patientId: string) => void;
+  /** Callback to toggle date expansion. */
+  onToggleDate: (key: string) => void;
 }
 
 /** Props for the PatientNode sub-component. */
@@ -96,46 +103,17 @@ interface DateNodeProps {
  * />
  * ```
  */
-export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: MealsTreeViewProps) {
+export function MealsPanel({
+  mealsData,
+  selectedMealId,
+  onMealSelect,
+  expandedPatients,
+  expandedDates,
+  onTogglePatient,
+  onToggleDate,
+}: MealsTreeViewProps) {
   // Sort patient IDs numerically.
   const patientIds = Object.keys(mealsData).sort((a, b) => Number(a) - Number(b));
-
-  // Expansion state: auto-expand first patient.
-  const [expandedPatients, setExpandedPatients] = useState<Set<string>>(() => {
-    const first = patientIds[0];
-    return first ? new Set([first]) : new Set();
-  });
-  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
-
-  /**
-   * Toggles the expansion state of a patient node.
-   */
-  const togglePatient = (patientId: string) => {
-    setExpandedPatients((prev) => {
-      const next = new Set(prev);
-      if (next.has(patientId)) {
-        next.delete(patientId);
-      } else {
-        next.add(patientId);
-      }
-      return next;
-    });
-  };
-
-  /**
-   * Toggles the expansion state of a date node.
-   */
-  const toggleDate = (key: string) => {
-    setExpandedDates((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
 
   /**
    * Calculates the total number of meals for a patient.
@@ -148,16 +126,44 @@ export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: Meals
   };
 
   return (
-    <div className="w-80 shrink-0">
-      <div
-        className="rounded-2xl border overflow-hidden shadow-sm"
-        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-      >
+    <div
+      className="rounded-2xl border overflow-hidden shadow-sm"
+      style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+    >
         {/* Header */}
-        <div className="p-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
-          <h2 className="font-semibold" style={{ color: 'var(--foreground)' }}>
-            Patients & Meals
-          </h2>
+        <div
+          className="px-4 py-3 border-b flex items-center justify-between"
+          style={{ borderColor: 'var(--card-border)' }}
+        >
+          <div className="flex items-center gap-2">
+            <svg
+              className="w-4 h-4"
+              style={{ color: 'var(--accent-primary)' }}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+            <span className="font-medium text-sm" style={{ color: 'var(--foreground)' }}>
+              Meals
+            </span>
+            <span
+              className="px-2 py-0.5 rounded-full text-xs font-medium"
+              style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
+            >
+              {Object.values(mealsData).reduce(
+                (total, dates) =>
+                  total + Object.values(dates).reduce((sum, times) => sum + Object.keys(times).length, 0),
+                0
+              )}
+            </span>
+          </div>
         </div>
 
         {/* Tree Content */}
@@ -174,15 +180,14 @@ export function MealsTreeView({ mealsData, selectedMealId, onMealSelect }: Meals
                 isExpanded={expandedPatients.has(patientId)}
                 expandedDates={expandedDates}
                 selectedMealId={selectedMealId}
-                onToggle={() => togglePatient(patientId)}
-                onToggleDate={toggleDate}
+                onToggle={() => onTogglePatient(patientId)}
+                onToggleDate={onToggleDate}
                 onMealSelect={onMealSelect}
               />
             ))}
           </div>
         )}
       </div>
-    </div>
   );
 }
 
@@ -331,12 +336,20 @@ function DateNode({
               <button
                 key={timeRange}
                 onClick={() => onMealSelect(meal)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  isSelected ? '' : 'hover:bg-blue-50'
-                }`}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
                 style={{
                   background: isSelected ? 'var(--accent-primary)' : 'transparent',
                   color: isSelected ? 'white' : 'var(--text-secondary)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = '#eff6ff';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = 'transparent';
+                  }
                 }}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

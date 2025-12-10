@@ -3,12 +3,13 @@
  *
  * Displays comprehensive information about a meal including menu item,
  * weight data, and before/after images. Provides functionality to
- * delete the meal.
+ * edit and delete the meal.
  */
 
 'use client';
 
-import type { MealData } from '../../lib/types';
+import { useState, useEffect } from 'react';
+import type { MealData, MenuItem, Patient } from '../../lib/types';
 import { uploadApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
 
@@ -22,8 +23,18 @@ interface MealDetailProps {
   meal: MealData;
   /** Callback invoked when the delete button is clicked. */
   onDelete: () => void;
+  /** Callback invoked when the meal is updated. */
+  onUpdate: (patientId?: number, menuItemId?: number) => Promise<void>;
   /** Whether a delete operation is in progress. */
   isDeleting?: boolean;
+  /** Whether an update operation is in progress. */
+  isUpdating?: boolean;
+  /** Error message from a failed update. */
+  updateError?: string | null;
+  /** All available patients for the dropdown. */
+  patients: Patient[];
+  /** All available menu items for the dropdown. */
+  menuItems: MenuItem[];
 }
 
 /** Props for the WeightCard sub-component. */
@@ -67,7 +78,7 @@ interface ImageCardProps {
  *
  * The detail view includes:
  * - Header with patient ID, date, time range, and delete button
- * - Menu item name and ingredients
+ * - Editable patient and menu item selection
  * - Weight comparison (before, after, consumed)
  * - Before and after images (RGB and depth)
  *
@@ -79,11 +90,74 @@ interface ImageCardProps {
  * <MealDetail
  *   meal={selectedMeal}
  *   onDelete={() => handleDeleteMeal(selectedMeal.id)}
+ *   onUpdate={(patientId, menuItemId) => handleUpdateMeal(selectedMeal.id, patientId, menuItemId)}
  *   isDeleting={isDeleting}
+ *   isUpdating={isUpdating}
+ *   patients={patients}
+ *   menuItems={menuItems}
  * />
  * ```
  */
-export function MealDetail({ meal, onDelete, isDeleting = false }: MealDetailProps) {
+export function MealDetail({
+  meal,
+  onDelete,
+  onUpdate,
+  isDeleting = false,
+  isUpdating = false,
+  updateError,
+  patients,
+  menuItems,
+}: MealDetailProps) {
+  const [isEditingPatient, setIsEditingPatient] = useState(false);
+  const [isEditingMenuItem, setIsEditingMenuItem] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState(meal.patient.id);
+  const [selectedMenuItemId, setSelectedMenuItemId] = useState(meal.menu_item.id);
+
+  // Reset editing state when the meal changes
+  useEffect(() => {
+    setIsEditingPatient(false);
+    setIsEditingMenuItem(false);
+    setSelectedPatientId(meal.patient.id);
+    setSelectedMenuItemId(meal.menu_item.id);
+  }, [meal.id, meal.patient.id, meal.menu_item.id]);
+
+  // Get current menu item details for display
+  const currentMenuItem = menuItems.find((mi) => mi.id === meal.menu_item.id) ?? meal.menu_item;
+
+  const handlePatientSave = async () => {
+    if (selectedPatientId !== meal.patient.id) {
+      await onUpdate(selectedPatientId, undefined);
+    }
+    setIsEditingPatient(false);
+  };
+
+  const handleMenuItemSave = async () => {
+    if (selectedMenuItemId !== meal.menu_item.id) {
+      await onUpdate(undefined, selectedMenuItemId);
+    }
+    setIsEditingMenuItem(false);
+  };
+
+  const handlePatientCancel = () => {
+    setSelectedPatientId(meal.patient.id);
+    setIsEditingPatient(false);
+  };
+
+  const handleMenuItemCancel = () => {
+    setSelectedMenuItemId(meal.menu_item.id);
+    setIsEditingMenuItem(false);
+  };
+
+  const startEditingPatient = () => {
+    setSelectedPatientId(meal.patient.id);
+    setIsEditingPatient(true);
+  };
+
+  const startEditingMenuItem = () => {
+    setSelectedMenuItemId(meal.menu_item.id);
+    setIsEditingMenuItem(true);
+  };
+
   return (
     <div
       className="rounded-2xl border overflow-hidden shadow-sm"
@@ -99,12 +173,12 @@ export function MealDetail({ meal, onDelete, isDeleting = false }: MealDetailPro
             Meal Details
           </h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Patient #{meal.patient.id} • {meal.date} • {meal.start_time} - {meal.end_time}
+            {meal.date} • {meal.start_time} - {meal.end_time}
           </p>
         </div>
         <button
           onClick={onDelete}
-          disabled={isDeleting}
+          disabled={isDeleting || isUpdating}
           className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ color: 'var(--danger)' }}
         >
@@ -112,26 +186,150 @@ export function MealDetail({ meal, onDelete, isDeleting = false }: MealDetailPro
         </button>
       </div>
 
-      {/* Menu Item Section */}
-      <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
-        <h3 className="font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-          Menu Item
-        </h3>
-        <span className="text-lg font-semibold" style={{ color: 'var(--accent-primary)' }}>
-          {meal.menu_item.name}
-        </span>
-        {meal.menu_item.ingredients.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {meal.menu_item.ingredients.map((ingredient, idx) => (
-              <span
-                key={idx}
-                className="px-3 py-1 rounded-full text-sm"
-                style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
-              >
-                {ingredient}
-              </span>
-            ))}
+      {/* Patient Section */}
+      <div
+        className="p-6 border-b flex items-center justify-between"
+        style={{ borderColor: 'var(--card-border)' }}
+      >
+        {isEditingPatient ? (
+          <div className="flex items-center gap-3 flex-1">
+            <select
+              value={selectedPatientId}
+              onChange={(e) => setSelectedPatientId(Number(e.target.value))}
+              disabled={isUpdating}
+              className="flex-1 pl-3 pr-10 py-2 rounded-xl border text-sm focus:outline-none focus:ring-2 disabled:opacity-50 appearance-none cursor-pointer"
+              style={{
+                background: `var(--background) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 0.75rem center`,
+                backgroundSize: '1rem',
+                borderColor: 'var(--card-border)',
+                color: 'var(--foreground)',
+              }}
+            >
+              {patients.map((patient) => (
+                <option key={patient.id} value={patient.id}>
+                  Patient #{patient.id}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handlePatientSave}
+              disabled={isUpdating}
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              style={{ background: 'var(--accent-primary)', color: 'white' }}
+            >
+              {isUpdating ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={handlePatientCancel}
+              disabled={isUpdating}
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Cancel
+            </button>
           </div>
+        ) : updateError ? (
+          <div className="flex-1 text-center">
+            <span className="text-sm" style={{ color: 'var(--danger)' }}>
+              {updateError}
+            </span>
+          </div>
+        ) : (
+          <>
+            <div>
+              <h3 className="font-medium" style={{ color: 'var(--foreground)' }}>
+                Patient
+              </h3>
+              <span className="text-lg font-semibold" style={{ color: 'var(--accent-primary)' }}>
+                Patient #{meal.patient.id}
+              </span>
+            </div>
+            <button
+              onClick={startEditingPatient}
+              disabled={isUpdating}
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ color: 'var(--accent-primary)' }}
+            >
+              Edit
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Menu Item Section */}
+      <div
+        className="p-6 border-b flex items-center justify-between"
+        style={{ borderColor: 'var(--card-border)' }}
+      >
+        {isEditingMenuItem ? (
+          <div className="flex items-center gap-3 flex-1">
+            <select
+              value={selectedMenuItemId}
+              onChange={(e) => setSelectedMenuItemId(Number(e.target.value))}
+              disabled={isUpdating}
+              className="flex-1 pl-3 pr-10 py-2 rounded-xl border text-sm focus:outline-none focus:ring-2 disabled:opacity-50 appearance-none cursor-pointer"
+              style={{
+                background: `var(--background) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 0.75rem center`,
+                backgroundSize: '1rem',
+                borderColor: 'var(--card-border)',
+                color: 'var(--foreground)',
+              }}
+            >
+              {menuItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleMenuItemSave}
+              disabled={isUpdating}
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              style={{ background: 'var(--accent-primary)', color: 'white' }}
+            >
+              {isUpdating ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={handleMenuItemCancel}
+              disabled={isUpdating}
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <>
+            <div>
+              <h3 className="font-medium" style={{ color: 'var(--foreground)' }}>
+                Menu Item
+              </h3>
+              <span className="text-lg font-semibold" style={{ color: 'var(--accent-primary)' }}>
+                {currentMenuItem.name}
+              </span>
+              {currentMenuItem.ingredients.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {currentMenuItem.ingredients.map((ingredient, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 rounded-full text-sm"
+                      style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
+                    >
+                      {ingredient}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={startEditingMenuItem}
+              disabled={isUpdating}
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ color: 'var(--accent-primary)' }}
+            >
+              Edit
+            </button>
+          </>
         )}
       </div>
 
