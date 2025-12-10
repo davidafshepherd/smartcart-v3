@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, Session, sessionmaker
 
 from app.constants import BACKEND_DIR
@@ -12,6 +12,15 @@ DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 # Create the SQLAlchemy engine.
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+
+
+# Enable foreign key support for SQLite.
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Enable foreign keys in SQLite."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 # Create a session factory for generating database sessions.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

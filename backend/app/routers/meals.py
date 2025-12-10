@@ -209,6 +209,30 @@ def update_meal(
             .filter(Patient.id == request.patient_id)
             .first()
         )
+        if patient is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Patient {request.patient_id} not found.",
+            )
+        
+        # Check for duplicate meal (same patient, date and time range).
+        if request.patient_id != meal.patient_id:
+            existing_meal = (
+                db.query(Meal)
+                .filter(
+                    Meal.patient_id == request.patient_id,
+                    Meal.date == meal.date,
+                    Meal.start_time == meal.start_time,
+                    Meal.end_time == meal.end_time,
+                )
+                .first()
+            )
+            if existing_meal is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Patient {request.patient_id} already has a meal on {meal.date} from {meal.start_time} to {meal.end_time}.",
+                )
+        
         meal.patient_id = patient.id
 
     # Update the meal's menu item if requested.
@@ -218,6 +242,11 @@ def update_meal(
             .filter(MenuItem.id == request.menu_item_id)
             .first()
         )
+        if menu_item is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Menu item {request.menu_item_id} not found.",
+            )
         meal.menu_item_id = menu_item.id
     
     # Persist the meal.

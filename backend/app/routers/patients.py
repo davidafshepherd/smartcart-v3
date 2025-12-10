@@ -1,10 +1,13 @@
+from pathlib import Path
+import shutil
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.constants import BACKEND_DIR
 from app.db import get_db
-from app.models.db_models import Patient
+from app.models.db_models import Meal, Patient
 from app.schemas import (
     CreatePatientRequest, 
     PatientResponse, 
@@ -163,7 +166,7 @@ def update_patient(
 def delete_patient(patient_id: int, db: Session = Depends(get_db)) -> None:
     """Deletes a patient.
 
-    Deletes a patient record and its associated meals via CASCADE.
+    Deletes a patient record, its associated meals and meal image files.
 
     Args:
         patient_id: The ID of the patient to delete.
@@ -183,6 +186,35 @@ def delete_patient(patient_id: int, db: Session = Depends(get_db)) -> None:
             detail=f"Patient {patient_id} not found.",
         )
 
-    # Delete the patient and commit the change.
+    # Fetch all meals for this patient to delete their image files.
+    meals = db.query(Meal).filter(Meal.patient_id == patient_id).all()
+
+    # Delete meal image files from disk.
+    for meal in meals:
+        # Get image paths.
+        paths = [
+            meal.before_rgb_path,
+            meal.before_depth_path,
+            meal.after_rgb_path,
+            meal.after_depth_path,
+        ]
+
+        # Delete each image file.
+        for path_str in paths:
+            if path_str:
+                image_path = BACKEND_DIR / path_str
+                if image_path.exists():
+                    image_path.unlink()
+
+        # Delete the meal's folder.
+        if meal.before_rgb_path:
+            meal_directory = (BACKEND_DIR / meal.before_rgb_path).parent
+            if meal_directory.exists():
+                try:
+                    meal_directory.rmdir()
+                except OSError:
+                    pass  # Directory not empty or already deleted.
+
+    # Delete the patient (meals are cascade deleted).
     db.delete(patient)
     db.commit()
