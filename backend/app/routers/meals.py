@@ -281,23 +281,10 @@ def delete_meal(meal_id: int, db: Session = Depends(get_db)) -> None:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Meal {meal_id} not found.",
         )
-
-    # Store the paths to the meal's images.
-    paths = [meal.before_rgb_path,
-        meal.before_depth_path,
-        meal.after_rgb_path,
-        meal.after_depth_path,
-    ]
-
-    # Delete the meal's images.
-    for path_str in paths:
-        image_path = BACKEND_DIR / path_str
-        image_path.unlink()
-
-    # Delete the meal's folder.
-    if meal.before_rgb_path:
-        meal_directory = (BACKEND_DIR / meal.before_rgb_path).parent
-        meal_directory.rmdir()
+    
+    # Delete the meal's images from disk.
+    meal_directory = (BACKEND_DIR / meal.before_rgb_path).parent
+    shutil.rmtree(meal_directory)
 
     # Delete the meal and commit the change.
     db.delete(meal)

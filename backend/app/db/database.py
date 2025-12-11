@@ -13,7 +13,6 @@ DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 # Create the SQLAlchemy engine.
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
-
 # Enable foreign key support for SQLite.
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):

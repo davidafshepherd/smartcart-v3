@@ -1,4 +1,3 @@
-from pathlib import Path
 import shutil
 from typing import List
 
@@ -186,35 +185,14 @@ def delete_patient(patient_id: int, db: Session = Depends(get_db)) -> None:
             detail=f"Patient {patient_id} not found.",
         )
 
-    # Fetch all meals for this patient to delete their image files.
+    # Fetch all meals for this patient.
     meals = db.query(Meal).filter(Meal.patient_id == patient_id).all()
 
-    # Delete meal image files from disk.
+    # Delete each meal's images from disk.
     for meal in meals:
-        # Get image paths.
-        paths = [
-            meal.before_rgb_path,
-            meal.before_depth_path,
-            meal.after_rgb_path,
-            meal.after_depth_path,
-        ]
+        meal_directory = (BACKEND_DIR / meal.before_rgb_path).parent
+        shutil.rmtree(meal_directory)
 
-        # Delete each image file.
-        for path_str in paths:
-            if path_str:
-                image_path = BACKEND_DIR / path_str
-                if image_path.exists():
-                    image_path.unlink()
-
-        # Delete the meal's folder.
-        if meal.before_rgb_path:
-            meal_directory = (BACKEND_DIR / meal.before_rgb_path).parent
-            if meal_directory.exists():
-                try:
-                    meal_directory.rmdir()
-                except OSError:
-                    pass  # Directory not empty or already deleted.
-
-    # Delete the patient (meals are cascade deleted).
+    # Delete the patient (meals are CASCADE deleted).
     db.delete(patient)
     db.commit()
