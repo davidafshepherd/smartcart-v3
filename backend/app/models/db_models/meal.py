@@ -28,7 +28,8 @@ class Meal(Base):
         after_rgb_path (str): Path to the post-meal RGB image.
         after_depth_path (str): Path to the post-meal depth image.
         patient (Patient): Patient who consumed the meal.
-        menu_item (MenuItem): Menu item that describes the contents of the meal.
+        menu_item (MenuItem): Menu item that describes the meal.
+        meal_foods (List[MealFood]): The contents of the meal. 
         patient_id (int): Foreign key referencing the associated patient.
         menu_item_id (int): Foreign key referencing the associated menu item.
     """
@@ -62,18 +63,37 @@ class Meal(Base):
     after_rgb_path = Column(String, nullable=False)
     after_depth_path = Column(String, nullable=False)
 
-    # ORM relationships.
+    # Many-to-one relationship: multiple meals can have the same patient.
     patient = relationship("Patient", back_populates="meals")
+
+    # Many-to-one: multiple meals can be described by the same menu item.
     menu_item = relationship("MenuItem", back_populates="meals")
 
-    # Foreign keys linking to patient and menu item.
+    # One-to-many relationship: a meal can contain multiple meal foods.
+    meal_foods = relationship( 
+        "MealFood", 
+        back_populates="meal",
+        cascade="all, delete-orphan",  # Delete meal foods when meal is deleted. 
+        passive_deletes=True,          # Let the database handle the deletes.
+    )
+
+    # Foreign key linking to patient.
     patient_id = Column(
         Integer, 
-        ForeignKey("patients.id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey(
+            "patients.id", 
+            ondelete="CASCADE",  # Delete meals when patient is deleted.
+            onupdate="CASCADE",  # Update meals when patient is updated.
+        ),
         nullable=False,
     )
+
+    # Foreign key linking to menu item.
     menu_item_id = Column(
         Integer, 
-        ForeignKey("menu.id", ondelete="RESTRICT"),
+        ForeignKey(
+            "menu.id", 
+            ondelete="RESTRICT",  # If meal exists, don't let item be deleted.
+        ),
         nullable=False,
     )

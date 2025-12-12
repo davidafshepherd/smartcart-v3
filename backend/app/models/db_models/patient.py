@@ -21,7 +21,7 @@ class Patient(Base):
     # One-to-many relationship: a patient can have multiple meals.
     meals = relationship(
         "Meal", 
-        back_populates="patient", 
-        cascade="all, delete-orphan",  # Remove meals when patient is deleted. 
-        passive_deletes=True,
+        back_populates="patient",
+        cascade="all, delete-orphan",  # Delete meals if patient is deleted. 
+        passive_deletes=True,          # Let the database handle the deletes.
     )

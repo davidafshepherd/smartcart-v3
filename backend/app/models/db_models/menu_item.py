@@ -10,8 +10,8 @@ class MenuItem(Base):
     Attributes:
         id (int): Unique identifier for the menu item.
         name (str): Human-readable name of the menu item.
-        ingredients (JSON): List of foods or ingredients.
-        meals (list[Meal]): Meals whose contents are described by the menu item.
+        foods (list[MenuItemFood]): Foods used by the menu item.
+        meals (list[Meal]): Meals described by the menu item.
     """
 
     # Table name.
@@ -23,12 +23,17 @@ class MenuItem(Base):
     # Human-readable name of the menu item (e.g. "Chicken & Veg").
     name = Column(String, nullable=False)
 
-    # Ingredients represented as JSON (e.g. ["chicken", "broccoli", "rice"]).
-    ingredients = Column(JSON, nullable=False)
+    # Many-to-many relationship: a menu item can contain multiple foods.
+    foods = relationship(
+        "Food",
+        secondary="menu_item_foods",  # Association table.
+        back_populates="menu_items",
+        lazy="selectin",              # Fetch foods for all menu items.
+    )
 
     # One-to-many relationship: a menu item can describe multiple meals.
     meals = relationship(
         "Meal", 
-        back_populates="menu_item",
-        passive_deletes="True",
+        back_populates="menu_item",  
+        passive_deletes="True",      # Let the database handle the deletes.
     )
