@@ -15,3 +15,5 @@ METADATA_FILENAME = "metadata.json"
 RGB_FILENAME = "rgb.png"
 DEPTH_FILENAME = "depth.jpeg"
 
+# Define the path to the nutrition dataset CSV file.
+NUTRITION_CSV_PATH = BACKEND_DIR / "nutrition_dataset.csv"
