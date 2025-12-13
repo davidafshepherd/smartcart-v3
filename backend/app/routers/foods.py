@@ -30,19 +30,19 @@ def get_foods(
         A list of all foods matching the search criteria.
     """
 
-    # Fetch all foods.
-    foods = db.query(Food)
+    # Create a query to fetch all foods.
+    query = db.query(Food)
 
     # Filter foods by search term if requested.
-    if search:
-        query = query.filter(Food.food_name.ilike(f"%{search}%"))
+    if term:
+        query = query.filter(Food.food_name.ilike(f"%{term}%"))
 
     # Order foods by food name and limit results.
     foods = query.order_by(Food.food_name).limit(limit).all()
 
     # Return a list of the foods.
     return [
-        FoodShortResponse(
+        FoodBriefResponse(
             id=food.id,
             food_name=food.food_name,
             kcal=food.kcal,
