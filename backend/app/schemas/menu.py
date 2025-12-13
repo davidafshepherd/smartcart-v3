@@ -9,7 +9,7 @@ class MenuItemResponse(BaseModel):
     """Response schema for retrieving a menu item."""
     id: int
     name: str
-    foods: List[FoodResponse]
+    foods: List[FoodBriefResponse]
 
 
 class CreateMenuItemRequest(BaseModel):
