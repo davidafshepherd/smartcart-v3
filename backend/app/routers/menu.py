@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models.db_models import Meal, MenuItem
+from app.models.db_models import Food, Meal, MenuItem
 from app.schemas import (
-    CreateMenuItemRequest, 
-    MenuItemResponse, 
+    CreateMenuItemRequest,
+    FoodBriefResponse,
+    MenuItemResponse,
     UpdateMenuItemRequest,
 )
 
@@ -17,7 +18,7 @@ router = APIRouter()
 
 
 # GET endpoint to retrieve all menu items.
-@router.get("/", status_code=status.HTTP_200_OK, )
+@router.get("/", status_code=status.HTTP_200_OK)
 def get_menu_items(db: Session = Depends(get_db)) -> List[MenuItemResponse]:
     """Retrieves all menu items.
 
@@ -32,20 +33,13 @@ def get_menu_items(db: Session = Depends(get_db)) -> List[MenuItemResponse]:
     menu_items = db.query(MenuItem).all()
 
     # Return a list of all menu items.
-    return [
-        MenuItemResponse(
-            id=item.id, 
-            name=item.name, 
-            ingredients=item.ingredients
-        ) 
-        for item in menu_items
-    ]
+    return [_menu_item_to_response(item) for item in menu_items]
 
 
 # GET endpoint to retrieve a single menu item.
 @router.get("/{menu_item_id}", status_code=status.HTTP_200_OK)
 def get_menu_item(
-    menu_item_id: int, 
+    menu_item_id: int,
     db: Session = Depends(get_db),
 ) -> MenuItemResponse:
     """Retrieves a single menu item by ID.
@@ -70,13 +64,9 @@ def get_menu_item(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Menu item {menu_item_id} not found.",
         )
-    
+
     # Return the menu item.
-    return MenuItemResponse(
-        id=menu_item.id,
-        name=menu_item.name,
-        ingredients=menu_item.ingredients,
-    )
+    return _menu_item_to_response(menu_item)
 
 
 # POST endpoint to create a new menu item.
@@ -88,25 +78,29 @@ def create_menu_item(
     """Creates a new menu item.
 
     Args:
-        request: A request containing the menu item's name and ingredients.
+        request: A request containing the menu item's name and the IDs of the 
+        menu item's foods.
         db: SQLAlchemy database session.
 
     Returns:
         The newly created menu item.
+
+    Raises:
+        HTTPException: If the foods don't exist.
     """
 
+    # Check if the foods exist.
+    foods = _check_foods_exist(request.food_ids, db)
+
     # Create and persist the new menu item.
-    new_menu_item = MenuItem(name=request.name, ingredients=request.ingredients)
+    new_menu_item = MenuItem(name=request.name)
+    new_menu_item.foods = foods
     db.add(new_menu_item)
     db.commit()
     db.refresh(new_menu_item)
 
     # Return the newly created menu item.
-    return MenuItemResponse(
-        id=new_menu_item.id,
-        name=new_menu_item.name,
-        ingredients=new_menu_item.ingredients,
-    )
+    return _menu_item_to_response(new_menu_item)
 
 
 # PUT endpoint to update a menu item.
@@ -120,14 +114,14 @@ def update_menu_item(
 
     Args:
         menu_item_id: The ID of the menu item to update.
-        request: A request containing the menu item's new name / ingredients.
+        request: A request containing the menu item's new name and/or foods.
         db: SQLAlchemy database session.
 
     Returns:
         The updated menu item.
 
     Raises:
-        HTTPException: If the menu item does not exist.
+        HTTPException: If the menu item or foods do not exist.
     """
 
     # Fetch the menu item.
@@ -144,20 +138,17 @@ def update_menu_item(
     if request.name is not None:
         menu_item.name = request.name
 
-    # Update the menu item's ingredients if requested.
-    if request.ingredients is not None:
-        menu_item.ingredients = request.ingredients
+    # Update the menu item's foods if requested.
+    if request.food_ids is not None:
+        foods = _check_foods_exist(request.food_ids, db)
+        menu_item.foods = foods
 
     # Persist the menu item.
     db.commit()
     db.refresh(menu_item)
 
     # Return the updated menu item.
-    return MenuItemResponse(
-        id=menu_item.id,
-        name=menu_item.name,
-        ingredients=menu_item.ingredients,
-    )
+    return _menu_item_to_response(menu_item)
 
 
 # DELETE endpoint to delete a menu item.
@@ -198,3 +189,62 @@ def delete_menu_item(menu_item_id: int, db: Session = Depends(get_db)) -> None:
     # Delete the menu item and commit the change.
     db.delete(menu_item)
     db.commit()
+
+
+# === Helpers ===
+
+def _menu_item_to_response(menu_item: MenuItem) -> MenuItemResponse:
+    """Converts a MenuItem ORM object into a MenuItemResponse Pydantic schema.
+
+    Args:
+        menu_item: The MenuItem ORM object.
+
+    Returns:
+        A MenuItemResponse Pydantic schema.
+    """
+    return MenuItemResponse(
+        id=menu_item.id,
+        name=menu_item.name,
+        foods=[
+            FoodBriefResponse(
+                id=food.id,
+                food_name=food.food_name,
+                kcal=food.kcal,
+                protein=food.protein,
+                fat=food.fat,
+                carbohydrate=food.carbohydrate,
+            )
+            for food in menu_item.foods
+        ],
+    )
+
+
+def _check_foods_exist(food_ids: List[int], db: Session) -> List[Food]:
+    """Checks if a set of foods exist.
+
+    Args:
+        food_ids: List of the IDs of the foods to check.
+        db: SQLAlchemy database session.
+
+    Returns:
+        A list of the foods that exist.
+
+    Raises:
+        HTTPException: If a food does not exist.
+    """
+
+    # Fetch the foods.
+    foods = db.query(Food).filter(Food.id.in_(food_ids)).all()
+
+    # Store the IDs of the found foods and the IDs of the missing foods.
+    found_ids = {food.id for food in foods}
+    missing_ids = set(food_ids) - found_ids
+
+    # Check if any foods are missing.
+    if missing_ids:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Foods not found: {', '.join(str(id) for id in sorted(missing_ids))}",
+        )
+    
+    return foods

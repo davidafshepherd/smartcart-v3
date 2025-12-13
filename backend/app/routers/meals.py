@@ -14,10 +14,11 @@ from app.constants import (
 from app.db import get_db
 from app.models.db_models import Meal, MealSnapshot, MenuItem, Patient
 from app.schemas import (
-    CreateMealRequest, 
-    MealResponse, 
-    MenuItemResponse, 
-    PatientResponse, 
+    CreateMealRequest,
+    FoodBriefResponse,
+    MealResponse,
+    MenuItemResponse,
+    PatientResponse,
     UpdateMealRequest,
 )
 
@@ -189,7 +190,7 @@ def update_meal(
         The updated meal.
 
     Raises:
-        HTTPException: If the meal does not exist.
+        HTTPException: If the meal or patient or menu item does not exist.
     """
     
     # Fetch the meal.
@@ -295,10 +296,10 @@ def delete_meal(meal_id: int, db: Session = Depends(get_db)) -> None:
 
 def _meal_to_response(meal: Meal) -> MealResponse:
     """Converts a Meal ORM object into a MealResponse Pydantic schema.
-    
+
     Args:
         meal: The Meal ORM object.
-    
+
     Returns:
         A MealResponse Pydantic schema.
     """
@@ -316,9 +317,19 @@ def _meal_to_response(meal: Meal) -> MealResponse:
         after_depth_path=meal.after_depth_path,
         patient=PatientResponse(id=meal.patient.id),
         menu_item=MenuItemResponse(
-            id=meal.menu_item.id, 
-            name=meal.menu_item.name, 
-            ingredients=meal.menu_item.ingredients,
+            id=meal.menu_item.id,
+            name=meal.menu_item.name,
+            foods=[
+                FoodBriefResponse(
+                    id=food.id,
+                    food_name=food.food_name,
+                    kcal=food.kcal,
+                    protein=food.protein,
+                    fat=food.fat,
+                    carbohydrate=food.carbohydrate,
+                )
+                for food in meal.menu_item.foods
+            ],
         ),
     )
 
