@@ -1,3 +1,4 @@
+from .food import Food
 from .meal import Meal
 from .meal_food import MealFood
 from .menu_item import MenuItem
@@ -6,11 +7,11 @@ from .patient import Patient
 from .snapshot import MealSnapshot
 
 __all__ = [
-    "Food", 
-    "Meal", 
+    "Food",
+    "Meal",
     "MealFood",
-    "MealSnapshot", 
-    "MenuItem", 
-    "MenuItemFood", 
-    "Patient"
+    "MealSnapshot",
+    "MenuItem",
+    "MenuItemFood",
+    "Patient",
 ]

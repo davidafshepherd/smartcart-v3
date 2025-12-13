@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, JSON, String
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.db import Base
@@ -23,17 +23,13 @@ class MenuItem(Base):
     # Human-readable name of the menu item (e.g. "Chicken & Veg").
     name = Column(String, nullable=False)
 
-    # Many-to-many relationship: a menu item can contain multiple foods.
+    # Many-to-many relationship: a menu item can use multiple foods.
     foods = relationship(
         "Food",
         secondary="menu_item_foods",  # Association table.
         back_populates="menu_items",
-        lazy="selectin",              # Fetch foods for all menu items.
+        lazy="selectin",  # Load foods for all menu items.
     )
 
     # One-to-many relationship: a menu item can describe multiple meals.
-    meals = relationship(
-        "Meal", 
-        back_populates="menu_item",  
-        passive_deletes="True",      # Let the database handle the deletes.
-    )
+    meals = relationship("Meal", back_populates="menu_item")

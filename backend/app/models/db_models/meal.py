@@ -1,11 +1,11 @@
 from sqlalchemy import (
     Column,
-    Date, 
-    Float, 
-    ForeignKey, 
-    Integer, 
-    String, 
-    Time, 
+    Date,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Time,
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
@@ -29,7 +29,7 @@ class Meal(Base):
         after_depth_path (str): Path to the post-meal depth image.
         patient (Patient): Patient who consumed the meal.
         menu_item (MenuItem): Menu item that describes the meal.
-        meal_foods (List[MealFood]): The contents of the meal. 
+        meal_foods (list[MealFood]): The contents of the meal.
         patient_id (int): Foreign key referencing the associated patient.
         menu_item_id (int): Foreign key referencing the associated menu item.
     """
@@ -40,8 +40,11 @@ class Meal(Base):
     # Prevent duplicate meals.
     __table_args__ = (
         UniqueConstraint(
-            "patient_id", "date", "start_time", "end_time",
-            name="uq_meal_patient_date_time"
+            "patient_id", 
+            "date", 
+            "start_time", 
+            "end_time",
+            name="uq_meal_patient_date_time",
         ),
     )
 
@@ -64,17 +67,17 @@ class Meal(Base):
     after_depth_path = Column(String, nullable=False)
 
     # Many-to-one relationship: multiple meals can have the same patient.
-    patient = relationship("Patient", back_populates="meals")
+    patient = relationship(
+        "Patient",
+        back_populates="meals",
+        lazy="selectin",  # Load patients for all meals.
+    )
 
     # Many-to-one: multiple meals can be described by the same menu item.
-    menu_item = relationship("MenuItem", back_populates="meals")
-
-    # One-to-many relationship: a meal can contain multiple meal foods.
-    meal_foods = relationship( 
-        "MealFood", 
-        back_populates="meal",
-        cascade="all, delete-orphan",  # Delete meal foods when meal is deleted. 
-        passive_deletes=True,          # Let the database handle the deletes.
+    menu_item = relationship(
+        "MenuItem",
+        back_populates="meals",
+        lazy="selectin",  # Load menu items for all meals.
     )
 
     # Foreign key linking to patient.
@@ -82,8 +85,8 @@ class Meal(Base):
         Integer, 
         ForeignKey(
             "patients.id", 
-            ondelete="CASCADE",  # Delete meals when patient is deleted.
-            onupdate="CASCADE",  # Update meals when patient is updated.
+            ondelete="CASCADE",  # If patient is deleted, delete meals
+            onupdate="CASCADE",  # If patient is updated, update meals.
         ),
         nullable=False,
     )
@@ -93,7 +96,15 @@ class Meal(Base):
         Integer, 
         ForeignKey(
             "menu.id", 
-            ondelete="RESTRICT",  # If meal exists, don't let item be deleted.
+            ondelete="RESTRICT",  # If meal exists, don't let menu item be deleted.
         ),
         nullable=False,
+    )
+
+    # One-to-many relationship: a meal can use multiple meal foods.
+    meal_foods = relationship( 
+        "MealFood", 
+        back_populates="meal",
+        cascade="all, delete-orphan",  # If meal is deleted, delete meal foods.
+        passive_deletes=True,          # Let the database handle these deletes.
     )

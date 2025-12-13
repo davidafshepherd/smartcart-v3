@@ -1,14 +1,14 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer
 
 from app.db import Base
 
 
 class MenuItemFood(Base):
-    """Associates a menu item with foods from the McCance & Widdowson dataset.
+    """Associates a menu item with a food from the McCance & Widdowson dataset.
 
     Attributes:
         menu_item_id (int): Foreign key referencing the associated menu item.
-        food_code (str): Foreign key referencing the associated food.
+        food_id (int): Foreign key referencing the associated food.
     """
 
     # Table name.
@@ -18,16 +18,16 @@ class MenuItemFood(Base):
     menu_item_id = Column(
         Integer,
         ForeignKey(
-            "menu.id", 
-            ondelete="CASCADE", # Delete menu item foods when menu item is deleted.
+            "menu.id",
+            ondelete="CASCADE",  # If menu item is deleted, delete menu item foods.
         ),
         primary_key=True,
     )
-    food_code = Column(
-        String,
+    food_id = Column(
+        Integer,
         ForeignKey(
-            "foods.food_code", 
-            ondelete="RESTRICT", # If menu item food
+            "foods.id",
+            ondelete="RESTRICT",  # If menu item food exists, don't let food be deleted.
         ),
         primary_key=True,
     )
