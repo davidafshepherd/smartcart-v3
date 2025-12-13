@@ -91,6 +91,20 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
     fetchMenuItems();
   }, []);
 
+  // Disable body scrolling when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      // Save the current overflow style
+      const originalOverflow = document.body.style.overflow;
+      // Disable scrolling
+      document.body.style.overflow = 'hidden';
+      // Restore on cleanup
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isModalOpen]);
+
   // Update dropdown position when showing
   useEffect(() => {
     if (showDropdown && searchInputRef.current) {

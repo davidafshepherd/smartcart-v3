@@ -62,6 +62,20 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Disable body scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Save the current overflow style
+      const originalOverflow = document.body.style.overflow;
+      // Disable scrolling
+      document.body.style.overflow = 'hidden';
+      // Restore on cleanup
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   // Focus the name input when modal opens
   useEffect(() => {
     if (isOpen) {
