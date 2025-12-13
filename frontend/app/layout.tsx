@@ -42,8 +42,8 @@ const geistMono = Geist_Mono({
  * Application metadata for SEO and browser display.
  */
 export const metadata: Metadata = {
-  title: 'SmartCart - Hospital Nutrition Dashboard',
-  description: 'Track and analyze patient meal consumption',
+  title: 'SmartCart v3 - Hospital Nutrition Dashboard',
+  description: 'Track and analyse patient meal consumption',
 };
 
 // =============================================================================

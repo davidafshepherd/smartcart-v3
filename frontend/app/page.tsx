@@ -15,13 +15,15 @@ import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import UploadSection from './components/UploadSection';
 import MealsSection from './components/MealsSection';
+import AnalysisSection from './components/AnalysisSection';
+import NutritionSection from './components/NutritionSection';
 
 // =============================================================================
 // Type Definitions
 // =============================================================================
 
 /** The available application sections. */
-type Section = 'upload' | 'meals';
+type Section = 'upload' | 'meals' | 'analysis' | 'nutrition';
 
 // =============================================================================
 // Component
@@ -49,7 +51,10 @@ export default function Home() {
       
       {/* Main Content (offset for sidebar) */}
       <main className="ml-64">
-        {activeSection === 'upload' ? <UploadSection /> : <MealsSection />}
+        {activeSection === 'upload' && <UploadSection />}
+        {activeSection === 'meals' && <MealsSection />}
+        {activeSection === 'analysis' && <AnalysisSection />}
+        {activeSection === 'nutrition' && <NutritionSection />}
       </main>
     </div>
   );
