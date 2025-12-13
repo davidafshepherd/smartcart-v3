@@ -7,10 +7,24 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { menuApi, ApiError } from '../../lib/api';
-import type { MenuItem } from '../../lib/types';
+import { menuApi, foodsApi, ApiError } from '../../lib/api';
+import type { MenuItem, Food } from '../../lib/types';
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Gets a shortened food name (first part before the comma).
+ * E.g., "Apple, dried, sliced" -> "Apple"
+ */
+function getShortFoodName(fullName: string): string {
+  const firstPart = fullName.split(',')[0].trim();
+  // Capitalize first letter
+  return firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
+}
 
 // =============================================================================
 // Type Definitions
@@ -31,7 +45,7 @@ interface MenuPanelProps {
  *
  * Features:
  * - View all existing menu items
- * - Create a new menu item with name and ingredients
+ * - Create a new menu item with name and foods from nutrition database
  * - Edit an existing menu item
  * - Delete a menu item (if not in use)
  *
@@ -50,9 +64,21 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null); // null = creating
   const [modalName, setModalName] = useState('');
-  const [modalIngredients, setModalIngredients] = useState('');
+  const [selectedFoods, setSelectedFoods] = useState<Food[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Food[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Refs
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Dropdown position for portal
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
   // Delete state
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
@@ -63,6 +89,35 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
 
   useEffect(() => {
     fetchMenuItems();
+  }, []);
+
+  // Update dropdown position when showing
+  useEffect(() => {
+    if (showDropdown && searchInputRef.current) {
+      const rect = searchInputRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }, [showDropdown, searchResults]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -83,13 +138,67 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
   };
 
   // ---------------------------------------------------------------------------
+  // Food Search
+  // ---------------------------------------------------------------------------
+
+  const searchFoods = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const results = await foodsApi.search(query, 20);
+      // Filter out already selected foods
+      const selectedIds = new Set(selectedFoods.map((f) => f.id));
+      const filtered = results.filter((f) => !selectedIds.has(f.id));
+      setSearchResults(filtered);
+      setShowDropdown(filtered.length > 0);
+    } catch (err) {
+      console.error('Food search failed:', err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [selectedFoods]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      searchFoods(query);
+    }, 300);
+  };
+
+  const handleSelectFood = (food: Food) => {
+    setSelectedFoods((prev) => [...prev, food]);
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowDropdown(false);
+    searchInputRef.current?.focus();
+  };
+
+  const handleRemoveFood = (foodId: number) => {
+    setSelectedFoods((prev) => prev.filter((f) => f.id !== foodId));
+  };
+
+  // ---------------------------------------------------------------------------
   // Event Handlers
   // ---------------------------------------------------------------------------
 
   const openCreateModal = () => {
     setEditingItemId(null);
     setModalName('');
-    setModalIngredients('');
+    setSelectedFoods([]);
+    setSearchQuery('');
+    setSearchResults([]);
     setModalError(null);
     setIsModalOpen(true);
   };
@@ -97,7 +206,9 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
   const openEditModal = (item: MenuItem) => {
     setEditingItemId(item.id);
     setModalName(item.name);
-    setModalIngredients(item.ingredients.join(', '));
+    setSelectedFoods(item.foods || []);
+    setSearchQuery('');
+    setSearchResults([]);
     setModalError(null);
     setIsModalOpen(true);
   };
@@ -106,8 +217,11 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
     setIsModalOpen(false);
     setEditingItemId(null);
     setModalName('');
-    setModalIngredients('');
+    setSelectedFoods([]);
+    setSearchQuery('');
+    setSearchResults([]);
     setModalError(null);
+    setShowDropdown(false);
   };
 
   const handleSaveModal = async () => {
@@ -116,24 +230,18 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
       return;
     }
 
-    const ingredientsList = modalIngredients
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-
-    if (ingredientsList.length === 0) {
-      setModalError('Please enter at least one ingredient');
+    if (selectedFoods.length === 0) {
+      setModalError('Please select at least one food');
       return;
     }
 
     setIsSaving(true);
     try {
+      const foodIds = selectedFoods.map((f) => f.id);
       if (editingItemId !== null) {
-        // Editing existing item
-        await menuApi.update(editingItemId, modalName.trim(), ingredientsList);
+        await menuApi.update(editingItemId, modalName.trim(), foodIds);
       } else {
-        // Creating new item
-        await menuApi.create(modalName.trim(), ingredientsList);
+        await menuApi.create(modalName.trim(), foodIds);
       }
       closeModal();
       fetchMenuItems();
@@ -158,7 +266,6 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
-        // Clear error after 3 seconds
         setTimeout(() => setError(null), 3000);
       } else {
         console.error('Failed to delete menu item:', err);
@@ -183,7 +290,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-md p-6 rounded-2xl border shadow-xl animate-fade-in"
+        className="relative w-full max-w-lg p-6 rounded-2xl border shadow-xl animate-fade-in max-h-[90vh] overflow-y-auto"
         style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
       >
         <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
@@ -191,6 +298,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
         </h2>
 
         <div className="space-y-4">
+          {/* Name Input */}
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>
               Name
@@ -199,7 +307,8 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
               type="text"
               value={modalName}
               onChange={(e) => setModalName(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2"
+              placeholder="e.g. Fish & Chips"
+              className="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{
                 background: 'var(--background)',
                 borderColor: 'var(--card-border)',
@@ -209,24 +318,73 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
             />
           </div>
 
+          {/* Selected Foods - shown first so search dropdown has room below */}
+          {selectedFoods.length > 0 && (
+            <div>
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--foreground)' }}
+              >
+                Selected ({selectedFoods.length})
+              </label>
+              <div className="space-y-1 max-h-28 overflow-y-auto">
+                {selectedFoods.map((food) => (
+                  <div
+                    key={food.id}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg border"
+                    style={{
+                      background: 'var(--accent-light)',
+                      borderColor: 'var(--card-border)',
+                    }}
+                  >
+                    <span className="text-sm truncate flex-1" style={{ color: 'var(--foreground)' }}>
+                      {food.food_name}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveFood(food.id)}
+                      className="ml-2 p-0.5 rounded transition-colors hover:bg-red-100"
+                      style={{ color: 'var(--danger)' }}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Food Search - at bottom so dropdown opens downward */}
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>
               Ingredients
               <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>
-                (comma-separated)
+                (search from nutrition database)
               </span>
             </label>
-            <input
-              type="text"
-              value={modalIngredients}
-              onChange={(e) => setModalIngredients(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2"
-              style={{
-                background: 'var(--background)',
-                borderColor: 'var(--card-border)',
-                color: 'var(--foreground)',
-              }}
-            />
+            <div className="relative">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => searchQuery && searchResults.length > 0 && setShowDropdown(true)}
+                placeholder="Search for foods..."
+                className="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{
+                  background: 'var(--background)',
+                  borderColor: 'var(--card-border)',
+                  color: 'var(--foreground)',
+                }}
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+
+            </div>
           </div>
 
           {modalError && (
@@ -239,7 +397,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleSaveModal}
-            disabled={isSaving || !modalName.trim() || !modalIngredients.trim()}
+            disabled={isSaving || !modalName.trim() || selectedFoods.length === 0}
             className="flex-1 px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
             style={{ background: 'var(--accent-primary)', color: 'white' }}
           >
@@ -355,7 +513,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                     {item.name}
                   </span>
                   <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                    {item.ingredients.join(', ')}
+                    {item.foods?.map((f) => getShortFoodName(f.food_name)).join(', ') || 'No ingredients'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
@@ -387,6 +545,41 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
       </div>
 
       {modal}
+
+      {/* Dropdown rendered via portal to escape modal boundaries */}
+      {showDropdown && searchResults.length > 0 && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[10000] rounded-xl border shadow-lg max-h-48 overflow-hidden"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            background: 'var(--card-bg)',
+            borderColor: 'var(--card-border)',
+          }}
+        >
+          <div className="max-h-48 overflow-y-auto">
+            {searchResults.map((food) => (
+              <button
+                key={food.id}
+                onClick={() => handleSelectFood(food)}
+                className="w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0"
+                style={{ borderColor: 'var(--card-border)' }}
+              >
+                <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                  {food.food_name}
+                </div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {food.kcal != null ? `${food.kcal} kcal` : 'N/A'}
+                  {food.protein != null && ` • ${food.protein}g protein`}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }
@@ -441,4 +634,3 @@ function TrashIcon() {
     </svg>
   );
 }
-

@@ -54,6 +54,31 @@ export interface InvalidSnapshot {
 }
 
 // =============================================================================
+// Food Types
+// =============================================================================
+
+/**
+ * Represents a food item from the nutrition dataset.
+ *
+ * Food items contain nutritional information per 100g and are used
+ * as ingredients in menu items.
+ */
+export interface Food {
+  /** Unique identifier for the food. */
+  id: number;
+  /** Human-readable name of the food. */
+  food_name: string;
+  /** Energy (kcal) per 100g. */
+  kcal: number | null;
+  /** Protein (g) per 100g. */
+  protein: number | null;
+  /** Fat (g) per 100g. */
+  fat: number | null;
+  /** Carbohydrate (g) per 100g. */
+  carbohydrate: number | null;
+}
+
+// =============================================================================
 // Menu Types
 // =============================================================================
 
@@ -68,8 +93,8 @@ export interface MenuItem {
   id: number;
   /** Display name of the menu item (e.g., "Chicken & Vegetables"). */
   name: string;
-  /** List of ingredient names in this menu item. */
-  ingredients: string[];
+  /** List of foods/ingredients in this menu item. */
+  foods: Food[];
 }
 
 // =============================================================================

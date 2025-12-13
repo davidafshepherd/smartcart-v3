@@ -14,6 +14,20 @@ import { uploadApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Gets a shortened food name (first part before the comma).
+ * E.g., "Apple, dried, sliced" -> "Apple"
+ */
+function getShortFoodName(fullName: string): string {
+  const firstPart = fullName.split(',')[0].trim();
+  // Capitalize first letter
+  return firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
+}
+
+// =============================================================================
 // Type Definitions
 // =============================================================================
 
@@ -307,15 +321,15 @@ export function MealDetail({
               <span className="text-lg font-semibold" style={{ color: 'var(--accent-primary)' }}>
                 {currentMenuItem.name}
               </span>
-              {currentMenuItem.ingredients.length > 0 && (
+              {currentMenuItem.foods && currentMenuItem.foods.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {currentMenuItem.ingredients.map((ingredient, idx) => (
+                  {currentMenuItem.foods.map((food) => (
                     <span
-                      key={idx}
+                      key={food.id}
                       className="px-3 py-1 rounded-full text-sm"
                       style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
                     >
-                      {ingredient}
+                      {getShortFoodName(food.food_name)}
                     </span>
                   ))}
                 </div>

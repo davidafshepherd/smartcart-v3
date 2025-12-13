@@ -21,7 +21,7 @@
  */
 
 import { config } from './config';
-import type { UploadResponse, MenuItem, MealsData, MealData, Patient } from './types';
+import type { UploadResponse, MenuItem, MealsData, MealData, Patient, Food } from './types';
 
 // =============================================================================
 // Error Handling
@@ -148,6 +148,42 @@ export const uploadApi = {
 // =============================================================================
 
 /**
+ * API client for food operations.
+ *
+ * Handles retrieval and searching of foods from the nutrition dataset.
+ */
+export const foodsApi = {
+  /**
+   * Searches foods by name from the nutrition dataset.
+   *
+   * @param term - Optional search term to filter foods by name.
+   * @param limit - Maximum number of results to return (default: 50).
+   * @returns A promise resolving to an array of matching foods.
+   * @throws {ApiError} If the request fails.
+   */
+  async search(term?: string, limit: number = 50): Promise<Food[]> {
+    const params = new URLSearchParams();
+    if (term) params.append('term', term);
+    params.append('limit', String(limit));
+
+    const response = await fetch(`${config.apiUrl}/foods?${params}`);
+    return handleResponse<Food[]>(response);
+  },
+
+  /**
+   * Retrieves a single food by its ID.
+   *
+   * @param foodId - The unique ID of the food to retrieve.
+   * @returns A promise resolving to the food details.
+   * @throws {ApiError} If the food doesn't exist.
+   */
+  async get(foodId: number): Promise<Food> {
+    const response = await fetch(`${config.apiUrl}/foods/${foodId}`);
+    return handleResponse<Food>(response);
+  },
+};
+
+/**
  * API client for menu item operations.
  *
  * Handles retrieval and creation of menu items.
@@ -168,15 +204,15 @@ export const menuApi = {
    * Creates a new menu item.
    *
    * @param name - The display name for the menu item.
-   * @param ingredients - List of ingredient names.
+   * @param foodIds - List of food IDs from the nutrition dataset.
    * @returns A promise resolving to the newly created menu item.
-   * @throws {ApiError} If creation fails (e.g., duplicate name).
+   * @throws {ApiError} If creation fails (e.g., invalid food IDs).
    */
-  async create(name: string, ingredients: string[]): Promise<MenuItem> {
+  async create(name: string, foodIds: number[]): Promise<MenuItem> {
     const response = await fetch(`${config.apiUrl}/menu`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, ingredients }),
+      body: JSON.stringify({ name, food_ids: foodIds }),
     });
 
     return handleResponse<MenuItem>(response);
@@ -187,19 +223,19 @@ export const menuApi = {
    *
    * @param menuItemId - The ID of the menu item to update.
    * @param name - Optional new name.
-   * @param ingredients - Optional new ingredients list.
+   * @param foodIds - Optional new list of food IDs.
    * @returns A promise resolving to the updated menu item.
    * @throws {ApiError} If the menu item doesn't exist.
    */
   async update(
     menuItemId: number,
     name?: string,
-    ingredients?: string[],
+    foodIds?: number[],
   ): Promise<MenuItem> {
     const response = await fetch(`${config.apiUrl}/menu/${menuItemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, ingredients }),
+      body: JSON.stringify({ name, food_ids: foodIds }),
     });
 
     return handleResponse<MenuItem>(response);
