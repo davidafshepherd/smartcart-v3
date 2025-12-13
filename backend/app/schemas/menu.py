@@ -2,21 +2,23 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from .foods import FoodBriefResponse
+
 
 class MenuItemResponse(BaseModel):
     """Response schema for retrieving a menu item."""
     id: int
     name: str
-    ingredients: List[str]
+    foods: List[FoodResponse]
 
 
 class CreateMenuItemRequest(BaseModel):
     """Request schema for creating a new menu item."""
     name: str
-    ingredients: List[str]
+    food_ids: List[int]
 
 
 class UpdateMenuItemRequest(BaseModel):
     """Request schema for updating a menu item."""
     name: Optional[str] = None
-    ingredients: Optional[List[str]] = None
+    food_ids: Optional[List[int]] = None

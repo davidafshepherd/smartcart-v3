@@ -1,27 +1,35 @@
+from .foods import (
+    FoodBriefResponse,
+    FoodResponse,
+)
 from .meals import (
-    CreateMealRequest, 
-    MealResponse, 
+    CreateMealRequest,
+    MealResponse,
     UpdateMealRequest,
 )
 from .menu import (
-    CreateMenuItemRequest, 
-    MenuItemResponse, 
+    CreateMenuItemRequest,
+    MenuItemResponse,
     UpdateMenuItemRequest,
 )
 from .patients import (
-    CreatePatientRequest, 
-    PatientResponse, 
+    CreatePatientRequest,
+    PatientResponse,
     UpdatePatientRequest,
 )
 from .snapshots import (
-    InvalidSnapshotResponse, 
-    MealSnapshotResponse, 
+    InvalidSnapshotResponse,
+    MealSnapshotResponse,
     UploadResponse,
 )
 
 
 # Pydantic schemas for API request/response validation.
 __all__ = [
+    # Foods.
+    "FoodBriefResponse",
+    "FoodResponse",
+
     # Meals.
     "CreateMealRequest",
     "MealResponse",
