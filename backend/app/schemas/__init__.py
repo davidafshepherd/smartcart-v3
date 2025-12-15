@@ -1,3 +1,22 @@
+from .analysis import (
+    Point,
+    Box,
+    PointGroup,
+    BoxGroup,
+    OWLv2Request,
+    OWLv2SAHIRequest,
+    OWLv2Response,
+    PointsRequest,
+    BoxRequest,
+    Mask,
+    SAM2Response,
+    ComputeNutritionRequest,
+    FoodVolume,
+    FoodMass,
+    MealNutrition,
+    FoodNutrition,
+    ComputeNutritionResponse,
+)
 from .foods import (
     FoodBriefResponse,
     FoodResponse,
@@ -26,6 +45,25 @@ from .snapshots import (
 
 # Pydantic schemas for API request/response validation.
 __all__ = [
+    # Analysis.
+    "Point",
+    "Box",
+    "PointGroup",
+    "BoxGroup",
+    "OWLv2Request",
+    "OWLv2SAHIRequest",
+    "OWLv2Response",
+    "PointsRequest",
+    "BoxRequest",
+    "Mask",
+    "SAM2Response",
+    "ComputeNutritionRequest",
+    "FoodVolume",
+    "FoodMass",
+    "MealNutrition",
+    "FoodNutrition",
+    "ComputeNutritionResponse",
+
     # Foods.
     "FoodBriefResponse",
     "FoodResponse",
@@ -34,11 +72,6 @@ __all__ = [
     "CreateMealRequest",
     "MealResponse",
     "UpdateMealRequest",
-
-    # Meal snapshots.
-    "InvalidSnapshotResponse",
-    "MealSnapshotResponse",
-    "UploadResponse",
 
     # Menu.
     "CreateMenuItemRequest",
@@ -49,4 +82,9 @@ __all__ = [
     "CreatePatientRequest",
     "PatientResponse",
     "UpdatePatientRequest",
+
+    # Meal snapshots.
+    "InvalidSnapshotResponse",
+    "MealSnapshotResponse",
+    "UploadResponse",
 ]
