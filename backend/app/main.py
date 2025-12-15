@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.constants import BACKEND_DIR, NUTRITION_CSV_PATH, UPLOAD_DIR
 from app.db import Base, engine, SessionLocal
 from app.models.db_models import Food, MealSnapshot
-from app.routers import foods, meals, menu, patients, uploads
+from app.routers import analysis, foods, images, meals, menu, patients, uploads
 
 
 # Create the tables if they don't exist already.
@@ -37,16 +37,18 @@ app.add_middleware(
 )
 
 # Register the application's API routers.
+app.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 app.include_router(foods.router, prefix="/foods", tags=["foods"])
+app.include_router(images.router, prefix="/images", tags=["images"])
 app.include_router(menu.router, prefix="/menu", tags=["menu"])
-app.include_router(patients.router, prefix="/patients", tags=["patients"])
 app.include_router(meals.router, prefix="/meals", tags=["meals"])
+app.include_router(patients.router, prefix="/patients", tags=["patients"])
 app.include_router(uploads.router, prefix="/uploads", tags=["uploads"])
 
 
 # === Helpers ===
 
-def _cleanup_snapshots():
+def _cleanup_snapshots() -> None:
     "Deletes all meal snapshots from the database and disk."
 
     # Delete all meal snapshots from the database.
@@ -56,13 +58,13 @@ def _cleanup_snapshots():
         db.commit()
     finally:
         db.close()
-
+    
     # Delete all meal snapshots from disk.
     if UPLOAD_DIR.exists():
         shutil.rmtree(UPLOAD_DIR)
 
 
-def _load_nutrition_dataset():
+def _load_nutrition_dataset() -> None:
     """Loads nutrition data from CSV into the foods table."""
 
     # SQLAlchemy database session.
@@ -93,13 +95,14 @@ def _load_nutrition_dataset():
             for row in reader:
                 # Get the food's name.
                 food_name = row["Food Name"].lower()
+                short_name = food_name.split(',')[0].strip()
 
                 # Skip the food if we have already seen its name.
                 if food_name in foods_dict:
                     continue
                     
                 # Store the food if we have not seen its name.
-                foods_dict[food_name] = _create_food(food_name, row)
+                foods_dict[food_name] = _create_food(food_name, short_name, row)
             
             # Create a list of the foods to add to the database.
             foods_to_add = list(foods_dict.values())
@@ -118,11 +121,12 @@ def _load_nutrition_dataset():
         db.close()
 
 
-def _create_food(food_name: str, row: dict) -> Food:
+def _create_food(food_name: str, short_name: str, row: dict) -> Food:
     """Creates a Food ORM object from a row in the nutrition dataset.
 
     Args:
         food_name: The name of the food.
+        short_name: The shortened name of the food.
         row: The row in the nutrition dataset.
 
     Returns:
@@ -131,6 +135,7 @@ def _create_food(food_name: str, row: dict) -> Food:
 
     return Food(
         food_name=food_name,
+        short_name=short_name,
         density=_parse_float(row.get("Food Density", "")),
         protein=_parse_float(row.get("PROT", "")),
         fat=_parse_float(row.get("FAT", "")),
