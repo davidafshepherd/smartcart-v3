@@ -9,7 +9,7 @@
 'use client';
 
 import type { Snapshot } from '../../lib/types';
-import { uploadApi } from '../../lib/api';
+import { imagesApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
 
 // =============================================================================
@@ -100,7 +100,7 @@ export function SnapshotCard({
       {/* Image Section */}
       <div className="relative h-40">
         <img
-          src={uploadApi.getImageUrl(snapshot.rgb_path)}
+          src={imagesApi.getImageUrl(snapshot.rgb_path)}
           alt={`Snapshot ${snapshot.id}`}
           className="w-full h-full object-cover"
         />
@@ -135,7 +135,7 @@ export function SnapshotCard({
             onDiscard();
           }}
           disabled={isDiscarding}
-          className="mt-3 w-full py-2 rounded-lg text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-3 w-full py-2 rounded-lg text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           style={{ color: 'var(--danger)' }}
         >
           {isDiscarding ? 'Discarding...' : 'Discard'}

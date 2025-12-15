@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import type { MealData, MenuItem, Patient } from '../../lib/types';
-import { uploadApi } from '../../lib/api';
+import { imagesApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
 
 // =============================================================================
@@ -21,10 +21,8 @@ import { NumberBadge } from '../ui/NumberBadge';
  * Gets a shortened food name (first part before the comma).
  * E.g., "Apple, dried, sliced" -> "Apple"
  */
-function getShortFoodName(fullName: string): string {
-  const firstPart = fullName.split(',')[0].trim();
-  // Capitalize first letter
-  return firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
+function getShortFoodName(shortName: string): string {
+  return shortName;
 }
 
 // =============================================================================
@@ -193,7 +191,7 @@ export function MealDetail({
         <button
           onClick={onDelete}
           disabled={isDeleting || isUpdating}
-          className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           style={{ color: 'var(--danger)' }}
         >
           {isDeleting ? 'Deleting...' : 'Delete Meal'}
@@ -228,7 +226,7 @@ export function MealDetail({
             <button
               onClick={handlePatientSave}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
               style={{ background: 'var(--accent-primary)', color: 'white' }}
             >
               {isUpdating ? 'Saving...' : 'Save'}
@@ -236,7 +234,7 @@ export function MealDetail({
             <button
               onClick={handlePatientCancel}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
               style={{ color: 'var(--text-muted)' }}
             >
               Cancel
@@ -261,7 +259,7 @@ export function MealDetail({
             <button
               onClick={startEditingPatient}
               disabled={isUpdating}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               style={{ color: 'var(--accent-primary)' }}
             >
               Edit
@@ -298,7 +296,7 @@ export function MealDetail({
             <button
               onClick={handleMenuItemSave}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
               style={{ background: 'var(--accent-primary)', color: 'white' }}
             >
               {isUpdating ? 'Saving...' : 'Save'}
@@ -306,7 +304,7 @@ export function MealDetail({
             <button
               onClick={handleMenuItemCancel}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
               style={{ color: 'var(--text-muted)' }}
             >
               Cancel
@@ -329,7 +327,7 @@ export function MealDetail({
                       className="px-3 py-1 rounded-full text-sm"
                       style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
                     >
-                      {getShortFoodName(food.food_name)}
+                      {getShortFoodName(food.short_name)}
                     </span>
                   ))}
                 </div>
@@ -338,7 +336,7 @@ export function MealDetail({
             <button
               onClick={startEditingMenuItem}
               disabled={isUpdating}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               style={{ color: 'var(--accent-primary)' }}
             >
               Edit
@@ -456,7 +454,7 @@ function ImageCard({ label, path }: ImageCardProps) {
         {label}
       </p>
       <img
-        src={uploadApi.getImageUrl(path)}
+        src={imagesApi.getImageUrl(path)}
         alt={`${label} image`}
         className="w-full h-48 object-cover"
       />

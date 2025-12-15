@@ -99,7 +99,7 @@ export function AlertMessage({ type, message, onDismiss, className = '' }: Alert
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="absolute top-3 right-3 p-1 rounded-lg transition-colors"
+          className="absolute top-3 right-3 p-1 rounded-lg transition-colors cursor-pointer"
           style={{ color: style.color }}
           onMouseEnter={(e) => (e.currentTarget.style.background = style.hoverBg)}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}

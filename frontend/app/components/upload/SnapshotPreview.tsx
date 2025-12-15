@@ -8,7 +8,7 @@
 'use client';
 
 import type { Snapshot } from '../../lib/types';
-import { uploadApi } from '../../lib/api';
+import { imagesApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
 
 // =============================================================================
@@ -75,7 +75,7 @@ export function SnapshotPreview({ label, number, snapshot, color }: SnapshotPrev
       {snapshot ? (
         <div>
           <img
-            src={uploadApi.getImageUrl(snapshot.rgb_path)}
+            src={imagesApi.getImageUrl(snapshot.rgb_path)}
             alt={`${label} RGB`}
             className="w-full h-32 object-cover rounded-lg mb-2"
           />

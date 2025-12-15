@@ -247,7 +247,7 @@ function PatientNode({
       {/* Patient Header */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-blue-50"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-blue-50 cursor-pointer"
       >
         <ChevronIcon isExpanded={isExpanded} />
         <div
@@ -304,7 +304,7 @@ function DateNode({
       {/* Date Header */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-blue-50"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-blue-50 cursor-pointer"
       >
         <ChevronIcon isExpanded={isExpanded} />
         <svg
@@ -336,7 +336,7 @@ function DateNode({
               <button
                 key={timeRange}
                 onClick={() => onMealSelect(meal)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors cursor-pointer"
                 style={{
                   background: isSelected ? 'var(--accent-primary)' : 'transparent',
                   color: isSelected ? 'white' : 'var(--text-secondary)',

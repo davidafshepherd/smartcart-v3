@@ -252,7 +252,7 @@ export default function UploadSection() {
           {hasExistingSnapshots && (
             <label
               className={`absolute top-0 right-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl border transition-all duration-200 ${
-                isUploading ? 'opacity-50 pointer-events-none' : ''
+                isUploading ? 'opacity-50 pointer-events-none' : 'cursor-pointer'
               }`}
               style={{
                 borderColor: 'var(--card-border)',
@@ -326,7 +326,7 @@ export default function UploadSection() {
           >
             <button
               onClick={clearInvalidSnapshots}
-              className="absolute top-3 right-3 p-1 rounded-lg transition-colors"
+              className="absolute top-3 right-3 p-1 rounded-lg transition-colors cursor-pointer"
               style={{ color: '#d97706' }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#fef3c7')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}

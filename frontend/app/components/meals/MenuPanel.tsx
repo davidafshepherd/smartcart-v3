@@ -18,12 +18,11 @@ import type { MenuItem, Food } from '../../lib/types';
 
 /**
  * Gets a shortened food name (first part before the comma).
- * E.g., "Apple, dried, sliced" -> "Apple"
+ * E.g., "apple, dried, sliced" -> "apple"
  */
 function getShortFoodName(fullName: string): string {
   const firstPart = fullName.split(',')[0].trim();
-  // Capitalize first letter
-  return firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
+  return firstPart;
 }
 
 // =============================================================================
@@ -356,7 +355,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                     </span>
                     <button
                       onClick={() => handleRemoveFood(food.id)}
-                      className="ml-2 p-0.5 rounded transition-colors hover:bg-red-100"
+                      className="ml-2 p-0.5 rounded transition-colors hover:bg-red-100 cursor-pointer"
                       style={{ color: 'var(--danger)' }}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -412,14 +411,14 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
           <button
             onClick={handleSaveModal}
             disabled={isSaving || !modalName.trim() || selectedFoods.length === 0}
-            className="flex-1 px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50 cursor-pointer"
             style={{ background: 'var(--accent-primary)', color: 'white' }}
           >
             {isSaving ? 'Saving...' : (editingItemId !== null ? 'Save' : 'Create')}
           </button>
           <button
             onClick={closeModal}
-            className="px-4 py-2 rounded-xl font-medium border transition-colors hover:bg-gray-50"
+            className="px-4 py-2 rounded-xl font-medium border transition-colors hover:bg-gray-50 cursor-pointer"
             style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
           >
             Cancel
@@ -459,7 +458,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
           </div>
           <button
             onClick={openCreateModal}
-            className="p-1 rounded-lg transition-colors hover:bg-blue-50"
+            className="p-1 rounded-lg transition-colors hover:bg-blue-50 cursor-pointer"
             style={{ color: 'var(--accent-primary)' }}
             title="Add menu item"
           >
@@ -527,13 +526,13 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                     {item.name}
                   </span>
                   <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                    {item.foods?.map((f) => getShortFoodName(f.food_name)).join(', ') || 'No ingredients'}
+                    {item.foods?.map((f) => getShortFoodName(f.short_name)).join(', ') || 'No ingredients'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                   <button
                     onClick={() => openEditModal(item)}
-                    className="p-1 rounded-lg transition-colors hover:bg-blue-50"
+                    className="p-1 rounded-lg transition-colors hover:bg-blue-50 cursor-pointer"
                     style={{ color: 'var(--accent-primary)' }}
                     title="Edit"
                   >
@@ -542,7 +541,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                   <button
                     onClick={() => handleDeleteMenuItem(item.id)}
                     disabled={deletingItemId === item.id}
-                    className="p-1 rounded-lg transition-colors hover:bg-red-50 disabled:opacity-50"
+                    className="p-1 rounded-lg transition-colors hover:bg-red-50 disabled:opacity-50 cursor-pointer"
                     style={{ color: 'var(--danger)' }}
                     title="Delete"
                   >
@@ -578,7 +577,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
               <button
                 key={food.id}
                 onClick={() => handleSelectFood(food)}
-                className="w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0"
+                className="w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0 cursor-pointer"
                 style={{ borderColor: 'var(--card-border)' }}
               >
                 <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
@@ -587,6 +586,8 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                 <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   {food.kcal != null ? `${food.kcal} kcal` : 'N/A'}
                   {food.protein != null && ` • ${food.protein}g protein`}
+                  {food.carbohydrate != null && ` • ${food.carbohydrate}g carbs`}
+                  {food.fat != null && ` • ${food.fat}g fat`}
                 </div>
               </button>
             ))}

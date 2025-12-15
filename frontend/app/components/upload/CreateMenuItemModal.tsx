@@ -256,7 +256,7 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg transition-colors hover:bg-gray-100"
+            className="p-1 rounded-lg transition-colors hover:bg-gray-100 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -322,7 +322,7 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
                     </div>
                     <button
                       onClick={() => handleRemoveFood(food.id)}
-                      className="ml-2 p-1 rounded-lg transition-colors hover:bg-red-100"
+                      className="ml-2 p-1 rounded-lg transition-colors hover:bg-red-100 cursor-pointer"
                       style={{ color: 'var(--danger)' }}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -347,20 +347,20 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
               </span>
             </label>
             <div className="relative">
-              <input
+            <input
                 ref={searchInputRef}
-                type="text"
+              type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => searchQuery && searchResults.length > 0 && setShowDropdown(true)}
                 placeholder="Search for foods..."
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                style={{
-                  background: 'var(--background)',
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--foreground)',
-                }}
-              />
+              className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{
+                background: 'var(--background)',
+                borderColor: 'var(--card-border)',
+                color: 'var(--foreground)',
+              }}
+            />
               {isSearching && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -383,14 +383,14 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
           <button
             onClick={handleCreate}
             disabled={isCreating || !name.trim() || selectedFoods.length === 0}
-            className="flex-1 px-4 py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 cursor-pointer"
             style={{ background: 'var(--accent-primary)', color: 'white' }}
           >
             {isCreating ? 'Creating...' : 'Create'}
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-3 rounded-xl font-medium border transition-colors hover:bg-gray-50"
+            className="px-4 py-3 rounded-xl font-medium border transition-colors hover:bg-gray-50 cursor-pointer"
             style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
           >
             Cancel
@@ -418,7 +418,7 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
         <button
           key={food.id}
           onClick={() => handleSelectFood(food)}
-          className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0"
+          className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0 cursor-pointer"
           style={{ borderColor: 'var(--card-border)' }}
         >
           <div className="font-medium" style={{ color: 'var(--foreground)' }}>
@@ -446,6 +446,6 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
       </>
     );
   }
-
+  
   return modalContent;
 }

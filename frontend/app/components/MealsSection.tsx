@@ -304,7 +304,7 @@ export default function MealsSection() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-            Saved Meals
+            View Meals
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
             View and manage meals organized by patient, date and time.

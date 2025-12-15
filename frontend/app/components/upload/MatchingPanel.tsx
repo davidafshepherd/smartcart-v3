@@ -140,7 +140,7 @@ export function MatchingPanel({
         <button
           onClick={onSave}
           disabled={!canSave || isSaving}
-          className="px-6 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           style={{
             background: 'var(--accent-primary)',
             color: 'white',
@@ -150,7 +150,7 @@ export function MatchingPanel({
         </button>
         <button
           onClick={onClearSelection}
-          className="px-6 py-3 rounded-xl font-medium border transition-colors hover:bg-gray-50"
+          className="px-6 py-3 rounded-xl font-medium border transition-colors hover:bg-gray-50 cursor-pointer"
           style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
         >
           Clear Selection

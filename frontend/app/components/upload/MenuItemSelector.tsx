@@ -105,7 +105,7 @@ export function MenuItemSelector({
         </select>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-3 rounded-xl border transition-colors hover:bg-blue-50"
+          className="px-4 py-3 rounded-xl border transition-colors hover:bg-blue-50 cursor-pointer"
           style={{ borderColor: 'var(--card-border)', color: 'var(--accent-primary)' }}
         >
           + New
