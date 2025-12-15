@@ -213,19 +213,28 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
               type="number"
               min="0"
               step="1"
+              max="9999999999"
               value={modalPatientId}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^\d]/g, '');
-                setModalPatientId(value);
-                setModalError(null);
+                // Limit to 10 digits (max: 9999999999)
+                if (value.length <= 10) {
+                  setModalPatientId(value);
+                  setModalError(null);
+                }
               }}
               onKeyDown={(e) => {
+                // Prevent typing if we're at the 10-digit limit
+                if (e.key >= '0' && e.key <= '9' && modalPatientId.length >= 10) {
+                  e.preventDefault();
+                }
                 if (e.key === '.' || e.key === '-' || e.key === 'e') {
                   e.preventDefault();
                 }
                 if (e.key === 'Enter') handleSaveModal();
                 if (e.key === 'Escape') closeModal();
               }}
+              placeholder="e.g. 12345"
               className="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2"
               style={{
                 background: 'var(--background)',
@@ -247,14 +256,14 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
           <button
             onClick={handleSaveModal}
             disabled={isSaving || !modalPatientId.trim()}
-            className="flex-1 px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50 cursor-pointer"
             style={{ background: 'var(--accent-primary)', color: 'white' }}
           >
             {isSaving ? 'Saving...' : (editingPatientId !== null ? 'Save' : 'Create')}
           </button>
           <button
             onClick={closeModal}
-            className="px-4 py-2 rounded-xl font-medium border transition-colors hover:bg-gray-50"
+            className="px-4 py-2 rounded-xl font-medium border transition-colors hover:bg-gray-50 cursor-pointer"
             style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
           >
             Cancel
@@ -294,7 +303,7 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
           </div>
           <button
             onClick={openCreateModal}
-            className="p-1 rounded-lg transition-colors hover:bg-blue-50"
+            className="p-1 rounded-lg transition-colors hover:bg-blue-50 cursor-pointer"
             style={{ color: 'var(--accent-primary)' }}
             title="Add patient"
           >
@@ -363,7 +372,7 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => openEditModal(patient)}
-                    className="p-1 rounded-lg transition-colors hover:bg-blue-50"
+                    className="p-1 rounded-lg transition-colors hover:bg-blue-50 cursor-pointer"
                     style={{ color: 'var(--accent-primary)' }}
                     title="Edit"
                   >
@@ -372,7 +381,7 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
                   <button
                     onClick={() => handleDeletePatient(patient.id)}
                     disabled={deletingPatientId === patient.id}
-                    className="p-1 rounded-lg transition-colors hover:bg-red-50 disabled:opacity-50"
+                    className="p-1 rounded-lg transition-colors hover:bg-red-50 disabled:opacity-50 cursor-pointer"
                     style={{ color: 'var(--danger)' }}
                     title="Delete"
                   >
