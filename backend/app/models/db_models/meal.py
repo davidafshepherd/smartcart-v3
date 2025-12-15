@@ -29,7 +29,6 @@ class Meal(Base):
         after_depth_path (str): Path to the post-meal depth image.
         patient (Patient): Patient who consumed the meal.
         menu_item (MenuItem): Menu item that describes the meal.
-        meal_foods (list[MealFood]): The contents of the meal.
         patient_id (int): Foreign key referencing the associated patient.
         menu_item_id (int): Foreign key referencing the associated menu item.
     """
@@ -99,12 +98,4 @@ class Meal(Base):
             ondelete="RESTRICT",  # If meal exists, don't let menu item be deleted.
         ),
         nullable=False,
-    )
-
-    # One-to-many relationship: a meal can use multiple meal foods.
-    meal_foods = relationship( 
-        "MealFood", 
-        back_populates="meal",
-        cascade="all, delete-orphan",  # If meal is deleted, delete meal foods.
-        passive_deletes=True,          # Let the database handle these deletes.
     )

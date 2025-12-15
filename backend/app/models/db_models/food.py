@@ -8,9 +8,10 @@ class Food(Base):
     """A food entry from the McCance & Widdowson's dataset.
 
     Attributes:
-        id (int): Auto-increment primary key.
+        id (int): Unique identifier for the food.
         food_name (str): Human-readable name of the food.
-        density (float): Density (g/m^3) of the food.
+        short_name (str): Shortened name of the food.
+        density (float): Density (g/cm^3) of the food.
         kcal (float | None): Energy (kcal) per 100g.
         kj (float | None): Energy (kj) per 100g.
         protein (float | None): Protein (g) per 100g.
@@ -42,7 +43,6 @@ class Food(Base):
         folate (float | None): Folate (µg) per 100g.
         vitamin_c (float | None): Vitamin C (mg) per 100g.
         menu_items (list[MenuItem]): Menu items that use the food.
-        meal_foods (list[MealFood]): Meal foods that use the food.
     """
 
     # Table name.
@@ -54,7 +54,10 @@ class Food(Base):
     # Human-readable name of the food (e.g. "apples, eating, dried").
     food_name = Column(String, nullable=False, index=True)
 
-    # Density (g/m^3) of the food.
+    # Shortened name of the food (e.g. "apples").
+    short_name = Column(String, nullable=False, index=True)
+
+    # Density (g/cm^3) of the food.
     density = Column(Float, nullable=False)
 
     # Calories.
@@ -101,6 +104,4 @@ class Food(Base):
         secondary="menu_item_foods",  # Association table.
         back_populates="foods",
     )
-
-    # One-to-many relationship: a food can be used in multiple meal foods.
-    meal_foods = relationship("MealFood", back_populates="food")
+    
