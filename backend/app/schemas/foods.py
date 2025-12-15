@@ -7,6 +7,7 @@ class FoodBriefResponse(BaseModel):
     """Response schema for retrieving a shortened food."""
     id: int
     food_name: str
+    short_name: str
     kcal: Optional[float] = None
     protein: Optional[float] = None
     fat: Optional[float] = None
@@ -17,6 +18,7 @@ class FoodResponse(BaseModel):
     """Response schema for retrieving a food."""
     id: int
     food_name: str
+    short_name: str
     density: float
     kcal: Optional[float] = None
     kj: Optional[float] = None
