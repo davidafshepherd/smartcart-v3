@@ -142,7 +142,7 @@ function NavButton({ label, icon, isActive, onClick }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`nav-button w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+      className={`nav-button w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer ${
         isActive ? 'nav-button-active' : 'nav-button-inactive'
       }`}
       style={{
