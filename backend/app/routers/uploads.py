@@ -7,7 +7,6 @@ import uuid
 import zipfile
 
 from fastapi import APIRouter, Depends, File, HTTPException, status, UploadFile
-from fastapi.responses import FileResponse
 from dataclasses import dataclass
 from PIL import Image
 from sqlalchemy.orm import Session
@@ -50,7 +49,7 @@ class InvalidSnapshot:
 async def upload_zip(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    ) -> UploadResponse:
+) -> UploadResponse:
     """Stores the meal snapshots within an uploaded ZIP file.
 
     Extracts all folders within an uploaded ZIP file into a directory named 
@@ -196,40 +195,6 @@ def delete_upload(upload_id: str, db: Session = Depends(get_db)) -> None:
     # Delete the upload's folder and its files from disk.
     upload_directory = UPLOAD_DIR / upload_id
     shutil.rmtree(upload_directory)
-
-
-# GET endpoint to serve a meal's image.
-@router.get("/images/{path:path}", status_code=status.HTTP_200_OK)
-def get_image(path: str) -> FileResponse:
-    """Serves a meal's image.
-
-    Args:
-        path: Path to the image.
-
-    Returns:
-        A file response containing the image's path and media type.
-
-    Raises:
-        HTTPException: If the image does not exist.
-    """
-
-    # Store the absolute path to the image.
-    image_path = BACKEND_DIR / path
-    
-    # Check if the image exists.
-    if not image_path.exists() or not image_path.is_file():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Image not found: {path}",
-        )
-    
-    # Store the media type of the image.
-    media_type = (
-        "image/png" if image_path.suffix.lower() == ".png" else "image/jpeg"
-    )
-
-    # Return a file response containing the image's path and media type.
-    return FileResponse(image_path, media_type=media_type)
 
 
 # === Helpers ===

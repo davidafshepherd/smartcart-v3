@@ -45,6 +45,7 @@ def get_foods(
         FoodBriefResponse(
             id=food.id,
             food_name=food.food_name,
+            short_name=food.short_name,
             kcal=food.kcal,
             protein=food.protein,
             fat=food.fat,
@@ -84,6 +85,7 @@ def get_food(food_id: int, db: Session = Depends(get_db)) -> FoodResponse:
     return FoodResponse(
         id=food.id,
         food_name=food.food_name,
+        short_name=food.short_name,
         density=food.density,
         kcal=food.kcal,
         kj=food.kj,

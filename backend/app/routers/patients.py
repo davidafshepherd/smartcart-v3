@@ -84,19 +84,8 @@ def create_patient(
 
     Returns:
         The newly created patient.
-
-    Raises:
-        HTTPException: If a patient with the given ID already exists.
     """
     
-    # Check if the ID is already in use.
-    existing = db.query(Patient).filter(Patient.id == request.id).first()
-    if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Patient {request.id} already exists.",
-        )
-
     # Create and persist the new patient.
     new_patient = Patient(id=request.id)
     db.add(new_patient)

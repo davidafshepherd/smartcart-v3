@@ -89,8 +89,8 @@ def create_menu_item(
         HTTPException: If the foods don't exist.
     """
 
-    # Check if the foods exist.
-    foods = _check_foods_exist(request.food_ids, db)
+    # Fetch the menu item's foods.
+    foods = _fetch_foods(request.food_ids, db)
 
     # Create and persist the new menu item.
     new_menu_item = MenuItem(name=request.name)
@@ -140,7 +140,7 @@ def update_menu_item(
 
     # Update the menu item's foods if requested.
     if request.food_ids is not None:
-        foods = _check_foods_exist(request.food_ids, db)
+        foods = _fetch_foods(request.food_ids, db)
         menu_item.foods = foods
 
     # Persist the menu item.
@@ -209,6 +209,7 @@ def _menu_item_to_response(menu_item: MenuItem) -> MenuItemResponse:
             FoodBriefResponse(
                 id=food.id,
                 food_name=food.food_name,
+                short_name=food.short_name,
                 kcal=food.kcal,
                 protein=food.protein,
                 fat=food.fat,
@@ -219,15 +220,15 @@ def _menu_item_to_response(menu_item: MenuItem) -> MenuItemResponse:
     )
 
 
-def _check_foods_exist(food_ids: List[int], db: Session) -> List[Food]:
-    """Checks if a set of foods exist.
+def _fetch_foods(food_ids: List[int], db: Session) -> List[Food]:
+    """Fetches a list of foods.
 
     Args:
-        food_ids: List of the IDs of the foods to check.
+        food_ids: List of the IDs of the foods to fetch.
         db: SQLAlchemy database session.
 
     Returns:
-        A list of the foods that exist.
+        A list of the foods.
 
     Raises:
         HTTPException: If a food does not exist.
@@ -247,4 +248,5 @@ def _check_foods_exist(food_ids: List[int], db: Session) -> List[Food]:
             detail=f"Foods not found: {', '.join(str(id) for id in sorted(missing_ids))}",
         )
     
+    # Return the foods.
     return foods

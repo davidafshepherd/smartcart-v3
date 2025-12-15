@@ -323,6 +323,7 @@ def _meal_to_response(meal: Meal) -> MealResponse:
                 FoodBriefResponse(
                     id=food.id,
                     food_name=food.food_name,
+                    short_name=food.short_name,
                     kcal=food.kcal,
                     protein=food.protein,
                     fat=food.fat,
