@@ -21,7 +21,7 @@
  */
 
 import { config } from './config';
-import type { UploadResponse, MenuItem, MealsData, MealData, Patient, Food } from './types';
+import type { UploadResponse, MenuItem, MealsData, MealData, Patient, Food, FoodPoints, FoodBox, Mask, Point, Box, BoxGroup, ComputeNutritionResponse } from './types';
 
 // =============================================================================
 // Error Handling
@@ -84,7 +84,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 /**
  * API client for upload-related operations.
  *
- * Handles ZIP file uploads, snapshot management, and image URL generation.
+ * Handles ZIP file uploads and snapshot management.
  */
 export const uploadApi = {
   /**
@@ -129,17 +129,30 @@ export const uploadApi = {
     return handleResponse<void>(response);
   },
 
+};
+
+// =============================================================================
+// Images API
+// =============================================================================
+
+/**
+ * API client for image operations.
+ *
+ * Handles image URL generation for both upload snapshots and meal images.
+ */
+export const imagesApi = {
   /**
    * Generates the full URL for an image.
    *
    * Converts a relative image path to a complete URL that can be used
-   * in img src attributes.
+   * in img src attributes. Works with images from both the uploads/
+   * directory (temporary snapshots) and meal_images/ directory (permanent meals).
    *
-   * @param path - The relative path to the image.
+   * @param path - The relative path to the image (e.g., "meal_images/patient_id/date/before_rgb.jpg").
    * @returns The complete URL to fetch the image.
    */
   getImageUrl(path: string): string {
-    return `${config.apiUrl}/uploads/images/${path}`;
+    return `${config.apiUrl}/images/${path}`;
   },
 };
 
@@ -443,5 +456,240 @@ export const patientsApi = {
     });
 
     return handleResponse<void>(response);
+  },
+};
+
+// =============================================================================
+// Analysis API
+// =============================================================================
+
+/**
+ * API client for analysis-related operations.
+ *
+ * Handles SAM2 and OWLv2 model inference for meal analysis.
+ */
+export const analysisApi = {
+  /**
+   * Runs SAM2 inference using point groups.
+   *
+   * @param beforeRgbPath - Path to the before-meal RGB image.
+   * @param afterRgbPath - Path to the after-meal RGB image.
+   * @param beforePoints - Point groups for the before image, grouped by food ID.
+   * @param afterPoints - Point groups for the after image, grouped by food ID.
+   * @returns A promise resolving to the generated masks.
+   * @throws {ApiError} If the inference fails.
+   */
+  async sam2Points(
+    beforeRgbPath: string,
+    afterRgbPath: string,
+    beforePoints: FoodPoints[],
+    afterPoints: FoodPoints[]
+  ): Promise<Mask[]> {
+    // Convert points to Point objects: [{x, y}, {x, y}, ...]
+    const formatPoints = (pointGroups: FoodPoints[]) =>
+      pointGroups.map((pointGroup) => ({
+        food_id: pointGroup.food_id,
+        points: pointGroup.points.map((p) => ({ x: p.x, y: p.y })),
+      }));
+
+    const response = await fetch(`${config.apiUrl}/analysis/sam2/points`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        before_rgb_path: beforeRgbPath,
+        after_rgb_path: afterRgbPath,
+        before_points: formatPoints(beforePoints),
+        after_points: formatPoints(afterPoints),
+      }),
+    });
+
+    const data = await handleResponse<{ before_masks: Mask[]; after_masks: Mask[] }>(response);
+    // Combine before and after masks, adding image_type and mask_id for compatibility
+    let beforeIdx = 0;
+    let afterIdx = 0;
+    return [
+      ...data.before_masks.map((m) => ({
+        ...m,
+        image_type: 'before' as const,
+        mask_id: `before_${m.food_id}_${beforeIdx++}`,
+      })),
+      ...data.after_masks.map((m) => ({
+        ...m,
+        image_type: 'after' as const,
+        mask_id: `after_${m.food_id}_${afterIdx++}`,
+      })),
+    ];
+  },
+
+  /**
+   * Runs SAM2 inference using bounding boxes.
+   *
+   * @param beforeRgbPath - Path to the before-meal RGB image.
+   * @param afterRgbPath - Path to the after-meal RGB image.
+   * @param beforeBoxes - Bounding boxes for the before image, grouped by food ID.
+   * @param afterBoxes - Bounding boxes for the after image, grouped by food ID.
+   * @returns A promise resolving to the generated masks.
+   * @throws {ApiError} If the inference fails.
+   */
+  async sam2Boxes(
+    beforeRgbPath: string,
+    afterRgbPath: string,
+    beforeBoxes: FoodBox[],
+    afterBoxes: FoodBox[]
+  ): Promise<Mask[]> {
+    // Convert FoodBox[] to BoxGroup[] format (group boxes by food_id)
+    const groupBoxes = (foodBoxes: FoodBox[]): BoxGroup[] => {
+      const groups = new Map<number, Box[]>();
+      foodBoxes.forEach((foodBox) => {
+        if (!groups.has(foodBox.food_id)) {
+          groups.set(foodBox.food_id, []);
+        }
+        groups.get(foodBox.food_id)!.push(foodBox.box);
+      });
+      return Array.from(groups.entries()).map(([food_id, boxes]) => ({
+        food_id,
+        boxes,
+      }));
+    };
+
+    const response = await fetch(`${config.apiUrl}/analysis/sam2/boxes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        before_rgb_path: beforeRgbPath,
+        after_rgb_path: afterRgbPath,
+        before_boxes: groupBoxes(beforeBoxes),
+        after_boxes: groupBoxes(afterBoxes),
+      }),
+    });
+
+    const data = await handleResponse<{ before_masks: Mask[]; after_masks: Mask[] }>(response);
+    // Combine before and after masks, adding image_type and mask_id for compatibility
+    let beforeIdx = 0;
+    let afterIdx = 0;
+    return [
+      ...data.before_masks.map((m) => ({
+        ...m,
+        image_type: 'before' as const,
+        mask_id: `before_${m.food_id}_${beforeIdx++}`,
+      })),
+      ...data.after_masks.map((m) => ({
+        ...m,
+        image_type: 'after' as const,
+        mask_id: `after_${m.food_id}_${afterIdx++}`,
+      })),
+    ];
+  },
+
+  /**
+   * Runs OWLv2 object detection.
+   *
+   * @param beforeRgbPath - Path to the before-meal RGB image.
+   * @param afterRgbPath - Path to the after-meal RGB image.
+   * @param threshold - Confidence threshold for detection (default: 0.5).
+   * @param foods - List of food names to detect.
+   * @returns A promise resolving to detected bounding boxes with food names.
+   * @throws {ApiError} If the inference fails.
+   */
+  async owlv2Detect(
+    beforeRgbPath: string,
+    afterRgbPath: string,
+    threshold: number = 0.5,
+    foodIds: number[] = []
+  ): Promise<{
+    before_boxes: BoxGroup[];
+    after_boxes: BoxGroup[];
+  }> {
+    const response = await fetch(`${config.apiUrl}/analysis/owlv2`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        before_rgb_path: beforeRgbPath,
+        after_rgb_path: afterRgbPath,
+        threshold,
+        foods: foodIds,
+      }),
+    });
+
+    return handleResponse<{
+      before_boxes: BoxGroup[];
+      after_boxes: BoxGroup[];
+    }>(response);
+  },
+
+  /**
+   * Runs OWLv2 object detection with SAHI (Slicing Aided Hyper Inference).
+   *
+   * @param beforeRgbPath - Path to the before-meal RGB image.
+   * @param afterRgbPath - Path to the after-meal RGB image.
+   * @param threshold - Confidence threshold for detection (default: 0.5).
+   * @param iouThreshold - IOU threshold for SAHI (default: 0.5).
+   * @param foods - List of food names to detect.
+   * @returns A promise resolving to detected bounding boxes with food names.
+   * @throws {ApiError} If the inference fails.
+   */
+  async owlv2SahiDetect(
+    beforeRgbPath: string,
+    afterRgbPath: string,
+    threshold: number = 0.5,
+    iouThreshold: number = 0.5,
+    foods: number[] = []
+  ): Promise<{
+    before_boxes: BoxGroup[];
+    after_boxes: BoxGroup[];
+  }> {
+    const response = await fetch(`${config.apiUrl}/analysis/owlv2/sahi`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        before_rgb_path: beforeRgbPath,
+        after_rgb_path: afterRgbPath,
+        threshold,
+        iou_threshold: iouThreshold,
+        foods,
+      }),
+    });
+
+    return handleResponse<{
+      before_boxes: BoxGroup[];
+      after_boxes: BoxGroup[];
+    }>(response);
+  },
+
+  /**
+   * Computes nutrition by calculating volumes and converting to masses.
+   *
+   * @param beforeDepthPath - Path to the before-meal depth image.
+   * @param afterDepthPath - Path to the after-meal depth image.
+   * @param beforeMasks - Masks for the before image.
+   * @param afterMasks - Masks for the after image.
+   * @returns A promise resolving to computed nutrition data.
+   * @throws {ApiError} If the computation fails.
+   */
+  async computeNutrition(
+    beforeDepthPath: string,
+    afterDepthPath: string,
+    beforeMasks: Mask[],
+    afterMasks: Mask[]
+  ): Promise<ComputeNutritionResponse> {
+    // Convert masks to backend format (remove mask_id and image_type)
+    const formatMasks = (masks: Mask[]) =>
+      masks.map((m) => ({
+        food_id: m.food_id,
+        mask_data: m.mask_data,
+      }));
+
+    const response = await fetch(`${config.apiUrl}/analysis/compute-nutrition`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        before_depth_path: beforeDepthPath,
+        after_depth_path: afterDepthPath,
+        before_masks: formatMasks(beforeMasks),
+        after_masks: formatMasks(afterMasks),
+      }),
+    });
+
+    return handleResponse<ComputeNutritionResponse>(response);
   },
 };
