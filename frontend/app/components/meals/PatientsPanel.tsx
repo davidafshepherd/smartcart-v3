@@ -452,4 +452,3 @@ function TrashIcon() {
     </svg>
   );
 }
-

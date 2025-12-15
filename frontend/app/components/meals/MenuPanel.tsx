@@ -17,12 +17,14 @@ import type { MenuItem, Food } from '../../lib/types';
 // =============================================================================
 
 /**
- * Gets a shortened food name (first part before the comma).
- * E.g., "apple, dried, sliced" -> "apple"
+ * Converts a food short name to title case for display.
+ * E.g., "apple" -> "Apple"
  */
-function getShortFoodName(fullName: string): string {
-  const firstPart = fullName.split(',')[0].trim();
-  return firstPart;
+function formatFoodName(shortName: string): string {
+  return shortName
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
 
 // =============================================================================
@@ -526,7 +528,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                     {item.name}
                   </span>
                   <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                    {item.foods?.map((f) => getShortFoodName(f.short_name)).join(', ') || 'No ingredients'}
+                    {item.foods?.map((f) => formatFoodName(f.short_name)).join(', ') || 'No ingredients'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">

@@ -14,18 +14,6 @@ import { imagesApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
 
 // =============================================================================
-// Helpers
-// =============================================================================
-
-/**
- * Gets a shortened food name (first part before the comma).
- * E.g., "Apple, dried, sliced" -> "Apple"
- */
-function getShortFoodName(shortName: string): string {
-  return shortName;
-}
-
-// =============================================================================
 // Type Definitions
 // =============================================================================
 
@@ -327,7 +315,7 @@ export function MealDetail({
                       className="px-3 py-1 rounded-full text-sm"
                       style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
                     >
-                      {getShortFoodName(food.short_name)}
+                      {food.short_name}
                     </span>
                   ))}
                 </div>

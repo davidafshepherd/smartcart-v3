@@ -20,9 +20,13 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
   // Tab state: 'total' for total nutrition, or food_id for individual foods
   const [activeTab, setActiveTab] = useState<string>('total');
 
+  /**
+   * Gets the formatted display name for a food by ID.
+   */
   const getFoodName = (foodId: number): string => {
     const food = foods.find((f) => f.id === foodId);
     if (!food) return `Food ${foodId}`;
+    // Convert to title case for display
     return food.short_name
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -32,12 +36,6 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
   const formatNumber = (value: number | null | undefined, decimals: number = 1): string => {
     if (value === null || value === undefined) return 'N/A';
     return value.toFixed(decimals);
-  };
-
-  const formatLabel = (key: string): string => {
-    return key
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   // Helper to render nutrition value

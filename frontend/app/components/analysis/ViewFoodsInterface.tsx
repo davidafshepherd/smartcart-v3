@@ -50,7 +50,10 @@ export function ViewFoodsInterface({
     return colors[foodId % colors.length];
   };
 
-  const getShortFoodName = (shortName: string): string => {
+  /**
+   * Converts a food short name to title case for display.
+   */
+  const formatFoodName = (shortName: string): string => {
     return shortName
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -326,7 +329,7 @@ export function ViewFoodsInterface({
                   style={{ background: getFoodColor(mask.food_id) }}
                 />
                 <span className="font-medium" style={{ color: 'var(--foreground)' }}>
-                  {food ? getShortFoodName(food.short_name) : `Food ${mask.food_id}`}
+                  {food ? formatFoodName(food.short_name) : `Food ${mask.food_id}`}
                 </span>
                 <span
                   className="ml-auto px-2 py-0.5 text-xs rounded"
@@ -386,4 +389,3 @@ export function ViewFoodsInterface({
     </div>
   );
 }
-

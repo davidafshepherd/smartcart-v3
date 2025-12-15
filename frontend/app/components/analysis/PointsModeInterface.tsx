@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import type { Food, FoodPoints, MealData } from '../../lib/types';
+import type { Food, FoodPoints } from '../../lib/types';
 
 interface PointsModeInterfaceProps {
   foods: Food[];
@@ -76,8 +76,10 @@ export function PointsModeInterface({
     return beforeCount + afterCount;
   };
 
-  // Helper function to get short food name (title case for display)
-  const getShortFoodName = (shortName: string): string => {
+  /**
+   * Converts a food short name to title case for display.
+   */
+  const formatFoodName = (shortName: string): string => {
     return shortName
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -188,7 +190,7 @@ export function PointsModeInterface({
                     className="w-3 h-3 rounded-full"
                     style={{ background: getFoodColor(food.id) }}
                   />
-                  <span className="font-medium">{getShortFoodName(food.short_name)}</span>
+                  <span className="font-medium">{formatFoodName(food.short_name)}</span>
                   {hasRequiredPoints && (
                     <span
                       className="ml-1 px-1.5 py-0.5 text-xs rounded"
@@ -256,7 +258,7 @@ export function PointsModeInterface({
                         e.stopPropagation();
                         onDeletePoint(pointGroup.food_id, idx, 'before');
                       }}
-                      title={`Click to delete point for ${foods.find((f) => f.id === pointGroup.food_id) ? getShortFoodName(foods.find((f) => f.id === pointGroup.food_id)!.short_name) : 'food'}`}
+                      title={`Click to delete point for ${foods.find((f) => f.id === pointGroup.food_id) ? formatFoodName(foods.find((f) => f.id === pointGroup.food_id)!.short_name) : 'food'}`}
                     />
                   );
                 })
@@ -310,7 +312,7 @@ export function PointsModeInterface({
                         e.stopPropagation();
                         onDeletePoint(pointGroup.food_id, idx, 'after');
                       }}
-                      title={`Click to delete point for ${foods.find((f) => f.id === pointGroup.food_id) ? getShortFoodName(foods.find((f) => f.id === pointGroup.food_id)!.short_name) : 'food'}`}
+                      title={`Click to delete point for ${foods.find((f) => f.id === pointGroup.food_id) ? formatFoodName(foods.find((f) => f.id === pointGroup.food_id)!.short_name) : 'food'}`}
                     />
                   );
                 })

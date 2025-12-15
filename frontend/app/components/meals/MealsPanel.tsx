@@ -14,8 +14,8 @@ import type { MealsData, MealData } from '../../lib/types';
 // Type Definitions
 // =============================================================================
 
-/** Props for the MealsTreeView component. */
-interface MealsTreeViewProps {
+/** Props for the MealsPanel component. */
+interface MealsPanelProps {
   /** Hierarchical meals data organized by patient → date → time. */
   mealsData: MealsData;
   /** ID of the currently selected meal, or null. */
@@ -88,18 +88,21 @@ interface DateNodeProps {
  *   - Date (expandable)
  *     - Time Range (selectable)
  *
- * By default, the first patient is expanded. Clicking on a time range
- * selects that meal for detailed viewing.
+ * Clicking on a time range selects that meal for detailed viewing.
  *
  * @param props - The component props.
- * @returns The tree view element.
+ * @returns The meals panel element.
  *
  * @example
  * ```tsx
- * <MealsTreeView
+ * <MealsPanel
  *   mealsData={mealsData}
  *   selectedMealId={selectedMeal?.id ?? null}
  *   onMealSelect={setSelectedMeal}
+ *   expandedPatients={expandedPatients}
+ *   expandedDates={expandedDates}
+ *   onTogglePatient={togglePatient}
+ *   onToggleDate={toggleDate}
  * />
  * ```
  */
@@ -111,7 +114,7 @@ export function MealsPanel({
   expandedDates,
   onTogglePatient,
   onToggleDate,
-}: MealsTreeViewProps) {
+}: MealsPanelProps) {
   // Sort patient IDs numerically.
   const patientIds = Object.keys(mealsData).sort((a, b) => Number(a) - Number(b));
 

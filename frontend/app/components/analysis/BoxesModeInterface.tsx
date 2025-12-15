@@ -78,8 +78,10 @@ export function BoxesModeInterface({
     }
   }, []);
 
-  // Helper function to get short food name (title case for display)
-  const getShortFoodName = (shortName: string): string => {
+  /**
+   * Converts a food short name to title case for display.
+   */
+  const formatFoodName = (shortName: string): string => {
     return shortName
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -293,7 +295,7 @@ export function BoxesModeInterface({
                         color: 'white',
                       }}
                     >
-                      {food ? getShortFoodName(food.short_name) : `Food ${foodBox.food_id}`}
+                      {food ? formatFoodName(food.short_name) : `Food ${foodBox.food_id}`}
                       {foodBox.confidence !== undefined && (
                         <span className="ml-1 opacity-90">
                           ({(foodBox.confidence * 100).toFixed(0)}%)
@@ -357,7 +359,7 @@ export function BoxesModeInterface({
                         color: 'white',
                       }}
                     >
-                      {food ? getShortFoodName(food.short_name) : `Food ${foodBox.food_id}`}
+                      {food ? formatFoodName(food.short_name) : `Food ${foodBox.food_id}`}
                       {foodBox.confidence !== undefined && (
                         <span className="ml-1 opacity-90">
                           ({(foodBox.confidence * 100).toFixed(0)}%)

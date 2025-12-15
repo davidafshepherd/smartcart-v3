@@ -44,4 +44,3 @@ export function NumberBadge({ number, color, size = 'md' }: NumberBadgeProps) {
     </div>
   );
 }
-
