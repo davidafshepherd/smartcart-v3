@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.constants import BACKEND_DIR, NUTRITION_CSV_PATH, UPLOAD_DIR
+from app.constants import NUTRITION_CSV_PATH, UPLOAD_DIR
 from app.db import Base, engine, SessionLocal
 from app.models.db_models import Food, MealSnapshot
 from app.routers import analysis, foods, images, meals, menu, patients, uploads

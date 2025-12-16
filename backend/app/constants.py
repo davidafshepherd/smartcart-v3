@@ -17,3 +17,6 @@ DEPTH_FILENAME = "depth.jpeg"
 
 # Define the path to the nutrition dataset CSV file.
 NUTRITION_CSV_PATH = BACKEND_DIR / "nutrition_dataset.csv"
+
+# Define the path to the SAM3 model weights.
+SAM3_CHECKPOINT_PATH = BACKEND_DIR / "app" / "models" / "sam3" / "sam3.pt"

@@ -28,7 +28,7 @@ from app.schemas.analysis import (
 router = APIRouter()
 
 
-# POST endpoint to compute boxes bounding foods with OWLv2.
+# POST endpoint to compute food bounding boxes with OWLv2.
 @router.post("/owlv2", status_code=status.HTTP_200_OK)
 async def owlv2_detect(request: OWLv2Request) -> OWLv2Response:
     """Runs OWLv2 object detection.
@@ -93,7 +93,7 @@ async def owlv2_detect(request: OWLv2Request) -> OWLv2Response:
     )
 
 
-# POST endpoint to compute boxes bounding foods with OWLv2 and SAHI.
+# POST endpoint to compute food bounding boxes with OWLv2 and SAHI.
 @router.post("/owlv2/sahi", status_code=status.HTTP_200_OK)
 async def owlv2_sahi_detect(request: OWLv2SAHIRequest) -> OWLv2Response:
     """Runs OWLv2 object detection with SAHI (Slicing Aided Hyper Inference).
