@@ -1,15 +1,3 @@
-/**
- * @fileoverview Main application page component.
- *
- * This is the root page of the SmartCart application. It manages the
- * top-level navigation state and renders the appropriate section based
- * on user selection.
- *
- * The page uses a responsive sidebar layout:
- * - Desktop (lg+): Fixed sidebar with main content offset
- * - Mobile/Tablet: Collapsible sidebar with overlay
- */
-
 'use client';
 
 import { useState } from 'react';
@@ -32,13 +20,6 @@ type Section = 'upload' | 'meals' | 'analysis' | 'nutrition';
 
 /**
  * Renders the main application page.
- *
- * The page structure consists of:
- * - A fixed sidebar on the left for navigation (collapsible on mobile)
- * - A main content area that displays the active section
- *
- * Navigation state is managed locally since it's simple and doesn't
- * need to be shared with other components.
  *
  * @returns The main page element.
  */

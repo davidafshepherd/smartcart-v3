@@ -1,27 +1,16 @@
-/**
- * @fileoverview Centralized API client for backend communication.
- *
- * This module provides a type-safe interface for all API operations,
- * including file uploads, menu management, and meal CRUD operations.
- * All API functions handle errors consistently and return typed responses.
- *
- * @example
- * ```typescript
- * import { uploadApi, menuApi, mealsApi, ApiError } from './api';
- *
- * try {
- *   const response = await uploadApi.uploadZip(file);
- *   console.log(`Uploaded ${response.meal_snapshots.length} snapshots`);
- * } catch (error) {
- *   if (error instanceof ApiError) {
- *     console.error(`API Error ${error.status}: ${error.message}`);
- *   }
- * }
- * ```
- */
-
 import { config } from './config';
-import type { UploadResponse, MenuItem, MealsData, MealData, Patient, Food, Point, FoodMask, SAM3Response, ComputeNutritionResponse } from './types';
+import type { 
+  UploadResponse, 
+  MenuItem, 
+  MealsData, 
+  MealData, 
+  Patient, 
+  Food, 
+  Point, 
+  FoodMask, 
+  SAM3Response, 
+  ComputeNutritionResponse, 
+} from './types';
 
 // =============================================================================
 // Error Handling
@@ -29,9 +18,6 @@ import type { UploadResponse, MenuItem, MealsData, MealData, Patient, Food, Poin
 
 /**
  * Custom error class for API-related errors.
- *
- * Extends the standard Error class with HTTP status code and optional
- * response details for more informative error handling.
  */
 export class ApiError extends Error {
   /**
@@ -83,16 +69,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 /**
  * API client for upload-related operations.
- *
- * Handles ZIP file uploads and snapshot management.
  */
 export const uploadApi = {
   /**
    * Uploads a ZIP file containing meal snapshot folders.
-   *
-   * The ZIP file should contain folders with RGB images, depth images,
-   * and metadata.json files. The backend will validate and process
-   * each folder, returning both valid and invalid snapshots.
    *
    * @param file - The ZIP file to upload.
    * @returns A promise resolving to the upload response with snapshots.
@@ -112,9 +92,6 @@ export const uploadApi = {
 
   /**
    * Discards a specific snapshot from the staging area.
-   *
-   * Removes the snapshot from the database and deletes its associated
-   * files from the upload directory.
    *
    * @param snapshotId - The ID of the snapshot to discard.
    * @returns A promise that resolves when the snapshot is deleted.
@@ -137,18 +114,12 @@ export const uploadApi = {
 
 /**
  * API client for image operations.
- *
- * Handles image URL generation for both upload snapshots and meal images.
  */
 export const imagesApi = {
   /**
    * Generates the full URL for an image.
    *
-   * Converts a relative image path to a complete URL that can be used
-   * in img src attributes. Works with images from both the uploads/
-   * directory (temporary snapshots) and meal_images/ directory (permanent meals).
-   *
-   * @param path - The relative path to the image (e.g., "meal_images/patient_id/date/before_rgb.jpg").
+   * @param path - The relative path to the image.
    * @returns The complete URL to fetch the image.
    */
   getImageUrl(path: string): string {
@@ -162,8 +133,6 @@ export const imagesApi = {
 
 /**
  * API client for food operations.
- *
- * Handles retrieval and searching of foods from the nutrition dataset.
  */
 export const foodsApi = {
   /**
@@ -198,8 +167,6 @@ export const foodsApi = {
 
 /**
  * API client for menu item operations.
- *
- * Handles retrieval and creation of menu items.
  */
 export const menuApi = {
   /**
@@ -276,16 +243,10 @@ export const menuApi = {
 
 /**
  * API client for meal operations.
- *
- * Handles retrieval, creation, and deletion of meal records.
  */
 export const mealsApi = {
   /**
    * Retrieves all meals organized in a hierarchical structure.
-   *
-   * The backend returns a flat list of meals, which this function
-   * transforms into a nested structure organized by patient ID,
-   * date, and time range for efficient tree view rendering.
    *
    * @returns A promise resolving to the hierarchical meals data.
    * @throws {ApiError} If the request fails.
@@ -315,11 +276,6 @@ export const mealsApi = {
 
   /**
    * Creates a new meal from matched snapshots.
-   *
-   * Pairs two snapshots (before and after eating) with a menu item
-   * to create a complete meal record. The snapshots are validated
-   * to ensure they have the same patient ID and date, and that the
-   * before time precedes the after time.
    *
    * @param beforeSnapshotId - ID of the pre-meal snapshot.
    * @param afterSnapshotId - ID of the post-meal snapshot.
@@ -393,8 +349,6 @@ export const mealsApi = {
 
 /**
  * API client for patient operations.
- *
- * Handles retrieval of patient records.
  */
 export const patientsApi = {
   /**
@@ -466,7 +420,6 @@ export const patientsApi = {
 /**
  * API client for analysis-related operations.
  *
- * Handles SAM3 model inference for meal analysis.
  */
 export const analysisApi = {
   /**
@@ -567,9 +520,6 @@ export const analysisApi = {
 
   /**
    * Runs SAM3 assisted segmentation using points.
-   *
-   * Points should be in pixel coordinates relative to the image's natural dimensions.
-   * They are sent directly to the backend without normalization.
    *
    * @param beforeRgbPath - Path to the before-meal RGB image.
    * @param afterRgbPath - Path to the after-meal RGB image.

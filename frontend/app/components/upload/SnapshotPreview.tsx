@@ -1,10 +1,3 @@
-/**
- * @fileoverview Preview component for displaying a selected snapshot.
- *
- * Shows a snapshot's image and metadata in a compact format, used in
- * the matching panel to display before and after snapshot selections.
- */
-
 'use client';
 
 import type { Snapshot } from '../../lib/types';
@@ -34,25 +27,8 @@ interface SnapshotPreviewProps {
 /**
  * Renders a preview of a selected snapshot in the matching panel.
  *
- * Displays either:
- * - A placeholder prompting the user to select a snapshot
- * - The snapshot's image, patient ID, date, time, and weight
- *
- * The border color changes based on whether a snapshot is selected,
- * providing visual feedback about the selection state.
- *
  * @param props - The component props.
  * @returns A snapshot preview element.
- *
- * @example
- * ```tsx
- * <SnapshotPreview
- *   label="Before (Pre-meal)"
- *   number={1}
- *   snapshot={beforeSnapshot}
- *   color="var(--accent-primary)"
- * />
- * ```
  */
 export function SnapshotPreview({ label, number, snapshot, color }: SnapshotPreviewProps) {
   return (

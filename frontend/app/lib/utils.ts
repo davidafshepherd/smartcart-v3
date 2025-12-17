@@ -1,10 +1,3 @@
-/**
- * @fileoverview Shared utility functions for the SmartCart frontend.
- *
- * This module contains common helper functions used across multiple
- * components to avoid code duplication.
- */
-
 // =============================================================================
 // Color Utilities
 // =============================================================================
@@ -45,12 +38,6 @@ export function getMaskColor(index: number): string {
  *
  * @param shortName - The food's short name (e.g., "apple pie").
  * @returns The formatted name (e.g., "Apple Pie").
- *
- * @example
- * ```ts
- * formatFoodName("chicken breast") // "Chicken Breast"
- * formatFoodName("RICE") // "Rice"
- * ```
  */
 export function formatFoodName(shortName: string): string {
   return shortName
@@ -66,19 +53,8 @@ export function formatFoodName(shortName: string): string {
 /**
  * Merges multiple binary masks into a single mask using OR operation.
  *
- * Each mask is a 2D array where 1 indicates a pixel belongs to the mask
- * and 0 indicates it does not. The merged result contains a 1 at any
- * position where at least one input mask has a 1.
- *
  * @param masks - Array of 2D binary masks to merge.
  * @returns The merged mask, or null if the input array is empty.
- *
- * @example
- * ```ts
- * const mask1 = [[1, 0], [0, 0]];
- * const mask2 = [[0, 1], [0, 0]];
- * mergeMasks([mask1, mask2]); // [[1, 1], [0, 0]]
- * ```
  */
 export function mergeMasks(masks: number[][][]): number[][] | null {
   if (masks.length === 0) return null;
@@ -122,4 +98,3 @@ export function formatNumber(
   if (value === null || value === undefined) return 'N/A';
   return value.toFixed(decimals);
 }
-

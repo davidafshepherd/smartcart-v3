@@ -1,14 +1,6 @@
-/**
- * @fileoverview Point marker component for displaying clickable points on images.
- *
- * Renders points with foreground/background labels and handles click interactions
- * for point deletion.
- */
-
 'use client';
 
-import React from 'react';
-import type { Point } from '../../lib/types';
+import type { Point } from '../../../lib/types';
 
 // =============================================================================
 // Types
@@ -42,10 +34,6 @@ interface PointMarkerProps {
 
 /**
  * Renders a single point marker on an image.
- *
- * The point is positioned based on its pixel coordinates, scaled to match
- * the displayed image size. Foreground points are green, background points
- * are red. Points can be clicked to delete them.
  *
  * @param props - The component props.
  * @returns The point marker element.
@@ -87,4 +75,3 @@ export function PointMarker({
     />
   );
 }
-

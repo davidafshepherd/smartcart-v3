@@ -1,11 +1,3 @@
-/**
- * @fileoverview Main upload section component for the meal creation workflow.
- *
- * This is the primary view for uploading ZIP files, viewing snapshots,
- * matching before/after pairs, and creating meals. It orchestrates the
- * entire upload and meal creation flow.
- */
-
 'use client';
 
 import { useCallback, useState, useEffect } from 'react';
@@ -25,23 +17,7 @@ import { Spinner } from './ui/Spinner';
 /**
  * Renders the upload section of the application.
  *
- * This component manages:
- * - ZIP file uploads containing meal snapshots
- * - Display of uploaded snapshots in a grid
- * - Selection of before/after snapshot pairs
- * - Menu item selection and creation
- * - Meal creation from matched snapshots
- *
- * State is managed through a combination of Zustand (for snapshot/selection
- * state and messages) and local React state (for UI-specific concerns).
- *
  * @returns The upload section element.
- *
- * @example
- * ```tsx
- * // Used in the main page
- * <UploadSection />
- * ```
  */
 export default function UploadSection() {
   // ===========================================================================
@@ -79,9 +55,6 @@ export default function UploadSection() {
 
   /**
    * Resets UI state and fetches menu items on component mount.
-   *
-   * Clears any lingering selections and messages from previous sessions,
-   * and loads menu items for the meal creation workflow.
    */
   useEffect(() => {
     // Clear selections and messages when switching to this section
@@ -102,9 +75,6 @@ export default function UploadSection() {
 
   /**
    * Handles ZIP file upload.
-   *
-   * Uploads the file to the backend, adds the resulting snapshots to
-   * the store, and displays appropriate success/error messages.
    *
    * @param file - The ZIP file to upload.
    */
@@ -137,9 +107,6 @@ export default function UploadSection() {
   /**
    * Handles discarding a snapshot.
    *
-   * Deletes the snapshot from the backend and removes it from the store.
-   * Prevents double-clicks by tracking which snapshots are being discarded.
-   *
    * @param snapshotId - The ID of the snapshot to discard.
    */
   const handleDiscard = async (snapshotId: number) => {
@@ -167,8 +134,6 @@ export default function UploadSection() {
   /**
    * Handles creation of a new menu item.
    *
-   * Adds the new item to the local list and auto-selects it.
-   *
    * @param newItem - The newly created menu item.
    */
   const handleMenuItemCreated = (newItem: MenuItem) => {
@@ -178,9 +143,6 @@ export default function UploadSection() {
 
   /**
    * Handles saving a meal from matched snapshots.
-   *
-   * Creates a meal from the selected before/after snapshots and menu
-   * item, then removes the used snapshots from the store.
    */
   const handleSaveMeal = async () => {
     if (selectedIds.length !== 2 || !selectedMenuItemId) return;

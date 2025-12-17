@@ -1,10 +1,3 @@
-/**
- * @fileoverview A loading spinner component.
- *
- * Provides visual feedback during asynchronous operations such as file
- * uploads, API requests, or data loading.
- */
-
 'use client';
 
 /** Props for the Spinner component. */
@@ -27,17 +20,8 @@ const SIZE_CLASSES = {
 /**
  * Renders an animated loading spinner.
  *
- * Uses CSS animation for smooth rotation. The spinner is implemented as an
- * SVG with a partially visible circle that rotates continuously.
- *
  * @param props - The component props.
  * @returns An animated spinner element.
- *
- * @example
- * ```tsx
- * <Spinner />
- * <Spinner size="lg" color="var(--danger)" />
- * ```
  */
 export function Spinner({ 
   size = 'md', 

@@ -1,10 +1,3 @@
-/**
- * @fileoverview Input mode selector component for analysis.
- *
- * Allows users to choose between automated and assisted segmentation methods
- * before starting the meal analysis workflow.
- */
-
 'use client';
 
 // =============================================================================
@@ -16,11 +9,7 @@ type InputMode = 'automated' | 'assisted';
 
 /** Props for the InputModeSelector component. */
 interface InputModeSelectorProps {
-  /**
-   * Callback invoked when a mode is selected.
-   *
-   * @param mode - The selected segmentation mode.
-   */
+  /** Callback invoked when a mode is selected. */
   onSelect: (mode: InputMode) => void;
 }
 
@@ -30,10 +19,6 @@ interface InputModeSelectorProps {
 
 /**
  * Renders a mode selection interface for choosing segmentation method.
- *
- * Presents two options:
- * - Automated: SAM3 automatically segments all foods at once
- * - Assisted: User guides SAM3 with text prompts or point clicks
  *
  * @param props - The component props.
  * @returns The mode selector element.

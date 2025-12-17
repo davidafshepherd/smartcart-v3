@@ -1,11 +1,3 @@
-/**
- * @fileoverview Root layout component for the Next.js application.
- *
- * Defines the HTML structure, metadata, and global font configuration
- * for all pages in the application. This layout wraps all page content
- * and provides consistent styling across the app.
- */
-
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -52,9 +44,6 @@ export const metadata: Metadata = {
 
 /**
  * Root layout component.
- *
- * Wraps all page content with the HTML structure, applies font classes,
- * and includes global CSS. This component is rendered on the server.
  *
  * @param props - The component props.
  * @param props.children - The page content to render.

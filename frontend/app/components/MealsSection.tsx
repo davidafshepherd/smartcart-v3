@@ -1,11 +1,3 @@
-/**
- * @fileoverview Main meals section component for viewing saved meals.
- *
- * Displays a hierarchical tree view of all saved meals and a detail
- * panel for the selected meal. Provides meal browsing and deletion
- * functionality.
- */
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -23,20 +15,7 @@ import { MenuPanel } from './meals/MenuPanel';
 /**
  * Renders the meals section of the application.
  *
- * This component provides a two-panel interface:
- * - Left panel: Tree view for browsing meals by patient/date/time
- * - Right panel: Detailed view of the selected meal
- *
- * Meals are fetched from the API on mount and when changes occur
- * (e.g., after deletion).
- *
  * @returns The meals section element.
- *
- * @example
- * ```tsx
- * // Used in the main page
- * <MealsSection />
- * ```
  */
 export default function MealsSection() {
   // ---------------------------------------------------------------------------
@@ -92,9 +71,6 @@ export default function MealsSection() {
 
   /**
    * Fetches all meals from the API.
-   *
-   * The API returns meals organized in a hierarchical structure
-   * suitable for the tree view component.
    */
   const fetchMeals = async () => {
     try {
@@ -146,9 +122,6 @@ export default function MealsSection() {
   /**
    * Handles meal deletion.
    *
-   * Deletes the meal from the backend, clears the selection, and
-   * refreshes the meal list. Prevents double-clicks.
-   *
    * @param mealId - The ID of the meal to delete.
    */
   const handleDeleteMeal = async (mealId: number) => {
@@ -169,8 +142,6 @@ export default function MealsSection() {
 
   /**
    * Handles meal updates.
-   *
-   * Updates the meal's patient and/or menu item, then refreshes the data.
    *
    * @param mealId - The ID of the meal to update.
    * @param patientId - Optional new patient ID.
@@ -205,10 +176,6 @@ export default function MealsSection() {
 
   /**
    * Handles data changes from child components (e.g., PatientsPanel).
-   *
-   * Refreshes all data. Updates the selected meal with fresh data if it
-   * still exists (e.g., patient ID changed), or clears it if deleted.
-   * Also preserves tree expansion state when patient IDs change.
    *
    * @param patientIdChange - Optional info about a patient ID change.
    */
@@ -359,8 +326,6 @@ export default function MealsSection() {
 
 /**
  * Renders an empty state when no meal is selected.
- *
- * Prompts the user to select a meal from the tree view.
  */
 function EmptySelection() {
   return (

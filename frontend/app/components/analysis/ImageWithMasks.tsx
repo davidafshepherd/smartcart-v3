@@ -1,10 +1,3 @@
-/**
- * @fileoverview Image component with mask overlays (simplified version).
- *
- * Displays an image with segmentation mask overlays. Used in automated
- * segmentation mode where masks are generated automatically.
- */
-
 'use client';
 
 import React, { useState, useCallback } from 'react';
@@ -45,9 +38,6 @@ interface ImageWithMasksProps {
 
 /**
  * Renders an image with mask overlays.
- *
- * Simpler version than ImageWithMasksAndPoints, used when only masks
- * need to be displayed without point interaction.
  *
  * @param props - The component props.
  * @returns The image with overlays element.
@@ -122,4 +112,3 @@ export function ImageWithMasks({
     </div>
   );
 }
-

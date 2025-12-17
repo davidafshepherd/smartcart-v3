@@ -1,10 +1,3 @@
-/**
- * @fileoverview Menu item management panel component.
- *
- * Displays a list of menu items with functionality to create, edit,
- * and delete menu items. Designed to be displayed below the patients panel.
- */
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -31,12 +24,6 @@ interface MenuPanelProps {
 
 /**
  * Renders a panel for managing menu items.
- *
- * Features:
- * - View all existing menu items
- * - Create a new menu item with name and foods from nutrition database
- * - Edit an existing menu item
- * - Delete a menu item (if not in use)
  *
  * @param props - The component props.
  * @returns The menu panel element.

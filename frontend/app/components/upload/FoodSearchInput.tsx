@@ -1,10 +1,3 @@
-/**
- * @fileoverview Food search input component with autocomplete dropdown.
- *
- * Provides a searchable input field for finding foods from the nutrition database
- * with a dropdown showing matching results.
- */
-
 'use client';
 
 import React, { useRef, useEffect } from 'react';
@@ -43,9 +36,6 @@ interface FoodSearchInputProps {
 
 /**
  * Renders a food search input with autocomplete dropdown.
- *
- * The dropdown is rendered via portal to escape modal boundaries and
- * is positioned dynamically based on the input field's location.
  *
  * @param props - The component props.
  * @returns The search input element.
@@ -149,4 +139,3 @@ export function FoodSearchInput({
     </>
   );
 }
-

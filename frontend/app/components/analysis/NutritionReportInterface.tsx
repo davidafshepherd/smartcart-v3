@@ -1,11 +1,3 @@
-/**
- * @fileoverview Nutrition Report interface component for meal analysis.
- *
- * Displays the computed nutrition report with tabbed navigation between
- * total meal nutrition and individual food breakdowns. Provides a save
- * button for persisting the report.
- */
-
 'use client';
 
 import { useState } from 'react';
@@ -32,12 +24,6 @@ interface NutritionReportInterfaceProps {
 
 /**
  * Renders the nutrition report interface.
- *
- * Displays nutrition data in a tabbed layout:
- * - Total Nutrition: Combined nutrition for all foods
- * - Individual Food tabs: Breakdown per food item
- *
- * Each tab shows macronutrients, minerals, and vitamins in organized sections.
  *
  * @param props - The component props.
  * @returns The nutrition report interface element.

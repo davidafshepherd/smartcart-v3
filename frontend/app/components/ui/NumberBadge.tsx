@@ -1,11 +1,3 @@
-/**
- * @fileoverview A circular badge component displaying a number.
- *
- * Used throughout the application to indicate selection order (e.g., "1" for
- * the first selected snapshot, "2" for the second) or to label items in a
- * sequence.
- */
-
 'use client';
 
 /** Props for the NumberBadge component. */
@@ -23,12 +15,6 @@ interface NumberBadgeProps {
  *
  * @param props - The component props.
  * @returns A styled circular badge element.
- *
- * @example
- * ```tsx
- * <NumberBadge number={1} color="var(--accent-primary)" />
- * <NumberBadge number={2} color="var(--accent-secondary)" size="sm" />
- * ```
  */
 export function NumberBadge({ number, color, size = 'md' }: NumberBadgeProps) {
   const sizeClasses = size === 'sm' 

@@ -1,11 +1,3 @@
-/**
- * @fileoverview Nutrition section component for viewing nutrition information.
- *
- * This section provides tools for viewing and analyzing nutrition data
- * across patients and time periods. Currently a placeholder for future
- * functionality.
- */
-
 'use client';
 
 // =============================================================================
@@ -14,9 +6,6 @@
 
 /**
  * Renders the nutrition section of the application.
- *
- * Placeholder component for future nutrition tracking and reporting
- * functionality. Will display aggregated nutrition data and trends.
  *
  * @returns The nutrition section element.
  */

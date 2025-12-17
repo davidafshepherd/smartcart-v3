@@ -1,16 +1,8 @@
-/**
- * @fileoverview Image component with mask overlays and point markers.
- *
- * Displays an image with segmentation mask overlays and interactive point markers.
- * Used in assisted segmentation mode where users can click to add/remove points
- * and view generated masks.
- */
-
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import type { FoodMask, Point } from '../../lib/types';
-import { MaskOverlay } from './MaskOverlay';
+import type { FoodMask, Point } from '../../../lib/types';
+import { MaskOverlay } from '../MaskOverlay';
 import { PointMarker } from './PointMarker';
 
 /** Image dimensions for rendering overlays and scaling points. */
@@ -71,10 +63,6 @@ interface ImageWithMasksAndPointsProps {
 
 /**
  * Renders an image with mask overlays and interactive point markers.
- *
- * Supports two modes:
- * - Points mode: Users can click to add points, points are displayed and clickable
- * - Text mode: Users can click masks to discard them, cursor changes on hover
  *
  * @param props - The component props.
  * @returns The image with overlays element.
@@ -200,4 +188,3 @@ export function ImageWithMasksAndPoints({
     </div>
   );
 }
-

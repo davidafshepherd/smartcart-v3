@@ -1,13 +1,5 @@
-/**
- * @fileoverview Mask overlay component for rendering segmentation masks on images.
- *
- * Renders binary masks as semi-transparent colored overlays on top of images.
- * Used by both automated and assisted segmentation interfaces.
- */
-
 'use client';
 
-import React from 'react';
 import type { FoodMask } from '../../lib/types';
 import { getFoodColor, getMaskColor } from '../../lib/utils';
 
@@ -31,9 +23,6 @@ interface MaskOverlayProps {
 
 /**
  * Renders mask overlays on top of an image.
- *
- * Creates canvas elements for each mask and renders them as semi-transparent
- * colored overlays. Masks are rendered at the same dimensions as the image.
  *
  * @param props - The component props.
  * @returns Array of mask overlay image elements, or null if dimensions are invalid.
@@ -99,4 +88,3 @@ export function MaskOverlay({ masks, imageWidth, imageHeight }: MaskOverlayProps
     </>
   );
 }
-

@@ -1,10 +1,3 @@
-/**
- * @fileoverview Analysis section component for meal analysis.
- *
- * This section provides tools for analyzing meal data using SAM3 models.
- * Users can select meals and use either automated or assisted segmentation.
- */
-
 'use client';
 
 import { useEffect, useState } from 'react';

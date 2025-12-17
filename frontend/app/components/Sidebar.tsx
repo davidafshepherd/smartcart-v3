@@ -1,14 +1,3 @@
-/**
- * @fileoverview Application sidebar component for navigation.
- *
- * Provides a responsive sidebar with branding and navigation between the
- * main sections of the application (Upload Snapshots, View Meals,
- * Analyse Meals, and View Nutrition).
- *
- * On desktop (lg+), the sidebar is fixed. On mobile/tablet, it becomes
- * a slide-out drawer with an overlay backdrop.
- */
-
 'use client';
 
 // =============================================================================
@@ -22,11 +11,7 @@ type Section = 'upload' | 'meals' | 'analysis' | 'nutrition';
 interface SidebarProps {
   /** The currently active section. */
   activeSection: Section;
-  /**
-   * Callback invoked when a section is selected.
-   *
-   * @param section - The newly selected section.
-   */
+  /** Callback invoked when a section is selected. */
   onSectionChange: (section: Section) => void;
   /** Whether the sidebar is open (mobile only). */
   isOpen?: boolean;
@@ -41,27 +26,8 @@ interface SidebarProps {
 /**
  * Renders the application sidebar.
  *
- * The sidebar includes:
- * - Application logo and title
- * - Navigation buttons for each section
- * - Close button on mobile
- *
- * The active section is visually highlighted. On desktop, the sidebar
- * is fixed to the left side of the viewport. On mobile, it slides in
- * from the left with an overlay backdrop.
- *
  * @param props - The component props.
  * @returns The sidebar element.
- *
- * @example
- * ```tsx
- * <Sidebar
- *   activeSection={activeSection}
- *   onSectionChange={setActiveSection}
- *   isOpen={isSidebarOpen}
- *   onClose={() => setIsSidebarOpen(false)}
- * />
- * ```
  */
 export default function Sidebar({
   activeSection,

@@ -1,10 +1,3 @@
-/**
- * @fileoverview Patient management panel component.
- *
- * Displays a list of patients with functionality to create, edit,
- * and delete patients. Designed to be displayed below the meals tree view.
- */
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -34,12 +27,6 @@ interface PatientsPanelProps {
 
 /**
  * Renders a panel for managing patients.
- *
- * Features:
- * - View all existing patients
- * - Create a new patient with a specified ID
- * - Edit an existing patient's ID
- * - Delete a patient (with confirmation)
  *
  * @param props - The component props.
  * @returns The patients panel element.

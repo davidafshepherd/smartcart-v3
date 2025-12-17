@@ -1,10 +1,3 @@
-/**
- * @fileoverview Menu item selector component with modal creation.
- *
- * Provides a dropdown for selecting existing menu items and a button
- * to open a modal for creating new ones.
- */
-
 'use client';
 
 import { useState } from 'react';
@@ -21,17 +14,9 @@ interface MenuItemSelectorProps {
   menuItems: MenuItem[];
   /** Currently selected menu item ID, or null. */
   selectedId: number | null;
-  /**
-   * Callback invoked when a menu item is selected.
-   *
-   * @param id - The selected menu item ID, or null to clear.
-   */
+  /** Callback invoked when a menu item is selected. */
   onSelect: (id: number | null) => void;
-  /**
-   * Callback invoked when a new menu item is successfully created.
-   *
-   * @param item - The newly created menu item.
-   */
+  /** Callback invoked when a new menu item is successfully created. */
   onItemCreated: (item: MenuItem) => void;
   /** Optional additional CSS classes. */
   className?: string;
@@ -44,24 +29,8 @@ interface MenuItemSelectorProps {
 /**
  * Renders a menu item selector with modal creation capability.
  *
- * The component shows a dropdown list of existing menu items with a
- * "New" button that opens a modal dialog for creating new items.
- *
- * When a new item is created, it is automatically selected and the
- * parent component is notified via the onItemCreated callback.
- *
  * @param props - The component props.
  * @returns The menu item selector element.
- *
- * @example
- * ```tsx
- * <MenuItemSelector
- *   menuItems={menuItems}
- *   selectedId={selectedMenuItemId}
- *   onSelect={setSelectedMenuItemId}
- *   onItemCreated={handleMenuItemCreated}
- * />
- * ```
  */
 export function MenuItemSelector({
   menuItems,

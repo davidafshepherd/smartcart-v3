@@ -1,33 +1,3 @@
-/**
- * @fileoverview Zustand store for upload state management.
- *
- * Manages the state of uploaded meal snapshots during the meal creation
- * workflow. This includes tracking uploaded snapshots, invalid entries,
- * user selections, upload progress, and feedback messages.
- *
- * The store uses Zustand for lightweight, hook-based state management
- * without the boilerplate of Redux.
- *
- * @example
- * ```typescript
- * import { useUploadStore } from '../store/uploadStore';
- *
- * function MyComponent() {
- *   const { snapshots, toggleSelection } = useUploadStore();
- *
- *   return (
- *     <div>
- *       {snapshots.map((s) => (
- *         <button key={s.id} onClick={() => toggleSelection(s.id)}>
- *           {s.folder}
- *         </button>
- *       ))}
- *     </div>
- *   );
- * }
- * ```
- */
-
 import { create } from 'zustand';
 import type { Snapshot, InvalidSnapshot } from '../lib/types';
 
@@ -37,9 +7,6 @@ import type { Snapshot, InvalidSnapshot } from '../lib/types';
 
 /**
  * State shape for the upload store.
- *
- * Contains all data related to the current upload session, including
- * snapshots awaiting meal creation, user selections, and feedback messages.
  */
 interface UploadState {
   /** List of successfully uploaded snapshots awaiting meal creation. */
@@ -58,16 +25,10 @@ interface UploadState {
 
 /**
  * Actions available on the upload store.
- *
- * These methods modify the store state and should be used via the
- * useUploadStore hook.
  */
 interface UploadActions {
   /**
    * Adds newly uploaded snapshots to the store.
-   *
-   * Appends valid snapshots to existing ones, but replaces invalid
-   * snapshots (only shows errors from the most recent upload).
    *
    * @param snapshots - Valid snapshots from the upload.
    * @param invalidSnapshots - Invalid snapshots that failed validation.
@@ -76,8 +37,6 @@ interface UploadActions {
 
   /**
    * Removes a snapshot from the store.
-   *
-   * Also clears the snapshot from selections if it was selected.
    *
    * @param id - The ID of the snapshot to remove.
    */
@@ -93,10 +52,6 @@ interface UploadActions {
 
   /**
    * Toggles selection state of a snapshot.
-   *
-   * If already selected, deselects it. If not selected and fewer than
-   * 2 snapshots are selected, adds it to selections. If 2 are already
-   * selected, replaces the oldest selection with the new one.
    *
    * @param id - The ID of the snapshot to toggle.
    */
@@ -142,9 +97,6 @@ const MAX_SELECTIONS = 2;
 
 /**
  * Zustand store for managing upload-related state.
- *
- * Provides a centralized state container for the upload workflow,
- * accessible via the useUploadStore hook.
  *
  * @returns Combined state and actions object.
  */

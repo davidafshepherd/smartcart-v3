@@ -1,11 +1,3 @@
-/**
- * @fileoverview File upload zone component for ZIP file selection.
- *
- * Provides a drag-and-drop style interface for selecting ZIP files
- * containing meal snapshots. Adapts its appearance based on whether
- * snapshots already exist (compact mode) or not (full mode).
- */
-
 'use client';
 
 import { Spinner } from '../ui/Spinner';
@@ -16,11 +8,7 @@ import { Spinner } from '../ui/Spinner';
 
 /** Props for the UploadZone component. */
 interface UploadZoneProps {
-  /**
-   * Callback invoked when a file is selected.
-   *
-   * @param file - The selected ZIP file.
-   */
+  /** Callback invoked when a file is selected. */
   onFileSelect: (file: File) => void;
   /** Whether a file upload is currently in progress. */
   isUploading: boolean;
@@ -37,25 +25,8 @@ interface UploadZoneProps {
 /**
  * Renders a file upload zone for ZIP file selection.
  *
- * The component has two display modes:
- * - **Full mode**: Large dashed border area with upload icon, shown when
- *   no snapshots exist yet.
- * - **Compact mode**: Small inline button, shown when snapshots already
- *   exist to allow adding more without taking up much space.
- *
- * During upload, displays a spinner and disables further interaction.
- *
  * @param props - The component props.
  * @returns The upload zone element.
- *
- * @example
- * ```tsx
- * <UploadZone
- *   onFileSelect={handleUpload}
- *   isUploading={isUploading}
- *   hasExistingSnapshots={snapshots.length > 0}
- * />
- * ```
  */
 export function UploadZone({ 
   onFileSelect, 

@@ -1,11 +1,3 @@
-/**
- * @fileoverview Detailed view component for a single meal.
- *
- * Displays comprehensive information about a meal including menu item,
- * weight data, and before/after images. Provides functionality to
- * edit and delete the meal.
- */
-
 'use client';
 
 import { useState } from 'react';
@@ -76,27 +68,8 @@ interface ImageCardProps {
 /**
  * Renders a detailed view of a meal.
  *
- * The detail view includes:
- * - Header with patient ID, date, time range, and delete button
- * - Editable patient and menu item selection
- * - Weight comparison (before, after, consumed)
- * - Before and after images (RGB and depth)
- *
  * @param props - The component props.
  * @returns The meal detail element.
- *
- * @example
- * ```tsx
- * <MealDetail
- *   meal={selectedMeal}
- *   onDelete={() => handleDeleteMeal(selectedMeal.id)}
- *   onUpdate={(patientId, menuItemId) => handleUpdateMeal(selectedMeal.id, patientId, menuItemId)}
- *   isDeleting={isDeleting}
- *   isUpdating={isUpdating}
- *   patients={patients}
- *   menuItems={menuItems}
- * />
- * ```
  */
 export function MealDetail({
   meal,

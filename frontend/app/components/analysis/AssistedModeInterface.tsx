@@ -1,24 +1,12 @@
-/**
- * @fileoverview Assisted mode interface component for SAM3 segmentation.
- *
- * Provides an interactive workflow for segmenting foods one at a time:
- * 1. Work on current food (sequential, no skipping)
- * 2. Choose input type (text prompt or points)
- * 3. Provide input and run SAM3
- * 4. View masks on images, click to discard
- * 5. Merge masks and move to next food (must have at least 1 before mask)
- * 6. Compute volume when all foods are complete
- */
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Food, Point, FoodMask } from '../../lib/types';
 import { analysisApi, ApiError } from '../../lib/api';
 import { getFoodColor, formatFoodName, mergeMasks } from '../../lib/utils';
-import { ProgressBar } from './ProgressBar';
-import { AssistedControls } from './AssistedControls';
-import { ImageWithMasksAndPoints } from './ImageWithMasksAndPoints';
+import { ProgressBar } from './assisted/ProgressBar';
+import { AssistedControls } from './assisted/AssistedControls';
+import { ImageWithMasksAndPoints } from './assisted/ImageWithMasksAndPoints';
 
 // =============================================================================
 // Types
@@ -607,7 +595,7 @@ export function AssistedModeInterface({
             ) : isLastFood ? (
               'Compute Nutrients'
             ) : (
-              'Save Masks'
+              'Save Food Masks'
             )}
           </button>
         </div>

@@ -1,10 +1,3 @@
-/**
- * @fileoverview Modal component for creating new menu items.
- *
- * Provides a popup dialog for entering menu item details including
- * name and selecting foods/ingredients from the nutrition dataset.
- */
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -24,11 +17,7 @@ interface CreateMenuItemModalProps {
   isOpen: boolean;
   /** Callback invoked when the modal should close. */
   onClose: () => void;
-  /**
-   * Callback invoked when a menu item is successfully created.
-   *
-   * @param item - The newly created menu item.
-   */
+  /** Callback invoked when a menu item is successfully created. */
   onCreated: (item: MenuItem) => void;
 }
 
@@ -38,13 +27,6 @@ interface CreateMenuItemModalProps {
 
 /**
  * Renders a modal dialog for creating new menu items.
- *
- * The modal includes:
- * - Name input field
- * - Food search with autocomplete dropdown
- * - Selected foods display with remove buttons
- * - Create and Cancel buttons
- * - Error display for API failures
  *
  * @param props - The component props.
  * @returns The modal element, or null if not open.

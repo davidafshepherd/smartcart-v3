@@ -1,11 +1,3 @@
-/**
- * @fileoverview Hierarchical tree view component for browsing meals.
- *
- * Displays meals organized by patient, date, and time range in an
- * expandable/collapsible tree structure. Allows selection of individual
- * meals for detailed viewing.
- */
-
 'use client';
 
 import type { MealsData, MealData } from '../../lib/types';
@@ -20,11 +12,7 @@ interface MealsPanelProps {
   mealsData: MealsData;
   /** ID of the currently selected meal, or null. */
   selectedMealId: number | null;
-  /**
-   * Callback invoked when a meal is selected.
-   *
-   * @param meal - The selected meal data.
-   */
+  /** Callback invoked when a meal is selected. */
   onMealSelect: (meal: MealData) => void;
   /** Set of expanded patient IDs (controlled). */
   expandedPatients: Set<string>;
@@ -83,28 +71,8 @@ interface DateNodeProps {
 /**
  * Renders a hierarchical tree view of all meals.
  *
- * The tree structure is:
- * - Patient (expandable)
- *   - Date (expandable)
- *     - Time Range (selectable)
- *
- * Clicking on a time range selects that meal for detailed viewing.
- *
  * @param props - The component props.
  * @returns The meals panel element.
- *
- * @example
- * ```tsx
- * <MealsPanel
- *   mealsData={mealsData}
- *   selectedMealId={selectedMeal?.id ?? null}
- *   onMealSelect={setSelectedMeal}
- *   expandedPatients={expandedPatients}
- *   expandedDates={expandedDates}
- *   onTogglePatient={togglePatient}
- *   onToggleDate={toggleDate}
- * />
- * ```
  */
 export function MealsPanel({
   mealsData,

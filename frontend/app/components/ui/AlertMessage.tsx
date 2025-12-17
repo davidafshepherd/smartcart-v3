@@ -1,10 +1,3 @@
-/**
- * @fileoverview Alert message component for displaying feedback to users.
- *
- * Provides styled alert boxes for error, success, and warning messages.
- * Supports an optional dismiss button for user-controlled dismissal.
- */
-
 'use client';
 
 // =============================================================================
@@ -33,8 +26,6 @@ interface AlertMessageProps {
 /**
  * Style mappings for each alert type.
  *
- * Each type has a distinct color scheme with refined, modern colors
- * that provide clear visual differentiation.
  */
 const ALERT_STYLES: Record<AlertType, {
   background: string;
@@ -69,21 +60,8 @@ const ALERT_STYLES: Record<AlertType, {
 /**
  * Renders a styled alert message box with optional dismiss button.
  *
- * The alert's appearance (colors, border) is determined by its type.
- * When onDismiss is provided, a close button appears that allows the
- * user to dismiss the alert manually.
- *
  * @param props - The component props.
  * @returns A styled alert element.
- *
- * @example
- * ```tsx
- * // Auto-dismiss controlled by parent
- * <AlertMessage type="error" message="Failed to save meal" onDismiss={() => setError(null)} />
- *
- * // Static alert without dismiss
- * <AlertMessage type="warning" message="Some files were skipped" />
- * ```
  */
 export function AlertMessage({ type, message, onDismiss, className = '' }: AlertMessageProps) {
   const style = ALERT_STYLES[type];

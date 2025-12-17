@@ -1,11 +1,3 @@
-/**
- * @fileoverview Card component for displaying an individual meal snapshot.
- *
- * Renders a snapshot's image, metadata (patient, date, time, weight),
- * and provides selection and discard functionality. Used in the snapshot
- * grid on the upload page.
- */
-
 'use client';
 
 import type { Snapshot } from '../../lib/types';
@@ -41,32 +33,8 @@ interface SnapshotCardProps {
 /**
  * Renders a card displaying a meal snapshot with selection capabilities.
  *
- * The card displays:
- * - RGB image thumbnail
- * - Selection badge (1 or 2) when selected
- * - Patient ID and weight
- * - Date and time
- * - Discard button
- *
- * Visual feedback includes border color changes and a selection badge
- * to indicate the before/after order. The discard button shows loading
- * state when the snapshot is being discarded.
- *
  * @param props - The component props.
  * @returns A snapshot card element.
- *
- * @example
- * ```tsx
- * <SnapshotCard
- *   snapshot={snapshot}
- *   isSelected={selectedIds.includes(snapshot.id)}
- *   selectionIndex={selectedIds.indexOf(snapshot.id)}
- *   animationDelay={index * 50}
- *   onSelect={() => toggleSelection(snapshot.id)}
- *   onDiscard={() => handleDiscard(snapshot.id)}
- *   isDiscarding={discardingIds.has(snapshot.id)}
- * />
- * ```
  */
 export function SnapshotCard({
   snapshot,

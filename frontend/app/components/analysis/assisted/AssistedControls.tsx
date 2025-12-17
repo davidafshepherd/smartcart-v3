@@ -1,13 +1,4 @@
-/**
- * @fileoverview Control panel component for assisted segmentation mode.
- *
- * Provides controls for selecting input type (text/points), setting confidence
- * threshold, managing point labels, and entering text prompts.
- */
-
 'use client';
-
-import React from 'react';
 
 // =============================================================================
 // Types
@@ -50,10 +41,6 @@ interface AssistedControlsProps {
 
 /**
  * Renders the control panel for assisted segmentation.
- *
- * Displays different controls based on the selected input type:
- * - Text mode: Confidence threshold slider and text input
- * - Points mode: Point label selector and clear button
  *
  * @param props - The component props.
  * @returns The controls element.
@@ -217,4 +204,3 @@ export function AssistedControls({
     </div>
   );
 }
-

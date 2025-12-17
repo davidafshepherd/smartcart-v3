@@ -1,13 +1,5 @@
-/**
- * @fileoverview Selected foods list component.
- *
- * Displays a list of selected foods with remove buttons. Used in menu item
- * creation and editing workflows.
- */
-
 'use client';
 
-import React from 'react';
 import type { Food } from '../../lib/types';
 
 // =============================================================================
@@ -30,9 +22,6 @@ interface SelectedFoodsListProps {
 
 /**
  * Renders a list of selected foods with remove buttons.
- *
- * Each food displays its name and nutritional information (kcal/100g).
- * Users can click the remove button to deselect a food.
  *
  * @param props - The component props.
  * @returns The selected foods list element.
@@ -93,4 +82,3 @@ export function SelectedFoodsList({
     </div>
   );
 }
-

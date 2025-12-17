@@ -1,14 +1,7 @@
-/**
- * @fileoverview Progress bar component for tracking food segmentation progress.
- *
- * Displays a visual progress indicator showing which foods have been completed
- * and which is currently being worked on.
- */
-
 'use client';
 
-import type { Food } from '../../lib/types';
-import { getFoodColor } from '../../lib/utils';
+import type { Food } from '../../../lib/types';
+import { getFoodColor } from '../../../lib/utils';
 
 // =============================================================================
 // Types
@@ -30,11 +23,6 @@ interface ProgressBarProps {
 
 /**
  * Renders a progress bar showing segmentation progress across foods.
- *
- * Each food gets a segment in the bar:
- * - Completed foods: Full color
- * - Current food: Semi-transparent color
- * - Pending foods: Gray border
  *
  * @param props - The component props.
  * @returns The progress bar element.
@@ -62,4 +50,3 @@ export function ProgressBar({ foods, currentIndex, completedIndices }: ProgressB
     </div>
   );
 }
-

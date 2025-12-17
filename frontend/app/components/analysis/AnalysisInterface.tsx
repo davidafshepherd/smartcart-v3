@@ -1,13 +1,3 @@
-/**
- * @fileoverview Analysis interface component for meal analysis.
- *
- * Main interface that handles the analysis flow:
- * 1. Select Segmentation Method (automated or assisted)
- * 2. Automated: SAM3 auto-segments all foods at once
- * 3. Assisted: User guides SAM3 per food with points or text
- * 4. Nutrition Report (shared)
- */
-
 'use client';
 
 import React from 'react';
@@ -54,11 +44,6 @@ interface AnalysisInterfaceProps {
 
 /**
  * Renders the main analysis interface for a meal.
- *
- * Manages the multi-step workflow:
- * - Step 1: Select between automated and assisted segmentation
- * - Step 2: Run the selected segmentation method
- * - Step 3: Display the nutrition report
  *
  * @param props - The component props.
  * @returns The analysis interface element.
