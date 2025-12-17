@@ -21,7 +21,7 @@
  */
 
 import { config } from './config';
-import type { UploadResponse, MenuItem, MealsData, MealData, Patient, Food, FoodPoints, FoodBox, Mask, Point, Box, BoxGroup, ComputeNutritionResponse } from './types';
+import type { UploadResponse, MenuItem, MealsData, MealData, Patient, Food, Point, FoodMask, SAM3Response, ComputeNutritionResponse } from './types';
 
 // =============================================================================
 // Error Handling
@@ -466,194 +466,155 @@ export const patientsApi = {
 /**
  * API client for analysis-related operations.
  *
- * Handles SAM2 and OWLv2 model inference for meal analysis.
+ * Handles SAM3 model inference for meal analysis.
  */
 export const analysisApi = {
   /**
-   * Runs SAM2 inference using point groups.
+   * Runs SAM3 automated segmentation for all foods.
    *
    * @param beforeRgbPath - Path to the before-meal RGB image.
    * @param afterRgbPath - Path to the after-meal RGB image.
-   * @param beforePoints - Point groups for the before image, grouped by food ID.
-   * @param afterPoints - Point groups for the after image, grouped by food ID.
-   * @returns A promise resolving to the generated masks.
+   * @param foodIds - List of food IDs to segment.
+   * @param confidenceThreshold - Confidence threshold for SAM3 (default: 0.5).
+   * @returns A promise resolving to the generated masks for both images.
    * @throws {ApiError} If the inference fails.
    */
-  async sam2Points(
+  async sam3Automated(
     beforeRgbPath: string,
     afterRgbPath: string,
-    beforePoints: FoodPoints[],
-    afterPoints: FoodPoints[]
-  ): Promise<Mask[]> {
-    // Convert points to Point objects: [{x, y}, {x, y}, ...]
-    const formatPoints = (pointGroups: FoodPoints[]) =>
-      pointGroups.map((pointGroup) => ({
-        food_id: pointGroup.food_id,
-        points: pointGroup.points.map((p) => ({ x: p.x, y: p.y })),
-      }));
-
-    const response = await fetch(`${config.apiUrl}/analysis/sam2/points`, {
+    foodIds: number[],
+    confidenceThreshold: number = 0.5
+  ): Promise<SAM3Response> {
+    const response = await fetch(`${config.apiUrl}/analysis/sam3/automated`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         before_rgb_path: beforeRgbPath,
         after_rgb_path: afterRgbPath,
-        before_points: formatPoints(beforePoints),
-        after_points: formatPoints(afterPoints),
-      }),
-    });
-
-    const data = await handleResponse<{ before_masks: Mask[]; after_masks: Mask[] }>(response);
-    // Combine before and after masks, adding image_type and mask_id for compatibility
-    let beforeIdx = 0;
-    let afterIdx = 0;
-    return [
-      ...data.before_masks.map((m) => ({
-        ...m,
-        image_type: 'before' as const,
-        mask_id: `before_${m.food_id}_${beforeIdx++}`,
-      })),
-      ...data.after_masks.map((m) => ({
-        ...m,
-        image_type: 'after' as const,
-        mask_id: `after_${m.food_id}_${afterIdx++}`,
-      })),
-    ];
-  },
-
-  /**
-   * Runs SAM2 inference using bounding boxes.
-   *
-   * @param beforeRgbPath - Path to the before-meal RGB image.
-   * @param afterRgbPath - Path to the after-meal RGB image.
-   * @param beforeBoxes - Bounding boxes for the before image, grouped by food ID.
-   * @param afterBoxes - Bounding boxes for the after image, grouped by food ID.
-   * @returns A promise resolving to the generated masks.
-   * @throws {ApiError} If the inference fails.
-   */
-  async sam2Boxes(
-    beforeRgbPath: string,
-    afterRgbPath: string,
-    beforeBoxes: FoodBox[],
-    afterBoxes: FoodBox[]
-  ): Promise<Mask[]> {
-    // Convert FoodBox[] to BoxGroup[] format (group boxes by food_id)
-    const groupBoxes = (foodBoxes: FoodBox[]): BoxGroup[] => {
-      const groups = new Map<number, Box[]>();
-      foodBoxes.forEach((foodBox) => {
-        if (!groups.has(foodBox.food_id)) {
-          groups.set(foodBox.food_id, []);
-        }
-        groups.get(foodBox.food_id)!.push(foodBox.box);
-      });
-      return Array.from(groups.entries()).map(([food_id, boxes]) => ({
-        food_id,
-        boxes,
-      }));
-    };
-
-    const response = await fetch(`${config.apiUrl}/analysis/sam2/boxes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        before_rgb_path: beforeRgbPath,
-        after_rgb_path: afterRgbPath,
-        before_boxes: groupBoxes(beforeBoxes),
-        after_boxes: groupBoxes(afterBoxes),
-      }),
-    });
-
-    const data = await handleResponse<{ before_masks: Mask[]; after_masks: Mask[] }>(response);
-    // Combine before and after masks, adding image_type and mask_id for compatibility
-    let beforeIdx = 0;
-    let afterIdx = 0;
-    return [
-      ...data.before_masks.map((m) => ({
-        ...m,
-        image_type: 'before' as const,
-        mask_id: `before_${m.food_id}_${beforeIdx++}`,
-      })),
-      ...data.after_masks.map((m) => ({
-        ...m,
-        image_type: 'after' as const,
-        mask_id: `after_${m.food_id}_${afterIdx++}`,
-      })),
-    ];
-  },
-
-  /**
-   * Runs OWLv2 object detection.
-   *
-   * @param beforeRgbPath - Path to the before-meal RGB image.
-   * @param afterRgbPath - Path to the after-meal RGB image.
-   * @param threshold - Confidence threshold for detection (default: 0.5).
-   * @param foods - List of food names to detect.
-   * @returns A promise resolving to detected bounding boxes with food names.
-   * @throws {ApiError} If the inference fails.
-   */
-  async owlv2Detect(
-    beforeRgbPath: string,
-    afterRgbPath: string,
-    threshold: number = 0.5,
-    foodIds: number[] = []
-  ): Promise<{
-    before_boxes: BoxGroup[];
-    after_boxes: BoxGroup[];
-  }> {
-    const response = await fetch(`${config.apiUrl}/analysis/owlv2`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        before_rgb_path: beforeRgbPath,
-        after_rgb_path: afterRgbPath,
-        threshold,
+        confidence_threshold: confidenceThreshold,
         foods: foodIds,
       }),
     });
 
-    return handleResponse<{
-      before_boxes: BoxGroup[];
-      after_boxes: BoxGroup[];
-    }>(response);
+    const data = await handleResponse<SAM3Response>(response);
+    
+    // Add mask_id, image_type, and color_index for frontend compatibility
+    // Use timestamp to create unique IDs across runs
+    const timestamp = Date.now();
+    return {
+      before_masks: data.before_masks.map((m, idx) => ({
+        ...m,
+        image_type: 'before' as const,
+        mask_id: `before_${timestamp}_${idx}`,
+        color_index: idx,
+      })),
+      after_masks: data.after_masks.map((m, idx) => ({
+        ...m,
+        image_type: 'after' as const,
+        mask_id: `after_${timestamp}_${idx}`,
+        color_index: idx,
+      })),
+    };
   },
 
   /**
-   * Runs OWLv2 object detection with SAHI (Slicing Aided Hyper Inference).
+   * Runs SAM3 assisted segmentation using a text prompt.
    *
    * @param beforeRgbPath - Path to the before-meal RGB image.
    * @param afterRgbPath - Path to the after-meal RGB image.
-   * @param threshold - Confidence threshold for detection (default: 0.5).
-   * @param iouThreshold - IOU threshold for SAHI (default: 0.5).
-   * @param foods - List of food names to detect.
-   * @returns A promise resolving to detected bounding boxes with food names.
+   * @param textPrompt - Text prompt describing what to segment.
+   * @param confidenceThreshold - Confidence threshold for SAM3 (default: 0.5).
+   * @returns A promise resolving to the generated masks for both images.
    * @throws {ApiError} If the inference fails.
    */
-  async owlv2SahiDetect(
+  async sam3AssistedText(
     beforeRgbPath: string,
     afterRgbPath: string,
-    threshold: number = 0.5,
-    iouThreshold: number = 0.5,
-    foods: number[] = []
-  ): Promise<{
-    before_boxes: BoxGroup[];
-    after_boxes: BoxGroup[];
-  }> {
-    const response = await fetch(`${config.apiUrl}/analysis/owlv2/sahi`, {
+    textPrompt: string,
+    confidenceThreshold: number = 0.5
+  ): Promise<SAM3Response> {
+    const response = await fetch(`${config.apiUrl}/analysis/sam3/assisted/text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         before_rgb_path: beforeRgbPath,
         after_rgb_path: afterRgbPath,
-        threshold,
-        iou_threshold: iouThreshold,
-        foods,
+        confidence_threshold: confidenceThreshold,
+        text_prompt: textPrompt,
       }),
     });
 
-    return handleResponse<{
-      before_boxes: BoxGroup[];
-      after_boxes: BoxGroup[];
-    }>(response);
+    const data = await handleResponse<SAM3Response>(response);
+    
+    // Add mask_id, image_type, and color_index for frontend compatibility
+    // Use timestamp to create unique IDs across runs
+    const timestamp = Date.now();
+    return {
+      before_masks: data.before_masks.map((m, idx) => ({
+        ...m,
+        image_type: 'before' as const,
+        mask_id: `before_${timestamp}_${idx}`,
+        color_index: idx,
+      })),
+      after_masks: data.after_masks.map((m, idx) => ({
+        ...m,
+        image_type: 'after' as const,
+        mask_id: `after_${timestamp}_${idx}`,
+        color_index: idx,
+      })),
+    };
+  },
+
+  /**
+   * Runs SAM3 assisted segmentation using points.
+   *
+   * Points should be in pixel coordinates relative to the image's natural dimensions.
+   * They are sent directly to the backend without normalization.
+   *
+   * @param beforeRgbPath - Path to the before-meal RGB image.
+   * @param afterRgbPath - Path to the after-meal RGB image.
+   * @param beforePoints - Points for the before image (with labels: 1=foreground, 0=background).
+   * @param afterPoints - Points for the after image (with labels: 1=foreground, 0=background).
+   * @returns A promise resolving to the generated masks for both images.
+   * @throws {ApiError} If the inference fails.
+   */
+  async sam3AssistedPoints(
+    beforeRgbPath: string,
+    afterRgbPath: string,
+    beforePoints: Point[] | null,
+    afterPoints: Point[] | null
+  ): Promise<SAM3Response> {
+    // Send points directly in pixel coordinates (backend gets dimensions from image files)
+    const response = await fetch(`${config.apiUrl}/analysis/sam3/assisted/points`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        before_rgb_path: beforeRgbPath,
+        after_rgb_path: afterRgbPath,
+        before_points: beforePoints,
+        after_points: afterPoints,
+      }),
+    });
+
+    const data = await handleResponse<SAM3Response>(response);
+    
+    // Add mask_id, image_type, and color_index for frontend compatibility
+    // Use timestamp to create unique IDs across runs
+    const timestamp = Date.now();
+    return {
+      before_masks: data.before_masks.map((m, idx) => ({
+        ...m,
+        image_type: 'before' as const,
+        mask_id: `before_${timestamp}_${idx}`,
+        color_index: idx,
+      })),
+      after_masks: data.after_masks.map((m, idx) => ({
+        ...m,
+        image_type: 'after' as const,
+        mask_id: `after_${timestamp}_${idx}`,
+        color_index: idx,
+      })),
+    };
   },
 
   /**
@@ -669,14 +630,14 @@ export const analysisApi = {
   async computeNutrition(
     beforeDepthPath: string,
     afterDepthPath: string,
-    beforeMasks: Mask[],
-    afterMasks: Mask[]
+    beforeMasks: FoodMask[],
+    afterMasks: FoodMask[]
   ): Promise<ComputeNutritionResponse> {
     // Convert masks to backend format (remove mask_id and image_type)
-    const formatMasks = (masks: Mask[]) =>
+    const formatMasks = (masks: FoodMask[]) =>
       masks.map((m) => ({
         food_id: m.food_id,
-        mask_data: m.mask_data,
+        mask: m.mask,
       }));
 
     const response = await fetch(`${config.apiUrl}/analysis/compute-nutrition`, {
