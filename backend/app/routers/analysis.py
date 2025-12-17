@@ -1,330 +1,148 @@
 import random
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from PIL import Image
 from sqlalchemy.orm import Session
 
+from app.constants import BACKEND_DIR
 from app.db import get_db
 from app.models.db_models import Food
 from app.schemas.analysis import (
-    Box,
-    BoxGroup,
-    BoxRequest,
     ComputeNutritionRequest,
     ComputeNutritionResponse,
     FoodMass,
+    FoodMask,
     FoodNutrition,
     FoodVolume,
     MealNutrition,
-    Mask,
-    OWLv2Request, 
-    OWLv2Response,
-    OWLv2SAHIRequest,
-    PointsRequest,
-    SAM2Response,
+    SAM3AutomatedRequest,
+    SAM3AssistedPointsRequest,
+    SAM3AssistedTextRequest,
+    SAM3Response,
 )
+
 
 # Create a new API router to group analysis-related endpoints.
 router = APIRouter()
 
 
-# POST endpoint to compute food bounding boxes with OWLv2.
-@router.post("/owlv2", status_code=status.HTTP_200_OK)
-async def owlv2_detect(request: OWLv2Request) -> OWLv2Response:
-    """Runs OWLv2 object detection.
-    
-    Args:
-        request: The OWLv2 request with image paths, threshold, and foods list.
-        
-    Returns:
-        OWLv2Response containing detected bounding boxes and corresponding food names.
-    """
-    # TODO: Implement OWLv2 inference
-    # For now, return dummy data grouped by food_id
-    before_box_groups = []
-    after_box_groups = []
-    
-    # Assume image dimensions are roughly 1920x1080 for dummy data
-    img_width = 1920
-    img_height = 1080
-    
-    # Generate 1-2 dummy boxes per food in before image
-    for i, food_id in enumerate(request.foods):
-        # Place boxes at different positions for each food
-        x_offset = (i * 200) % (img_width - 300)
-        y_offset = (i * 150) % (img_height - 200)
-        
-        boxes = []
-        # First box for this food
-        boxes.append(Box(
-            x1=float(x_offset),
-            y1=float(y_offset),
-            x2=float(x_offset + 200),
-            y2=float(y_offset + 150)
-        ))
-        
-        # Sometimes add a second box
-        if i % 2 == 0:
-            boxes.append(Box(
-                x1=float((x_offset + 250) % (img_width - 200)),
-                y1=float((y_offset + 180) % (img_height - 150)),
-                x2=float((x_offset + 250) % (img_width - 200) + 200),
-                y2=float((y_offset + 180) % (img_height - 150) + 150)
-            ))
-        
-        before_box_groups.append(BoxGroup(food_id=food_id, boxes=boxes))
-    
-    # Generate fewer boxes for after image (simulating consumption)
-    for i, food_id in enumerate(request.foods):
-        if i % 2 == 0:  # Only half the foods have boxes in after image
-            x_offset = (i * 200) % (img_width - 300)
-            y_offset = (i * 150) % (img_height - 200)
-            boxes = [Box(
-                x1=float(x_offset),
-                y1=float(y_offset),
-                x2=float(x_offset + 180),  # Slightly smaller (consumed)
-                y2=float(y_offset + 130)
-            )]
-            after_box_groups.append(BoxGroup(food_id=food_id, boxes=boxes))
-    
-    return OWLv2Response(
-        before_boxes=before_box_groups,
-        after_boxes=after_box_groups
-    )
+# POST endpoint for SAM3 automated segmentation.
+@router.post("/sam3/automated", status_code=status.HTTP_200_OK)
+async def sam3_automated(
+    request: SAM3AutomatedRequest,
+    db: Session = Depends(get_db),
+) -> SAM3Response:
+    """Stub for SAM3 automated segmentation."""
 
-
-# POST endpoint to compute food bounding boxes with OWLv2 and SAHI.
-@router.post("/owlv2/sahi", status_code=status.HTTP_200_OK)
-async def owlv2_sahi_detect(request: OWLv2SAHIRequest) -> OWLv2Response:
-    """Runs OWLv2 object detection with SAHI (Slicing Aided Hyper Inference).
+    # Get foods.
+    foods = db.query(Food).filter(Food.id.in_(request.foods)).all()
     
-    Args:
-        request: The OWLv2+SAHI request with image paths, threshold, IOU threshold, and foods list.
-        
-    Returns:
-        OWLv2Response containing detected bounding boxes and corresponding food names.
-    """
-    # TODO: Implement OWLv2+SAHI inference
-    # For now, return dummy data (similar to OWLv2 but with potentially more boxes due to SAHI)
-    before_box_groups = []
-    after_box_groups = []
+    # Get image dimensions.
+    before_width, before_height = _get_image_dimensions(request.before_rgb_path)
+    after_width, after_height = _get_image_dimensions(request.after_rgb_path)
     
-    # Assume image dimensions are roughly 1920x1080 for dummy data
-    img_width = 1920
-    img_height = 1080
-    
-    # SAHI typically detects more boxes, so generate 2-3 boxes per food
-    for i, food_id in enumerate(request.foods):
-        x_offset = (i * 200) % (img_width - 300)
-        y_offset = (i * 150) % (img_height - 200)
-        
-        boxes = []
-        # First box
-        boxes.append(Box(
-            x1=float(x_offset),
-            y1=float(y_offset),
-            x2=float(x_offset + 200),
-            y2=float(y_offset + 150)
-        ))
-        
-        # Second box
-        boxes.append(Box(
-            x1=float((x_offset + 250) % (img_width - 200)),
-            y1=float((y_offset + 180) % (img_height - 150)),
-            x2=float((x_offset + 250) % (img_width - 200) + 200),
-            y2=float((y_offset + 180) % (img_height - 150) + 150)
-        ))
-        
-        # Third box for some foods
-        if i % 3 == 0:
-            boxes.append(Box(
-                x1=float((x_offset + 100) % (img_width - 200)),
-                y1=float((y_offset + 250) % (img_height - 150)),
-                x2=float((x_offset + 100) % (img_width - 200) + 180),
-                y2=float((y_offset + 250) % (img_height - 150) + 130)
-            ))
-        
-        # Use the actual food_id from the request
-        before_box_groups.append(BoxGroup(food_id=food_id, boxes=boxes))
-    
-    # Generate boxes for after image
-    for i, food_id in enumerate(request.foods):
-        if i % 2 == 0:
-            x_offset = (i * 200) % (img_width - 300)
-            y_offset = (i * 150) % (img_height - 200)
-            boxes = [Box(
-                x1=float(x_offset),
-                y1=float(y_offset),
-                x2=float(x_offset + 180),
-                y2=float(y_offset + 130)
-            )]
-            after_box_groups.append(BoxGroup(food_id=food_id, boxes=boxes))
-    
-    return OWLv2Response(
-        before_boxes=before_box_groups,
-        after_boxes=after_box_groups
-    )
-
-
-# POST endpoint to compute food masks with points.
-@router.post("/sam2/points", status_code=status.HTTP_200_OK)
-async def sam2_points(request: PointsRequest) -> SAM2Response:
-    """Runs SAM2 inference using point groups.
-    
-    Args:
-        request: The points request with image paths and point groups.
-        
-    Returns:
-        SAM2Response containing generated masks (one mask per food).
-    """
-    # TODO: Implement SAM2 inference with points
-    # For now, return dummy masks (one per food)
     before_masks = []
     after_masks = []
     
-    # Generate dummy masks for before image (one per food)
-    # Use a standard mask size - will be scaled to match actual image dimensions
-    mask_width = 640
-    mask_height = 480
-    
-    for point_group in request.before_points:
-        mask_data = []
-        if point_group.points:
-            first_point = point_group.points[0]
-            # Scale point coordinates to mask dimensions (assuming image is roughly 1000-2000px)
-            # For dummy, place circle at proportional position
-            cx = int((first_point.x / 1500.0) * mask_width) if first_point.x > 0 else mask_width // 2
-            cy = int((first_point.y / 1500.0) * mask_height) if first_point.y > 0 else mask_height // 2
-            cx = max(50, min(mask_width - 50, cx))  # Clamp to valid range
-            cy = max(50, min(mask_height - 50, cy))
-            radius = 60  # Fixed radius for dummy mask
-            
-            for y in range(mask_height):
-                row = []
-                for x in range(mask_width):
-                    dist = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
-                    row.append(1 if dist < radius else 0)
-                mask_data.append(row)
-        else:
-            # Empty mask if no points
-            mask_data = [[0] * mask_width for _ in range(mask_height)]
+    # Iterate over each food.
+    for i, food_id in enumerate(request.foods):
+        # Generate a circular dummy mask for the food in the before image.
+        mask_data = _generate_dummy_circular_mask(
+            before_width, 
+            before_height, 
+            randomize=True,
+        )
+        before_masks.append(FoodMask(food_id=food_id, mask=mask_data))
         
-        before_masks.append(Mask(
-            food_id=point_group.food_id,
-            mask_data=mask_data
-        ))
+        # Generate a circular dummy mask for the food in the after image.
+        if i % 2 == 0:
+            mask_data = _generate_dummy_circular_mask(
+                after_width, 
+                after_height, 
+                randomize=True,
+            )
+            after_masks.append(FoodMask(food_id=food_id, mask=mask_data))
     
-    # Generate dummy masks for after image (if any points)
-    for point_group in request.after_points:
-        mask_data = []
-        if point_group.points:
-            first_point = point_group.points[0]
-            cx = int((first_point.x / 1500.0) * mask_width) if first_point.x > 0 else mask_width // 2
-            cy = int((first_point.y / 1500.0) * mask_height) if first_point.y > 0 else mask_height // 2
-            cx = max(50, min(mask_width - 50, cx))
-            cy = max(50, min(mask_height - 50, cy))
-            radius = 60
-            
-            for y in range(mask_height):
-                row = []
-                for x in range(mask_width):
-                    dist = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
-                    row.append(1 if dist < radius else 0)
-                mask_data.append(row)
-        else:
-            mask_data = [[0] * mask_width for _ in range(mask_height)]
-        
-        after_masks.append(Mask(
-            food_id=point_group.food_id,
-            mask_data=mask_data
-        ))
-    
-    return SAM2Response(before_masks=before_masks, after_masks=after_masks)
+    return SAM3Response(before_masks=before_masks, after_masks=after_masks)
 
 
-# POST endpoint to compute food masks with boxes.
-@router.post("/sam2/boxes", status_code=status.HTTP_200_OK)
-async def sam2_boxes(request: BoxRequest) -> SAM2Response:
-    """Runs SAM2 inference using bounding boxes.
+# POST endpoint for SAM3 assisted segmentation with text prompt.
+@router.post("/sam3/assisted/text", status_code=status.HTTP_200_OK)
+async def sam3_assisted_text(
+    request: SAM3AssistedTextRequest,
+) -> SAM3Response:
+    """Stub for SAM3 assisted segmentation with a text prompt."""
+
+    # Get image dimensions.
+    before_width, before_height = _get_image_dimensions(request.before_rgb_path)
+    after_width, after_height = _get_image_dimensions(request.after_rgb_path)
     
-    Args:
-        request: The box request with image paths and bounding boxes.
-        
-    Returns:
-        SAM2Response containing generated masks.
-    """
-    # TODO: Implement SAM2 inference with boxes
-    # For now, return dummy masks based on boxes
     before_masks = []
     after_masks = []
     
-    # Generate dummy masks for before image (one per box)
-    # Use a standard mask size - will be scaled to match actual image dimensions
-    mask_width = 640
-    mask_height = 480
+    # Generate a random number of circular dummy masks (1-4) in the before image.
+    num_before_masks = random.randint(1, 4)
+    for i in range(num_before_masks):
+        mask_data = _generate_dummy_circular_mask(
+            before_width, 
+            before_height, 
+            randomize=True,
+        )
+        before_masks.append(FoodMask(food_id=None, mask=mask_data))
     
-    for box_group in request.before_boxes:
-        # Combine all boxes for this food into a single mask
-        # Initialize mask with all zeros
-        mask_data = [[0] * mask_width for _ in range(mask_height)]
-        
-        # For each box in the group, mark the pixels as 1 (OR operation)
-        for box in box_group.boxes:
-            # Scale box coordinates to mask dimensions (assuming image is roughly 1920x1080)
-            x1 = int((box.x1 / 1920.0) * mask_width) if box.x1 > 0 else 0
-            y1 = int((box.y1 / 1080.0) * mask_height) if box.y1 > 0 else 0
-            x2 = int((box.x2 / 1920.0) * mask_width) if box.x2 > 0 else mask_width
-            y2 = int((box.y2 / 1080.0) * mask_height) if box.y2 > 0 else mask_height
-            
-            # Clamp to valid range
-            x1 = max(0, min(mask_width - 1, x1))
-            y1 = max(0, min(mask_height - 1, y1))
-            x2 = max(0, min(mask_width, x2))
-            y2 = max(0, min(mask_height, y2))
-            
-            # Mark pixels in this box as 1
-            for y in range(y1, y2):
-                for x in range(x1, x2):
-                    mask_data[y][x] = 1
-        
-        # Add single combined mask for this food
-        before_masks.append(Mask(
-            food_id=box_group.food_id,
-            mask_data=mask_data
-        ))
+    # Generate a random number of circular dummy masks (1-4) in the after image.
+    num_after_masks = random.randint(1, 4)
+    for i in range(num_after_masks):
+        mask_data = _generate_dummy_circular_mask(
+            after_width, 
+            after_height, 
+            randomize=True,
+        )
+        after_masks.append(FoodMask(food_id=None, mask=mask_data))
     
-    # Generate dummy masks for after image (if any boxes)
-    for box_group in request.after_boxes:
-        # Combine all boxes for this food into a single mask
-        # Initialize mask with all zeros
-        mask_data = [[0] * mask_width for _ in range(mask_height)]
-        
-        # For each box in the group, mark the pixels as 1 (OR operation)
-        for box in box_group.boxes:
-            # Scale box coordinates to mask dimensions
-            x1 = int((box.x1 / 1920.0) * mask_width) if box.x1 > 0 else 0
-            y1 = int((box.y1 / 1080.0) * mask_height) if box.y1 > 0 else 0
-            x2 = int((box.x2 / 1920.0) * mask_width) if box.x2 > 0 else mask_width
-            y2 = int((box.y2 / 1080.0) * mask_height) if box.y2 > 0 else mask_height
-            
-            # Clamp to valid range
-            x1 = max(0, min(mask_width - 1, x1))
-            y1 = max(0, min(mask_height - 1, y1))
-            x2 = max(0, min(mask_width, x2))
-            y2 = max(0, min(mask_height, y2))
-            
-            # Mark pixels in this box as 1
-            for y in range(y1, y2):
-                for x in range(x1, x2):
-                    mask_data[y][x] = 1
-        
-        # Add single combined mask for this food
-        after_masks.append(Mask(
-            food_id=box_group.food_id,
-            mask_data=mask_data
-        ))
+    return SAM3Response(before_masks=before_masks, after_masks=after_masks)
+
+
+# POST endpoint for SAM3 assisted segmentation with points.
+@router.post("/sam3/assisted/points", status_code=status.HTTP_200_OK)
+async def sam3_assisted_points(
+    request: SAM3AssistedPointsRequest,
+) -> SAM3Response:
+    """Stub for SAM3 assisted segmentation with points."""
     
-    return SAM2Response(before_masks=before_masks, after_masks=after_masks)
+    # Get image dimensions.
+    before_width, before_height = _get_image_dimensions(request.before_rgb_path)
+    after_width, after_height = _get_image_dimensions(request.after_rgb_path)
+    
+    before_masks = []
+    after_masks = []
+    
+    # Generate one circular dummy mask per foreground point in the before image.
+    if request.before_points:
+        foreground_points = [p for p in request.before_points if p.label == 1]
+        for point in foreground_points:
+            mask_data = _generate_dummy_circular_mask(
+                before_width, 
+                before_height,
+                center_x=point.x, 
+                center_y=point.y,
+            )
+            before_masks.append(FoodMask(food_id=None, mask=mask_data))
+    
+    # Generate one circular dummy mask per foreground point in the after image.
+    if request.after_points:
+        foreground_points = [p for p in request.after_points if p.label == 1]
+        for point in foreground_points:
+            mask_data = _generate_dummy_circular_mask(
+                after_width, 
+                after_height,
+                center_x=point.x, 
+                center_y=point.y,
+            )
+            after_masks.append(FoodMask(food_id=None, mask=mask_data))
+    
+    return SAM3Response(before_masks=before_masks, after_masks=after_masks)
 
 
 # POST endpoint to compute the nutritional values of a meal.
@@ -367,11 +185,69 @@ async def compute_nutrition(
 
 # === Helper Functions ===
 
+def _get_image_dimensions(image_path: str) -> Tuple[int, int]:
+    """Gets image dimensions from an image file."""
+
+    full_path = BACKEND_DIR / image_path
+    
+    if not full_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Image not found: {image_path}",
+        )
+    
+    try:
+        with Image.open(full_path) as img:
+            return img.size
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to read image dimensions: {str(e)}",
+        )
+
+
+def _generate_dummy_circular_mask(
+    width: int,
+    height: int,
+    center_x: float = None,
+    center_y: float = None,
+    randomize: bool = False,
+) -> List[List[int]]:
+    """Generates a dummy food mask."""
+
+    mask_data = [[0] * width for _ in range(height)]
+    
+    min_dim = min(width, height)
+    radius = max(10, int(min_dim * 0.08))
+    
+    if center_x is not None and center_y is not None:
+        cx = round(center_x)
+        cy = round(center_y)
+    elif randomize:
+        margin = radius + 10
+        cx = random.randint(margin, max(margin, width - margin))
+        cy = random.randint(margin, max(margin, height - margin))
+    else:
+        cx = width // 2
+        cy = height // 2
+    
+    radius_squared = radius * radius
+    for y in range(height):
+        for x in range(width):
+            dx = x - cx
+            dy = y - cy
+            dist_squared = dx * dx + dy * dy
+            if dist_squared <= radius_squared:
+                mask_data[y][x] = 1
+    
+    return mask_data
+
+
 def _calculate_volumes(
     before_depth_path: str,
     after_depth_path: str,
-    before_masks: List[Mask],
-    after_masks: List[Mask],
+    before_masks: List[FoodMask],
+    after_masks: List[FoodMask],
 ) -> List[FoodVolume]:
     """Calculates the consumed volume of each food in a meal.
     

@@ -3,89 +3,55 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
+class SAM3AutomatedRequest(BaseModel):
+    """Request schema for SAM3 automated segmentation."""
+    before_rgb_path: str
+    after_rgb_path: str
+    confidence_threshold: float = 0.5
+    foods: List[int]
+
+
+class SAM3AssistedTextRequest(BaseModel):
+    """Request schema for SAM3 inference with a text prompt."""
+    before_rgb_path: str
+    after_rgb_path: str
+    confidence_threshold: float = 0.5
+    text_prompt: str
+
+
 class Point(BaseModel):
     """A 2D point on an image."""
+    label: int
     x: float
     y: float
 
 
-class Box(BaseModel):
-    """A bounding box on an image."""
-    x1: float
-    y1: float
-    x2: float
-    y2: float
-
-
-class PointGroup(BaseModel):
-    """A group of points for a specific food."""
-    food_id: int
-    points: List[Point]
-
-
-class BoxGroup(BaseModel):
-    """A group of boxes for a specific food."""
-    food_id: int
-    boxes: List[Box]
-
-
-class OWLv2Request(BaseModel):
-    """Request schema for OWLv2 inference."""
+class SAM3AssistedPointsRequest(BaseModel):
+    """Request schema for SAM3 inference with points."""
     before_rgb_path: str
     after_rgb_path: str
-    threshold: float = 0.5
-    foods: List[int]
+    before_points: Optional[List[Point]] = None
+    after_points: Optional[List[Point]] = None
 
 
-class OWLv2SAHIRequest(BaseModel):
-    """Request schema for OWLv2 with SAHI inference."""
-    before_rgb_path: str
-    after_rgb_path: str
-    threshold: float = 0.5
-    iou_threshold: float = 0.5
-    foods: List[int]
+class FoodMask(BaseModel):
+    """A segmentation mask for a food item."""
+    food_id: Optional[int] = None
+    mask: List[List[int]]
 
 
-class OWLv2Response(BaseModel):
-    """Response schema from OWLv2 inference."""
-    before_boxes: List[BoxGroup]
-    after_boxes: List[BoxGroup]
-
-
-class PointsRequest(BaseModel):
-    """Request schema for SAM2 inference with points."""
-    before_rgb_path: str
-    after_rgb_path: str
-    before_points: List[PointGroup]
-    after_points: List[PointGroup]
-
-
-class BoxRequest(BaseModel):
-    """Request schema for SAM2 inference with boxes."""
-    before_rgb_path: str
-    after_rgb_path: str
-    before_boxes: List[BoxGroup]
-    after_boxes: List[BoxGroup]
-
-
-class Mask(BaseModel):
-    """A segmentation mask."""
-    food_id: int
-    mask_data: List[List[int]]
-
-
-class SAM2Response(BaseModel):
-    """Response schema from SAM2 inference."""
-    before_masks: List[Mask]
-    after_masks: List[Mask]
+class SAM3Response(BaseModel):
+    """Response schema from SAM3 inference."""
+    before_masks: List[FoodMask]
+    after_masks: List[FoodMask]
 
 
 class ComputeNutritionRequest(BaseModel):
     """Request schema for nutrition computation."""
     before_depth_path: str
     after_depth_path: str
-    before_masks: List[Mask]
-    after_masks: List[Mask]
+    before_masks: List[FoodMask]
+    after_masks: List[FoodMask]
 
 
 class FoodVolume(BaseModel):
