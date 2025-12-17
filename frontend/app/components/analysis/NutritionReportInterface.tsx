@@ -1,22 +1,52 @@
 /**
  * @fileoverview Nutrition Report interface component for meal analysis.
  *
- * Displays the nutrition report with save functionality.
- * Shared between points and boxes input modes.
+ * Displays the computed nutrition report with tabbed navigation between
+ * total meal nutrition and individual food breakdowns. Provides a save
+ * button for persisting the report.
  */
 
 'use client';
 
 import { useState } from 'react';
 import type { ComputeNutritionResponse, Food } from '../../lib/types';
+import { formatFoodName, formatNumber } from '../../lib/utils';
 
+// =============================================================================
+// Types
+// =============================================================================
+
+/** Props for the NutritionReportInterface component. */
 interface NutritionReportInterfaceProps {
+  /** Computed nutrition data from the backend. */
   nutritionData: ComputeNutritionResponse | null;
+  /** List of foods for displaying names. */
   foods?: Food[];
+  /** Callback to save the nutrition report. */
   onSave: () => void;
 }
 
-export function NutritionReportInterface({ nutritionData, foods = [], onSave }: NutritionReportInterfaceProps) {
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * Renders the nutrition report interface.
+ *
+ * Displays nutrition data in a tabbed layout:
+ * - Total Nutrition: Combined nutrition for all foods
+ * - Individual Food tabs: Breakdown per food item
+ *
+ * Each tab shows macronutrients, minerals, and vitamins in organized sections.
+ *
+ * @param props - The component props.
+ * @returns The nutrition report interface element.
+ */
+export function NutritionReportInterface({
+  nutritionData,
+  foods = [],
+  onSave,
+}: NutritionReportInterfaceProps) {
   // Tab state: 'total' for total nutrition, or food_id for individual foods
   const [activeTab, setActiveTab] = useState<string>('total');
 
@@ -26,30 +56,7 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
   const getFoodName = (foodId: number): string => {
     const food = foods.find((f) => f.id === foodId);
     if (!food) return `Food ${foodId}`;
-    // Convert to title case for display
-    return food.short_name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-
-  const formatNumber = (value: number | null | undefined, decimals: number = 1): string => {
-    if (value === null || value === undefined) return 'N/A';
-    return value.toFixed(decimals);
-  };
-
-  // Helper to render nutrition value
-  const renderNutritionValue = (label: string, value: number | null | undefined, unit: string = 'g', decimals: number = 1) => {
-    return (
-      <div>
-        <span className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>
-          {label}
-        </span>
-        <p className="font-medium" style={{ color: 'var(--foreground)' }}>
-          {value === null || value === undefined ? 'N/A' : `${formatNumber(value, decimals)} ${unit}`}
-        </p>
-      </div>
-    );
+    return formatFoodName(food.short_name);
   };
 
   // Helper to render nutrition value for totals (larger)
@@ -147,7 +154,7 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
                     <h5 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
                       Macronutrients
                     </h5>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       {renderTotalNutritionValue('Energy (kcal)', nutritionData.meal_nutrition.kcal, 'kcal', 0)}
                       {renderTotalNutritionValue('Energy (kJ)', nutritionData.meal_nutrition.kj, 'kJ', 0)}
                       {renderTotalNutritionValue('Protein', nutritionData.meal_nutrition.protein)}
@@ -164,7 +171,7 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
                     <h5 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
                       Minerals
                     </h5>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       {renderTotalNutritionValue('Sodium', nutritionData.meal_nutrition.sodium, 'mg', 1)}
                       {renderTotalNutritionValue('Potassium', nutritionData.meal_nutrition.potassium, 'mg', 1)}
                       {renderTotalNutritionValue('Calcium', nutritionData.meal_nutrition.calcium, 'mg', 1)}
@@ -183,7 +190,7 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
                     <h5 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
                       Vitamins
                     </h5>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       {renderTotalNutritionValue('Retinol (A)', nutritionData.meal_nutrition.retinol, 'μg', 1)}
                       {renderTotalNutritionValue('Carotene', nutritionData.meal_nutrition.carotene, 'μg', 1)}
                       {renderTotalNutritionValue('Vitamin D', nutritionData.meal_nutrition.vitamin_d, 'μg', 2)}
@@ -226,7 +233,7 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
                       <h5 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
                         Macronutrients
                       </h5>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {renderTotalNutritionValue('Energy (kcal)', foodNut.kcal, 'kcal', 0)}
                         {renderTotalNutritionValue('Energy (kJ)', foodNut.kj, 'kJ', 0)}
                         {renderTotalNutritionValue('Protein', foodNut.protein)}
@@ -243,7 +250,7 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
                       <h5 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
                         Minerals
                       </h5>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {renderTotalNutritionValue('Sodium', foodNut.sodium, 'mg', 1)}
                         {renderTotalNutritionValue('Potassium', foodNut.potassium, 'mg', 1)}
                         {renderTotalNutritionValue('Calcium', foodNut.calcium, 'mg', 1)}
@@ -262,7 +269,7 @@ export function NutritionReportInterface({ nutritionData, foods = [], onSave }: 
                       <h5 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
                         Vitamins
                       </h5>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {renderTotalNutritionValue('Retinol (A)', foodNut.retinol, 'μg', 1)}
                         {renderTotalNutritionValue('Carotene', foodNut.carotene, 'μg', 1)}
                         {renderTotalNutritionValue('Vitamin D', foodNut.vitamin_d, 'μg', 2)}
