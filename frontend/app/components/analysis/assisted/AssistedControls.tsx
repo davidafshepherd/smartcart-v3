@@ -70,13 +70,23 @@ export function AssistedControls({
           <button
             onClick={() => !isRunning && onInputTypeChange('text')}
             disabled={isRunning && inputType !== 'text'}
-            className={`px-4 py-2 rounded-lg border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${
+            className={`px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${
               inputType === 'text' ? 'shadow-sm' : ''
             }`}
             style={{
               borderColor: inputType === 'text' ? 'var(--accent-primary)' : 'var(--card-border)',
-              background: inputType === 'text' ? 'var(--accent-light)' : 'var(--background)',
+              background: inputType === 'text' ? 'var(--accent-light)' : 'var(--card-bg)',
               color: inputType === 'text' ? 'var(--accent-primary)' : 'var(--foreground)',
+            }}
+            onMouseEnter={(e) => {
+              if (!isRunning && inputType !== 'text') {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (inputType !== 'text') {
+                e.currentTarget.style.background = 'var(--card-bg)';
+              }
             }}
           >
             Text Prompt
@@ -84,13 +94,23 @@ export function AssistedControls({
           <button
             onClick={() => !isRunning && onInputTypeChange('points')}
             disabled={isRunning && inputType !== 'points'}
-            className={`px-4 py-2 rounded-lg border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${
+            className={`px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${
               inputType === 'points' ? 'shadow-sm' : ''
             }`}
             style={{
               borderColor: inputType === 'points' ? 'var(--accent-primary)' : 'var(--card-border)',
-              background: inputType === 'points' ? 'var(--accent-light)' : 'var(--background)',
+              background: inputType === 'points' ? 'var(--accent-light)' : 'var(--card-bg)',
               color: inputType === 'points' ? 'var(--accent-primary)' : 'var(--foreground)',
+            }}
+            onMouseEnter={(e) => {
+              if (!isRunning && inputType !== 'points') {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (inputType !== 'points') {
+                e.currentTarget.style.background = 'var(--card-bg)';
+              }
             }}
           >
             Points
@@ -135,26 +155,46 @@ export function AssistedControls({
             <div className="flex gap-2">
               <button
                 onClick={() => onPointLabelChange(1)}
-                className={`px-4 py-2 rounded-lg border transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer ${
                   pointLabel === 1 ? 'shadow-sm' : ''
                 }`}
                 style={{
                   borderColor: pointLabel === 1 ? '#10B981' : 'var(--card-border)',
-                  background: pointLabel === 1 ? '#10B98120' : 'var(--background)',
+                  background: pointLabel === 1 ? '#10B98120' : 'var(--card-bg)',
                   color: pointLabel === 1 ? '#10B981' : 'var(--foreground)',
+                }}
+                onMouseEnter={(e) => {
+                  if (pointLabel !== 1) {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (pointLabel !== 1) {
+                    e.currentTarget.style.background = 'var(--card-bg)';
+                  }
                 }}
               >
                 Foreground
               </button>
               <button
                 onClick={() => onPointLabelChange(0)}
-                className={`px-4 py-2 rounded-lg border transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer ${
                   pointLabel === 0 ? 'shadow-sm' : ''
                 }`}
                 style={{
                   borderColor: pointLabel === 0 ? '#EF4444' : 'var(--card-border)',
-                  background: pointLabel === 0 ? '#EF444420' : 'var(--background)',
+                  background: pointLabel === 0 ? '#EF444420' : 'var(--card-bg)',
                   color: pointLabel === 0 ? '#EF4444' : 'var(--foreground)',
+                }}
+                onMouseEnter={(e) => {
+                  if (pointLabel !== 0) {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (pointLabel !== 0) {
+                    e.currentTarget.style.background = 'var(--card-bg)';
+                  }
                 }}
               >
                 Background
@@ -164,11 +204,19 @@ export function AssistedControls({
               <button
                 onClick={onClearPoints}
                 disabled={isRunning}
-                className="px-4 py-2 rounded-lg border transition-all hover:shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   borderColor: 'var(--card-border)',
-                  background: 'var(--background)',
+                  background: 'var(--card-bg)',
                   color: 'var(--foreground)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isRunning) {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--card-bg)';
                 }}
               >
                 Clear Points

@@ -331,15 +331,33 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
           <button
             onClick={handleSaveModal}
             disabled={isSaving || !modalName.trim() || selectedFoods.length === 0}
-            className="flex-1 px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50 cursor-pointer"
+            className="flex-1 px-4 py-2 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 cursor-pointer"
             style={{ background: 'var(--accent-primary)', color: 'white' }}
+            onMouseEnter={(e) => {
+              if (!isSaving && modalName.trim() && selectedFoods.length > 0) {
+                e.currentTarget.style.background = 'var(--accent-primary-dim)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--accent-primary)';
+            }}
           >
             {isSaving ? 'Saving...' : (editingItemId !== null ? 'Save' : 'Create')}
           </button>
           <button
             onClick={closeModal}
-            className="px-4 py-2 rounded-xl font-medium border transition-colors hover:bg-gray-50 cursor-pointer"
-            style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
+            className="px-4 py-2 rounded-xl font-medium border transition-all duration-200 cursor-pointer"
+            style={{ 
+              borderColor: 'var(--card-border)', 
+              color: 'var(--foreground)',
+              background: 'var(--card-bg)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--card-bg)';
+            }}
           >
             Cancel
           </button>

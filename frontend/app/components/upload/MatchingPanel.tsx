@@ -106,13 +106,31 @@ export function MatchingPanel({
             background: 'var(--accent-primary)',
             color: 'white',
           }}
+          onMouseEnter={(e) => {
+            if (!isSaving && canSave) {
+              e.currentTarget.style.background = 'var(--accent-primary-dim)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--accent-primary)';
+          }}
         >
           {isSaving ? 'Saving...' : 'Save Meal'}
         </button>
         <button
           onClick={onClearSelection}
-          className="px-6 py-3 rounded-xl font-medium border transition-colors hover:bg-gray-50 cursor-pointer"
-          style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)' }}
+          className="px-6 py-3 rounded-xl font-medium border transition-all duration-200 cursor-pointer"
+          style={{ 
+            borderColor: 'var(--card-border)', 
+            color: 'var(--foreground)',
+            background: 'var(--card-bg)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--card-bg)';
+          }}
         >
           Clear Selection
         </button>

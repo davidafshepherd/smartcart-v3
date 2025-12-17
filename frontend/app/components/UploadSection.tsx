@@ -222,7 +222,7 @@ export default function UploadSection() {
               }}
               onMouseEnter={(e) => {
                 if (!isUploading) {
-                  e.currentTarget.style.background = '#eff6ff';
+                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
                 }
               }}
               onMouseLeave={(e) => {
@@ -247,7 +247,7 @@ export default function UploadSection() {
               ) : (
                 <svg
                   className="w-4 h-4"
-                  style={{ color: 'var(--accent-primary)' }}
+                  style={{ color: 'var(--foreground)' }}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -255,7 +255,7 @@ export default function UploadSection() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               )}
-              <span style={{ color: 'var(--accent-primary)' }} className="font-medium">
+              <span style={{ color: 'var(--foreground)' }} className="font-medium">
                 {isUploading ? 'Uploading...' : 'Add More Snapshots'}
               </span>
             </label>

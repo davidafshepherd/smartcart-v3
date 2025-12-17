@@ -294,10 +294,16 @@ export function NutritionReportInterface({
       <div className="px-8 py-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
         <button
           onClick={onSave}
-          className="px-6 py-3 rounded-xl font-semibold transition-all hover:shadow-md cursor-pointer"
+          className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer"
           style={{
             background: 'var(--accent-primary)',
             color: 'white',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--accent-primary-dim)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--accent-primary)';
           }}
         >
           Save Nutrition Report

@@ -74,8 +74,18 @@ export function MenuItemSelector({
         </select>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-3 rounded-xl border transition-colors hover:bg-blue-50 cursor-pointer"
-          style={{ borderColor: 'var(--card-border)', color: 'var(--accent-primary)' }}
+          className="px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer"
+          style={{ 
+            borderColor: 'var(--card-border)', 
+            color: 'var(--foreground)',
+            background: 'var(--card-bg)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--card-bg)';
+          }}
         >
           + New
         </button>

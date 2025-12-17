@@ -434,11 +434,17 @@ export function AssistedModeInterface({
           </div>
           <button
             onClick={onBackToInputSelection}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all hover:shadow-md cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer"
             style={{
               borderColor: 'var(--card-border)',
-              background: 'var(--background)',
+              background: 'var(--card-bg)',
               color: 'var(--foreground)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--card-bg)';
             }}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -554,10 +560,18 @@ export function AssistedModeInterface({
           <button
             onClick={handleRunSam3}
             disabled={!canRunSam3 || isRunning}
-            className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md cursor-pointer"
+            className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             style={{
               background: 'var(--accent-primary)',
               color: 'white',
+            }}
+            onMouseEnter={(e) => {
+              if (!isRunning && canRunSam3) {
+                e.currentTarget.style.background = 'var(--accent-primary-dim)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--accent-primary)';
             }}
           >
             {isRunning ? (
@@ -578,10 +592,18 @@ export function AssistedModeInterface({
           <button
             onClick={handleSaveMasks}
             disabled={!canSave || isComputingNutrition}
-            className="px-6 py-3 rounded-xl font-semibold transition-all hover:shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: '#10B981',
               color: 'white',
+            }}
+            onMouseEnter={(e) => {
+              if (!isComputingNutrition && canSave) {
+                e.currentTarget.style.background = '#059669';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#10B981';
             }}
           >
             {isComputingNutrition ? (
