@@ -99,6 +99,7 @@ export function SnapshotCard({
     >
       {/* Image Section */}
       <div className="relative h-40">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imagesApi.getImageUrl(snapshot.rgb_path)}
           alt={`Snapshot ${snapshot.id}`}

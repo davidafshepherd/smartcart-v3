@@ -101,15 +101,15 @@ export function MatchingPanel({
 
   return (
     <div
-      className={`p-6 rounded-2xl border shadow-sm ${className}`}
+      className={`p-4 sm:p-6 rounded-2xl border shadow-sm ${className}`}
       style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
     >
-      <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+      <h2 className="text-lg sm:text-xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
         Match Snapshots
       </h2>
 
       {/* Before/After Snapshot Previews */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
         <SnapshotPreview
           label="Before (Pre-meal)"
           number={1}

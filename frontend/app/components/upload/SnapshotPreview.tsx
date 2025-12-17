@@ -74,6 +74,7 @@ export function SnapshotPreview({ label, number, snapshot, color }: SnapshotPrev
       {/* Content: snapshot details or placeholder */}
       {snapshot ? (
         <div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imagesApi.getImageUrl(snapshot.rgb_path)}
             alt={`${label} RGB`}

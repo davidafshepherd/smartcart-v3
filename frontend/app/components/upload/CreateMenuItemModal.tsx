@@ -11,6 +11,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import type { MenuItem, Food } from '../../lib/types';
 import { menuApi, foodsApi, ApiError } from '../../lib/api';
+import { FoodSearchInput } from './FoodSearchInput';
+import { SelectedFoodsList } from './SelectedFoodsList';
 
 // =============================================================================
 // Type Definitions
@@ -59,7 +61,6 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const nameInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Disable body scrolling when modal is open
@@ -106,23 +107,6 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
       });
     }
   }, [showDropdown, searchResults]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        searchInputRef.current &&
-        !searchInputRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   /**
    * Searches for foods based on the query.
@@ -176,7 +160,8 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
     setSearchQuery('');
     setSearchResults([]);
     setShowDropdown(false);
-    searchInputRef.current?.focus();
+    // Focus search input after selection
+    setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
   /**
@@ -291,49 +276,11 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
           </div>
 
           {/* Selected Foods - shown first so search dropdown has room below */}
-          {selectedFoods.length > 0 && (
-            <div>
-              <label
-                className="block text-sm font-medium mb-2"
-                style={{ color: 'var(--foreground)' }}
-              >
-                Selected Foods ({selectedFoods.length})
-              </label>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {selectedFoods.map((food) => (
-                  <div
-                    key={food.id}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg border"
-                    style={{
-                      background: 'var(--accent-light)',
-                      borderColor: 'var(--card-border)',
-                    }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div
-                        className="text-sm font-medium truncate"
-                        style={{ color: 'var(--foreground)' }}
-                      >
-                        {food.food_name}
-                      </div>
-                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {food.kcal != null ? `${food.kcal} kcal/100g` : ''}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveFood(food.id)}
-                      className="ml-2 p-1 rounded-lg transition-colors hover:bg-red-100 cursor-pointer"
-                      style={{ color: 'var(--danger)' }}
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <SelectedFoodsList
+            selectedFoods={selectedFoods}
+            onRemoveFood={handleRemoveFood}
+            maxHeight="max-h-32"
+          />
 
           {/* Food Search - at bottom so dropdown opens downward */}
           <div>
@@ -346,28 +293,17 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
                 (search from nutrition database)
               </span>
             </label>
-            <div className="relative">
-            <input
-                ref={searchInputRef}
-              type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={() => searchQuery && searchResults.length > 0 && setShowDropdown(true)}
-                placeholder="Search for foods..."
-              className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style={{
-                background: 'var(--background)',
-                borderColor: 'var(--card-border)',
-                color: 'var(--foreground)',
-              }}
+            <FoodSearchInput
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              searchResults={searchResults}
+              isSearching={isSearching}
+              showDropdown={showDropdown}
+              onSelectFood={handleSelectFood}
+              onDropdownVisibilityChange={setShowDropdown}
+              dropdownPosition={dropdownPosition}
+              inputRef={searchInputRef}
             />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-
-            </div>
           </div>
 
           {/* Error Message */}
@@ -400,52 +336,10 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
     </div>
   );
 
-  // Dropdown rendered via portal to escape modal boundaries
-  const dropdownPortal = showDropdown && searchResults.length > 0 && typeof document !== 'undefined' && createPortal(
-    <div
-      ref={dropdownRef}
-      className="fixed z-[10000] rounded-xl border shadow-lg max-h-60 overflow-hidden"
-      style={{
-        top: dropdownPosition.top,
-        left: dropdownPosition.left,
-        width: dropdownPosition.width,
-        background: 'var(--card-bg)',
-        borderColor: 'var(--card-border)',
-      }}
-    >
-      <div className="max-h-60 overflow-y-auto">
-      {searchResults.map((food) => (
-        <button
-          key={food.id}
-          onClick={() => handleSelectFood(food)}
-          className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0 cursor-pointer"
-          style={{ borderColor: 'var(--card-border)' }}
-        >
-          <div className="font-medium" style={{ color: 'var(--foreground)' }}>
-            {food.food_name}
-          </div>
-          <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {food.kcal != null ? `${food.kcal} kcal` : 'N/A'}
-            {food.protein != null && ` • ${food.protein}g protein`}
-            {food.carbohydrate != null && ` • ${food.carbohydrate}g carbs`}
-            {food.fat != null && ` • ${food.fat}g fat`}
-          </div>
-        </button>
-      ))}
-      </div>
-    </div>,
-    document.body
-  );
-
   // Use portal to render at document body level for proper centering
   if (typeof document !== 'undefined') {
-    return (
-      <>
-        {createPortal(modalContent, document.body)}
-        {dropdownPortal}
-      </>
-    );
+    return createPortal(modalContent, document.body);
   }
-  
+
   return modalContent;
 }
