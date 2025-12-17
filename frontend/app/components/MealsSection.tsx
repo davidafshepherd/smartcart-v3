@@ -299,11 +299,11 @@ export default function MealsSection() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in pt-16 lg:pt-8">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
             View Meals
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
@@ -311,10 +311,10 @@ export default function MealsSection() {
           </p>
         </div>
 
-        {/* Two-Panel Layout */}
-        <div className="flex gap-8">
+        {/* Two-Panel Layout (stacked on mobile, side-by-side on desktop) */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Panel: Tree View, Patients, and Menu Items */}
-          <div className="w-80 shrink-0 space-y-4">
+          <div className="w-full lg:w-80 lg:shrink-0 space-y-4">
             <MealsPanel
               mealsData={mealsData}
               selectedMealId={selectedMeal?.id ?? null}

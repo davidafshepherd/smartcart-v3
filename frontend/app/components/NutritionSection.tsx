@@ -1,7 +1,9 @@
 /**
  * @fileoverview Nutrition section component for viewing nutrition information.
  *
- * This section provides tools for viewing and analyzing nutrition data.
+ * This section provides tools for viewing and analyzing nutrition data
+ * across patients and time periods. Currently a placeholder for future
+ * functionality.
  */
 
 'use client';
@@ -13,15 +15,18 @@
 /**
  * Renders the nutrition section of the application.
  *
+ * Placeholder component for future nutrition tracking and reporting
+ * functionality. Will display aggregated nutrition data and trends.
+ *
  * @returns The nutrition section element.
  */
 export default function NutritionSection() {
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in pt-16 lg:pt-8">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
             View Nutrition
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>

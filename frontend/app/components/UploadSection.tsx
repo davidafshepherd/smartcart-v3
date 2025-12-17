@@ -235,11 +235,11 @@ export default function UploadSection() {
   // ===========================================================================
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in pt-16 lg:pt-8">
       <div className="max-w-7xl mx-auto">
         {/* Page Header with Add More button */}
-        <div className="mb-8 relative">
-          <div className="pr-48">
+        <div className="mb-6 sm:mb-8 relative">
+          <div className="pr-0 sm:pr-48">
             <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
               Upload Meal Snapshots
             </h1>
@@ -248,10 +248,10 @@ export default function UploadSection() {
             </p>
           </div>
           
-          {/* Add More Snapshots button (absolutely positioned to prevent layout shift) */}
+          {/* Add More Snapshots button (responsive positioning) */}
           {hasExistingSnapshots && (
             <label
-              className={`absolute top-0 right-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl border transition-all duration-200 ${
+              className={`mt-4 sm:mt-0 sm:absolute sm:top-0 sm:right-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl border transition-all duration-200 ${
                 isUploading ? 'opacity-50 pointer-events-none' : 'cursor-pointer'
               }`}
               style={{
@@ -379,10 +379,10 @@ export default function UploadSection() {
         {/* Snapshot Grid */}
         {snapshots.length > 0 && (
           <div>
-            <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+            <h2 className="text-lg sm:text-xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
               Available Snapshots ({snapshots.length})
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {snapshots.map((snapshot, index) => {
                 const selectionIndex = selectedIds.indexOf(snapshot.id);
                 const isSelected = selectionIndex !== -1;

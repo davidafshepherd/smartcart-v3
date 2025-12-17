@@ -1,9 +1,12 @@
 /**
  * @fileoverview Application sidebar component for navigation.
  *
- * Provides a fixed sidebar with branding and navigation between the
+ * Provides a responsive sidebar with branding and navigation between the
  * main sections of the application (Upload Snapshots, View Meals,
  * Analyse Meals, and View Nutrition).
+ *
+ * On desktop (lg+), the sidebar is fixed. On mobile/tablet, it becomes
+ * a slide-out drawer with an overlay backdrop.
  */
 
 'use client';
@@ -25,6 +28,10 @@ interface SidebarProps {
    * @param section - The newly selected section.
    */
   onSectionChange: (section: Section) => void;
+  /** Whether the sidebar is open (mobile only). */
+  isOpen?: boolean;
+  /** Callback to close the sidebar (mobile only). */
+  onClose?: () => void;
 }
 
 // =============================================================================
@@ -37,9 +44,11 @@ interface SidebarProps {
  * The sidebar includes:
  * - Application logo and title
  * - Navigation buttons for each section
+ * - Close button on mobile
  *
- * The active section is visually highlighted. The sidebar is fixed to
- * the left side of the viewport.
+ * The active section is visually highlighted. On desktop, the sidebar
+ * is fixed to the left side of the viewport. On mobile, it slides in
+ * from the left with an overlay backdrop.
  *
  * @param props - The component props.
  * @returns The sidebar element.
@@ -49,70 +58,107 @@ interface SidebarProps {
  * <Sidebar
  *   activeSection={activeSection}
  *   onSectionChange={setActiveSection}
+ *   isOpen={isSidebarOpen}
+ *   onClose={() => setIsSidebarOpen(false)}
  * />
  * ```
  */
-export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+export default function Sidebar({
+  activeSection,
+  onSectionChange,
+  isOpen = false,
+  onClose,
+}: SidebarProps) {
   return (
-    <aside
-      className="fixed left-0 top-0 h-screen w-64 flex flex-col border-r"
-      style={{ background: 'var(--sidebar-bg)', borderColor: 'var(--card-border)' }}
-    >
-      {/* Logo Section */}
-      <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: 'var(--accent-primary)' }}
-          >
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-          </div>
-          <div>
-            <h1 className="font-bold text-lg" style={{ color: 'var(--foreground)' }}>
-              SmartCart v3
-            </h1>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Nutrition Dashboard
-            </p>
+    <>
+      {/* Backdrop (mobile only) */}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed left-0 top-0 h-screen w-64 flex flex-col border-r z-50
+          transition-transform duration-300 ease-in-out
+          lg:translate-x-0
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        style={{ background: 'var(--sidebar-bg)', borderColor: 'var(--card-border)' }}
+      >
+        {/* Logo Section */}
+        <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'var(--accent-primary)' }}
+              >
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1 className="font-bold text-lg" style={{ color: 'var(--foreground)' }}>
+                  SmartCart v3
+                </h1>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Nutrition Dashboard
+                </p>
+              </div>
+            </div>
+            {/* Close button (mobile only) */}
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1 rounded-lg transition-colors hover:bg-gray-100"
+              style={{ color: 'var(--text-muted)' }}
+              aria-label="Close menu"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Navigation Section */}
-      <nav className="flex-1 p-4 space-y-2">
-        <NavButton
-          label="Upload Snapshots"
-          icon={<UploadIcon />}
-          isActive={activeSection === 'upload'}
-          onClick={() => onSectionChange('upload')}
-        />
-        <NavButton
-          label="View Meals"
-          icon={<MealsIcon />}
-          isActive={activeSection === 'meals'}
-          onClick={() => onSectionChange('meals')}
-        />
-        <NavButton
-          label="Analyse Meals"
-          icon={<AnalysisIcon />}
-          isActive={activeSection === 'analysis'}
-          onClick={() => onSectionChange('analysis')}
-        />
-        <NavButton
-          label="View Nutrition"
-          icon={<NutritionIcon />}
-          isActive={activeSection === 'nutrition'}
-          onClick={() => onSectionChange('nutrition')}
-        />
-      </nav>
-    </aside>
+        {/* Navigation Section */}
+        <nav className="flex-1 p-4 space-y-2">
+          <NavButton
+            label="Upload Snapshots"
+            icon={<UploadIcon />}
+            isActive={activeSection === 'upload'}
+            onClick={() => onSectionChange('upload')}
+          />
+          <NavButton
+            label="View Meals"
+            icon={<MealsIcon />}
+            isActive={activeSection === 'meals'}
+            onClick={() => onSectionChange('meals')}
+          />
+          <NavButton
+            label="Analyse Meals"
+            icon={<AnalysisIcon />}
+            isActive={activeSection === 'analysis'}
+            onClick={() => onSectionChange('analysis')}
+          />
+          <NavButton
+            label="View Nutrition"
+            icon={<NutritionIcon />}
+            isActive={activeSection === 'nutrition'}
+            onClick={() => onSectionChange('nutrition')}
+          />
+        </nav>
+      </aside>
+    </>
   );
 }
 
@@ -188,7 +234,7 @@ function UploadIcon() {
 }
 
 /**
- * Meals/chart icon component.
+ * Meals icon component.
  */
 function MealsIcon() {
   return (
@@ -204,7 +250,7 @@ function MealsIcon() {
 }
 
 /**
- * Analysis/magnifying glass icon component.
+ * Analysis icon component.
  */
 function AnalysisIcon() {
   return (
@@ -220,7 +266,7 @@ function AnalysisIcon() {
 }
 
 /**
- * Nutrition/food icon component.
+ * Nutrition icon component.
  */
 function NutritionIcon() {
   return (
