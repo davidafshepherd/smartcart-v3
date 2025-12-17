@@ -2,7 +2,6 @@
 
 - `frontend/` – Next.js dashboard
 - `backend/` – FastAPI API + ML pipeline
-- `docs/` – architecture diagrams, API contracts, notes
 
 This project requires `python>=3.12`.
 
