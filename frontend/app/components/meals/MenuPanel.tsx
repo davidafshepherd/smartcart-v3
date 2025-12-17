@@ -11,21 +11,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { menuApi, foodsApi, ApiError } from '../../lib/api';
 import type { MenuItem, Food } from '../../lib/types';
-
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/**
- * Converts a food short name to title case for display.
- * E.g., "apple" -> "Apple"
- */
-function formatFoodName(shortName: string): string {
-  return shortName
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
+import { formatFoodName } from '../../lib/utils';
+import { FoodSearchInput } from '../upload/FoodSearchInput';
+import { SelectedFoodsList } from '../upload/SelectedFoodsList';
 
 // =============================================================================
 // Type Definitions
@@ -75,7 +63,6 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
 
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Dropdown position for portal
@@ -118,22 +105,6 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
     }
   }, [showDropdown, searchResults]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        searchInputRef.current &&
-        !searchInputRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // ===========================================================================
   // Data Fetching
@@ -197,7 +168,8 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
     setSearchQuery('');
     setSearchResults([]);
     setShowDropdown(false);
-    searchInputRef.current?.focus();
+    // Focus search input after selection
+    setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
   const handleRemoveFood = (foodId: number) => {
@@ -334,41 +306,11 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
           </div>
 
           {/* Selected Foods - shown first so search dropdown has room below */}
-          {selectedFoods.length > 0 && (
-            <div>
-              <label
-                className="block text-sm font-medium mb-2"
-                style={{ color: 'var(--foreground)' }}
-              >
-                Selected ({selectedFoods.length})
-              </label>
-              <div className="space-y-1 max-h-28 overflow-y-auto">
-                {selectedFoods.map((food) => (
-                  <div
-                    key={food.id}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg border"
-                    style={{
-                      background: 'var(--accent-light)',
-                      borderColor: 'var(--card-border)',
-                    }}
-                  >
-                    <span className="text-sm truncate flex-1" style={{ color: 'var(--foreground)' }}>
-                      {food.food_name}
-                    </span>
-                    <button
-                      onClick={() => handleRemoveFood(food.id)}
-                      className="ml-2 p-0.5 rounded transition-colors hover:bg-red-100 cursor-pointer"
-                      style={{ color: 'var(--danger)' }}
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <SelectedFoodsList
+            selectedFoods={selectedFoods}
+            onRemoveFood={handleRemoveFood}
+            maxHeight="max-h-28"
+          />
 
           {/* Food Search - at bottom so dropdown opens downward */}
           <div>
@@ -378,28 +320,17 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                 (search from nutrition database)
               </span>
             </label>
-            <div className="relative">
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={() => searchQuery && searchResults.length > 0 && setShowDropdown(true)}
-                placeholder="Search for foods..."
-                className="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                style={{
-                  background: 'var(--background)',
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--foreground)',
-                }}
-              />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-
-            </div>
+            <FoodSearchInput
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              searchResults={searchResults}
+              isSearching={isSearching}
+              showDropdown={showDropdown}
+              onSelectFood={handleSelectFood}
+              onDropdownVisibilityChange={setShowDropdown}
+              dropdownPosition={dropdownPosition}
+              inputRef={searchInputRef}
+            />
           </div>
 
           {modalError && (
@@ -561,42 +492,6 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
 
       {modal}
 
-      {/* Dropdown rendered via portal to escape modal boundaries */}
-      {showDropdown && searchResults.length > 0 && typeof document !== 'undefined' && createPortal(
-        <div
-          ref={dropdownRef}
-          className="fixed z-[10000] rounded-xl border shadow-lg max-h-48 overflow-hidden"
-          style={{
-            top: dropdownPosition.top,
-            left: dropdownPosition.left,
-            width: dropdownPosition.width,
-            background: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-          }}
-        >
-          <div className="max-h-48 overflow-y-auto">
-            {searchResults.map((food) => (
-              <button
-                key={food.id}
-                onClick={() => handleSelectFood(food)}
-                className="w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0 cursor-pointer"
-                style={{ borderColor: 'var(--card-border)' }}
-              >
-                <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                  {food.food_name}
-                </div>
-                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {food.kcal != null ? `${food.kcal} kcal` : 'N/A'}
-                  {food.protein != null && ` • ${food.protein}g protein`}
-                  {food.carbohydrate != null && ` • ${food.carbohydrate}g carbs`}
-                  {food.fat != null && ` • ${food.fat}g fat`}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>,
-        document.body
-      )}
     </>
   );
 }

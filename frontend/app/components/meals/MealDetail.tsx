@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { MealData, MenuItem, Patient } from '../../lib/types';
 import { imagesApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
@@ -112,14 +112,21 @@ export function MealDetail({
   const [isEditingMenuItem, setIsEditingMenuItem] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(meal.patient.id);
   const [selectedMenuItemId, setSelectedMenuItemId] = useState(meal.menu_item.id);
-
-  // Reset editing state when the meal changes
-  useEffect(() => {
+  
+  // Track previous meal props in state to reset editing state when meal changes
+  // This is the React-recommended pattern for adjusting state based on props
+  const [prevMeal, setPrevMeal] = useState({ id: meal.id, patientId: meal.patient.id, menuItemId: meal.menu_item.id });
+  if (
+    prevMeal.id !== meal.id ||
+    prevMeal.patientId !== meal.patient.id ||
+    prevMeal.menuItemId !== meal.menu_item.id
+  ) {
+    setPrevMeal({ id: meal.id, patientId: meal.patient.id, menuItemId: meal.menu_item.id });
     setIsEditingPatient(false);
     setIsEditingMenuItem(false);
     setSelectedPatientId(meal.patient.id);
     setSelectedMenuItemId(meal.menu_item.id);
-  }, [meal.id, meal.patient.id, meal.menu_item.id]);
+  }
 
   // Get current menu item details for display
   const currentMenuItem = menuItems.find((mi) => mi.id === meal.menu_item.id) ?? meal.menu_item;
@@ -334,11 +341,11 @@ export function MealDetail({
       </div>
 
       {/* Weight Data Section */}
-      <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
+      <div className="p-4 sm:p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
         <h3 className="font-medium mb-4" style={{ color: 'var(--foreground)' }}>
           Weight Data
         </h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <WeightCard label="Before" value={meal.before_weight} color="var(--accent-primary)" />
           <WeightCard label="After" value={meal.after_weight} color="var(--accent-secondary)" />
           <WeightCard
@@ -350,11 +357,11 @@ export function MealDetail({
       </div>
 
       {/* Images Section */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <h3 className="font-medium mb-4" style={{ color: 'var(--foreground)' }}>
           Meal Images
         </h3>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <ImageColumn
             label="Before (Pre-meal)"
             number={1}
@@ -441,6 +448,7 @@ function ImageCard({ label, path }: ImageCardProps) {
       >
         {label}
       </p>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={imagesApi.getImageUrl(path)}
         alt={`${label} image`}
