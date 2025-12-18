@@ -98,3 +98,58 @@ export function formatNumber(
   if (value === null || value === undefined) return 'N/A';
   return value.toFixed(decimals);
 }
+
+// =============================================================================
+// Nutrition Utilities
+// =============================================================================
+
+/**
+ * Converts a value to grams for comparison.
+ *
+ * @param value - The value to convert (can be null/undefined).
+ * @param unit - The unit of the value ('g', 'mg', 'μg', 'kcal', 'kJ').
+ * @returns The value converted to grams, or 0 if null/undefined or energy unit.
+ */
+export function convertToGrams(value: number | null | undefined, unit: string): number {
+  if (value === null || value === undefined) return 0;
+  if (unit === 'g') return value;
+  if (unit === 'mg') return value / 1000;
+  if (unit === 'μg') return value / 1000000;
+  if (unit === 'kcal' || unit === 'kJ') return 0; // Energy not included in bar calculations
+  return value; // Fallback
+}
+
+/**
+ * Calculates total macronutrients for bar normalization.
+ *
+ * @param data - Object containing protein, fat, and carbohydrate values.
+ * @returns The total in grams.
+ */
+export function calculateTotalMacros(data: {
+  protein: number | null | undefined;
+  fat: number | null | undefined;
+  carbohydrate: number | null | undefined;
+}): number {
+  return (
+    convertToGrams(data.protein, 'g') +
+    convertToGrams(data.fat, 'g') +
+    convertToGrams(data.carbohydrate, 'g')
+  );
+}
+
+/**
+ * Formats a nutrition value with unit and decimals.
+ *
+ * @param value - The value to format (can be null/undefined).
+ * @param unit - The unit string to append.
+ * @param decimals - Number of decimal places (default: 1).
+ * @returns The formatted string with unit, or 'N/A' if value is null/undefined.
+ */
+export function formatNutritionValue(
+  value: number | null | undefined,
+  unit: string,
+  decimals: number = 1
+): string {
+  if (value === null || value === undefined) return 'N/A';
+  return `${formatNumber(value, decimals)} ${unit}`;
+}

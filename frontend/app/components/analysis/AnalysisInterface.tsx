@@ -134,6 +134,10 @@ export function AnalysisInterface({
           onSave={() => {
             // TODO: Implement save nutrition report
           }}
+          onDiscard={() => {
+            setNutritionData(null);
+            onInputModeChange(null);
+          }}
         />
       )}
 
