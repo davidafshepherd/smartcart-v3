@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { MealData, FoodMask, ComputeNutritionResponse } from '../../lib/types';
-import { imagesApi } from '../../lib/api';
+import { imagesApi, nutritionApi, ApiError } from '../../lib/api';
 import { InputModeSelector } from './InputModeSelector';
 import { AssistedModeInterface } from './AssistedModeInterface';
 import { AutomatedModeInterface } from './AutomatedModeInterface';
@@ -59,6 +59,8 @@ export function AnalysisInterface({
   setNutritionData,
   isComputingNutrition,
 }: AnalysisInterfaceProps) {
+  const [isSavingReport, setIsSavingReport] = useState(false);
+  
   const foods = meal.menu_item.foods;
   const beforeImageUrl = imagesApi.getImageUrl(meal.before_rgb_path);
   const afterImageUrl = imagesApi.getImageUrl(meal.after_rgb_path);
@@ -131,9 +133,21 @@ export function AnalysisInterface({
         <NutritionReportInterface
           nutritionData={nutritionData}
           foods={foods}
-          onSave={() => {
-            // TODO: Implement save nutrition report
+          onSave={async () => {
+            if (!nutritionData || isSavingReport) return;
+            setIsSavingReport(true);
+            try {
+              await nutritionApi.saveReport(meal.id, nutritionData);
+              // Reset the section after successful save
+              setNutritionData(null);
+              onInputModeChange(null);
+            } catch (err) {
+              // Silently fail - if save fails, section won't reset and user can try again
+            } finally {
+              setIsSavingReport(false);
+            }
           }}
+          isSavingReport={isSavingReport}
           onDiscard={() => {
             setNutritionData(null);
             onInputModeChange(null);

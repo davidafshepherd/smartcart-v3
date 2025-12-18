@@ -9,7 +9,9 @@ import type {
   Point, 
   FoodMask, 
   SAM3Response, 
-  ComputeNutritionResponse, 
+  ComputeNutritionResponse,
+  MealNutrition,
+  FoodNutrition,
 } from './types';
 
 // =============================================================================
@@ -602,5 +604,51 @@ export const analysisApi = {
     });
 
     return handleResponse<ComputeNutritionResponse>(response);
+  },
+};
+
+// =============================================================================
+// Nutrition API
+// =============================================================================
+
+/**
+ * API client for nutrition report operations.
+ */
+export const nutritionApi = {
+  /**
+   * Saves a nutrition report for a meal.
+   *
+   * @param mealId - The ID of the meal to save the nutrition report for.
+   * @param nutritionData - The nutrition data to save.
+   * @returns A promise resolving to the saved nutrition report.
+   * @throws {ApiError} If the save fails.
+   */
+  async saveReport(
+    mealId: number,
+    nutritionData: ComputeNutritionResponse
+  ): Promise<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
+    const response = await fetch(`${config.apiUrl}/nutrition`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        meal_id: mealId,
+        meal_nutrition: nutritionData.meal_nutrition,
+        food_nutrition: nutritionData.food_nutrition,
+      }),
+    });
+
+    return handleResponse<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
+  },
+
+  /**
+   * Retrieves a nutrition report for a meal.
+   *
+   * @param mealId - The ID of the meal to retrieve the nutrition report for.
+   * @returns A promise resolving to the nutrition report.
+   * @throws {ApiError} If the nutrition report doesn't exist.
+   */
+  async getReport(mealId: number): Promise<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
+    const response = await fetch(`${config.apiUrl}/nutrition/${mealId}`);
+    return handleResponse<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
   },
 };

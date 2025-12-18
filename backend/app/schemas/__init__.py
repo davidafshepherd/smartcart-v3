@@ -26,6 +26,10 @@ from .menu import (
     MenuItemResponse,
     UpdateMenuItemRequest,
 )
+from .nutrition import (
+    CreateNutritionReportRequest,
+    NutritionReportResponse,
+)
 from .patients import (
     CreatePatientRequest,
     PatientResponse,
@@ -67,6 +71,10 @@ __all__ = [
     "CreateMenuItemRequest",
     "MenuItemResponse",
     "UpdateMenuItemRequest",
+
+    # Nutrition.
+    "CreateNutritionReportRequest",
+    "NutritionReportResponse",
 
     # Patients.
     "CreatePatientRequest",

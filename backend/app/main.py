@@ -9,7 +9,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.constants import NUTRITION_CSV_PATH, UPLOAD_DIR
 from app.db import Base, engine, SessionLocal
 from app.models.db_models import Food, MealSnapshot
-from app.routers import analysis, foods, images, meals, menu, patients, uploads
+from app.routers import (
+    analysis, 
+    foods, 
+    images, 
+    meals, 
+    menu, 
+    nutrition, 
+    patients, 
+    uploads,
+)
 
 
 # Create the tables if they don't exist already.
@@ -42,6 +51,7 @@ app.include_router(foods.router, prefix="/foods", tags=["foods"])
 app.include_router(images.router, prefix="/images", tags=["images"])
 app.include_router(menu.router, prefix="/menu", tags=["menu"])
 app.include_router(meals.router, prefix="/meals", tags=["meals"])
+app.include_router(nutrition.router, prefix="/nutrition", tags=["nutrition"])
 app.include_router(patients.router, prefix="/patients", tags=["patients"])
 app.include_router(uploads.router, prefix="/uploads", tags=["uploads"])
 

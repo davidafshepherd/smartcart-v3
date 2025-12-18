@@ -3,29 +3,33 @@
 interface NutritionActionsProps {
   onSave: () => void;
   onDiscard: () => void;
+  isSaving?: boolean;
 }
 
 /**
  * Renders the action buttons for the nutrition report.
  */
-export function NutritionActions({ onSave, onDiscard }: NutritionActionsProps) {
+export function NutritionActions({ onSave, onDiscard, isSaving = false }: NutritionActionsProps) {
   return (
     <div className="px-8 py-6 border-t border-b border-x flex gap-4 rounded-b-2xl" style={{ borderColor: 'var(--card-border)', background: 'var(--card-bg)' }}>
       <button
         onClick={onSave}
-        className="px-8 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer"
+        disabled={isSaving}
+        className="px-8 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         style={{
           background: 'var(--accent-primary)',
           color: 'white',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--accent-primary-dim)';
+          if (!isSaving && !e.currentTarget.disabled) {
+            e.currentTarget.style.background = 'var(--accent-primary-dim)';
+          }
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'var(--accent-primary)';
         }}
       >
-        Save Report
+        {isSaving ? 'Saving...' : 'Save Report'}
       </button>
       <button
         onClick={onDiscard}

@@ -22,6 +22,8 @@ interface NutritionReportInterfaceProps {
   onSave: () => void;
   /** Callback to discard/clear the nutrition report. */
   onDiscard: () => void;
+  /** Whether the save operation is in progress. */
+  isSavingReport?: boolean;
 }
 
 // =============================================================================
@@ -39,6 +41,7 @@ export function NutritionReportInterface({
   foods = [],
   onSave,
   onDiscard,
+  isSavingReport = false,
 }: NutritionReportInterfaceProps) {
   // Selected food IDs (initially all foods are selected)
   const [selectedFoodIds, setSelectedFoodIds] = useState<Set<number>>(new Set());
@@ -224,7 +227,7 @@ export function NutritionReportInterface({
 
       {/* Action Buttons */}
       {nutritionData && (
-        <NutritionActions onSave={onSave} onDiscard={onDiscard} />
+        <NutritionActions onSave={onSave} onDiscard={onDiscard} isSaving={isSavingReport} />
       )}
     </>
   );
