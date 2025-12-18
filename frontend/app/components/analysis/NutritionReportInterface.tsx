@@ -163,13 +163,13 @@ export function NutritionReportInterface({
   return (
     <>
       {nutritionData ? (
-        <div
+                  <div
           className="rounded-t-2xl border-t border-x"
-          style={{
+                    style={{
             background: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-          }}
-        >
+                      borderColor: 'var(--card-border)',
+                    }}
+                  >
           <NutritionHeader mass={displayNutrition.mass} />
 
           <div className="p-6">
@@ -187,40 +187,40 @@ export function NutritionReportInterface({
                 <h5 className="text-lg font-bold mb-4 flex items-center" style={{ color: 'var(--foreground)' }}>
                   <span className="w-1 h-6 rounded-full mr-3" style={{ background: 'var(--accent-primary)' }}></span>
                   Macronutrient Breakdown
-                </h5>
+                      </h5>
                 <NutritionWheel
                   protein={displayNutrition.protein}
                   carbs={displayNutrition.carbohydrate}
                   fat={displayNutrition.fat}
                 />
-              </div>
+                    </div>
 
               {/* Nutrition Table - Takes 2/3 on large screens */}
               <div className="lg:col-span-2">
                 <h5 className="text-lg font-bold mb-4 flex items-center" style={{ color: 'var(--foreground)' }}>
                   <span className="w-1 h-6 rounded-full mr-3" style={{ background: 'var(--accent-primary)' }}></span>
                   Nutrition Table
-                </h5>
+                      </h5>
                 <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'var(--card-border)', background: 'var(--card-bg)' }}>
                   <NutritionTable data={displayNutrition} />
-                </div>
-              </div>
+                      </div>
+                    </div>
+                  </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div
+        ) : (
+          <div
           className="rounded-2xl border p-8 text-center"
-          style={{
+            style={{
             background: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-          }}
-        >
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            No nutrition data available. Please compute nutrition first.
-          </p>
-        </div>
-      )}
+              borderColor: 'var(--card-border)',
+            }}
+          >
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              No nutrition data available. Please compute nutrition first.
+            </p>
+          </div>
+        )}
 
       {/* Action Buttons */}
       {nutritionData && (

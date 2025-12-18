@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import type { Snapshot, MenuItem } from '../../lib/types';
 import { SnapshotPreview } from './SnapshotPreview';
 import { MenuItemSelector } from './MenuItemSelector';
@@ -57,6 +58,16 @@ export function MatchingPanel({
   canSave,
   className = '',
 }: MatchingPanelProps) {
+  // Ref for save button to reset hover state when disabled
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Reset button background when it becomes disabled/running
+  useEffect(() => {
+    if (saveButtonRef.current && (isSaving || !canSave)) {
+      saveButtonRef.current.style.background = 'var(--accent-primary)';
+    }
+  }, [isSaving, canSave]);
+  
   // Show menu selector when at least one snapshot is selected.
   const showMenuSelector = beforeSnapshot || afterSnapshot;
 
@@ -99,6 +110,7 @@ export function MatchingPanel({
       {/* Action Buttons */}
       <div className="flex gap-3">
         <button
+          ref={saveButtonRef}
           onClick={onSave}
           disabled={!canSave || isSaving}
           className="px-6 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
@@ -107,7 +119,7 @@ export function MatchingPanel({
             color: 'white',
           }}
           onMouseEnter={(e) => {
-            if (!isSaving && canSave) {
+            if (!isSaving && canSave && !e.currentTarget.disabled) {
               e.currentTarget.style.background = 'var(--accent-primary-dim)';
             }
           }}

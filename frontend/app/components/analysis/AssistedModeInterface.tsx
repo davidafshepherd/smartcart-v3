@@ -98,6 +98,10 @@ export function AssistedModeInterface({
   // Loading state
   const [isRunning, setIsRunning] = useState(false);
   
+  // Refs for buttons to reset hover state when disabled
+  const runSam3ButtonRef = useRef<HTMLButtonElement>(null);
+  const saveMasksButtonRef = useRef<HTMLButtonElement>(null);
+  
   // Image refs for coordinate calculation (used by mask click handlers)
   const beforeImageRef = useRef<HTMLImageElement>(null);
   const afterImageRef = useRef<HTMLImageElement>(null);
@@ -105,7 +109,7 @@ export function AssistedModeInterface({
   // Cursor state for text mode (only show pointer when hovering over mask)
   const [beforeCursor, setBeforeCursor] = useState<'default' | 'pointer'>('default');
   const [afterCursor, setAfterCursor] = useState<'default' | 'pointer'>('default');
-  
+
   // Track which point is being hovered to prevent hover effect during deletion
   const [hoveredPointKey, setHoveredPointKey] = useState<string | null>(null);
 
@@ -126,6 +130,19 @@ export function AssistedModeInterface({
   const canSave = hasBeforeMask;
   
   const isLastFood = currentFoodIndex === foods.length - 1;
+  
+  // Reset button backgrounds when they become disabled/running
+  useEffect(() => {
+    if (runSam3ButtonRef.current && (isRunning || !canRunSam3)) {
+      runSam3ButtonRef.current.style.background = 'var(--accent-primary)';
+    }
+  }, [isRunning, canRunSam3]);
+  
+  useEffect(() => {
+    if (saveMasksButtonRef.current && (isComputingNutrition || !canSave)) {
+      saveMasksButtonRef.current.style.background = '#10B981';
+    }
+  }, [isComputingNutrition, canSave]);
 
   // ---------------------------------------------------------------------------
   // Effects
@@ -558,6 +575,7 @@ export function AssistedModeInterface({
         {/* Action Buttons - Always show Save button next to Run */}
         <div className="flex gap-3">
           <button
+            ref={runSam3ButtonRef}
             onClick={handleRunSam3}
             disabled={!canRunSam3 || isRunning}
             className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
@@ -566,7 +584,7 @@ export function AssistedModeInterface({
               color: 'white',
             }}
             onMouseEnter={(e) => {
-              if (!isRunning && canRunSam3) {
+              if (!isRunning && canRunSam3 && !e.currentTarget.disabled) {
                 e.currentTarget.style.background = 'var(--accent-primary-dim)';
               }
             }}
@@ -590,6 +608,7 @@ export function AssistedModeInterface({
           </button>
           
           <button
+            ref={saveMasksButtonRef}
             onClick={handleSaveMasks}
             disabled={!canSave || isComputingNutrition}
             className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -598,7 +617,7 @@ export function AssistedModeInterface({
               color: 'white',
             }}
             onMouseEnter={(e) => {
-              if (!isComputingNutrition && canSave) {
+              if (!isComputingNutrition && canSave && !e.currentTarget.disabled) {
                 e.currentTarget.style.background = '#059669';
               }
             }}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Food, FoodMask } from '../../lib/types';
 import { analysisApi, ApiError } from '../../lib/api';
 import { ImageWithMasks } from './ImageWithMasks';
@@ -57,6 +57,9 @@ export function AutomatedModeInterface({
   // Loading state
   const [isRunning, setIsRunning] = useState(false);
 
+  // Refs for buttons to reset hover state when disabled
+  const runSam3ButtonRef = useRef<HTMLButtonElement>(null);
+  const computeButtonRef = useRef<HTMLButtonElement>(null);
 
   // ---------------------------------------------------------------------------
   // Derived State
@@ -64,6 +67,19 @@ export function AutomatedModeInterface({
   
   const hasMasks = generatedBeforeMasks.length > 0 || generatedAfterMasks.length > 0;
   const canRunSam3 = foods.length > 0;
+
+  // Reset button backgrounds when they become disabled/running
+  useEffect(() => {
+    if (runSam3ButtonRef.current && (isRunning || !canRunSam3)) {
+      runSam3ButtonRef.current.style.background = 'var(--accent-primary)';
+    }
+  }, [isRunning, canRunSam3]);
+
+  useEffect(() => {
+    if (computeButtonRef.current && (isComputingNutrition || !hasMasks)) {
+      computeButtonRef.current.style.background = '#10B981';
+    }
+  }, [isComputingNutrition, hasMasks]);
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -211,6 +227,7 @@ export function AutomatedModeInterface({
         {/* Action Buttons */}
         <div className="flex gap-3">
           <button
+            ref={runSam3ButtonRef}
             onClick={handleRunSam3}
             disabled={!canRunSam3 || isRunning}
             className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
@@ -219,7 +236,7 @@ export function AutomatedModeInterface({
               color: 'white',
             }}
             onMouseEnter={(e) => {
-              if (!isRunning && canRunSam3) {
+              if (!isRunning && canRunSam3 && !e.currentTarget.disabled) {
                 e.currentTarget.style.background = 'var(--accent-primary-dim)';
               }
             }}
@@ -243,6 +260,7 @@ export function AutomatedModeInterface({
           </button>
           
           <button
+            ref={computeButtonRef}
             onClick={handleComputeVolume}
             disabled={!hasMasks || isComputingNutrition}
             className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -251,7 +269,7 @@ export function AutomatedModeInterface({
               color: 'white',
             }}
             onMouseEnter={(e) => {
-              if (!isComputingNutrition && hasMasks) {
+              if (!isComputingNutrition && hasMasks && !e.currentTarget.disabled) {
                 e.currentTarget.style.background = '#059669';
               }
             }}
