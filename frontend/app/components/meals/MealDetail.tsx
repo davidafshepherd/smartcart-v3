@@ -320,11 +320,11 @@ export function MealDetail({
       {/* Weight Data Section */}
       <div className="p-4 sm:p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
         <h3 className="font-medium mb-4" style={{ color: 'var(--foreground)' }}>
-          Weight Data
+          Weight
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <WeightCard label="Before" value={meal.before_weight} color="var(--accent-primary)" />
-          <WeightCard label="After" value={meal.after_weight} color="var(--accent-secondary)" />
+          <WeightCard label="After" value={meal.after_weight} color="var(--accent-primary)" />
           <WeightCard
             label="Consumed"
             value={meal.before_weight - meal.after_weight}
