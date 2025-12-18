@@ -105,6 +105,8 @@ export function MealDetail({
   const currentMenuItem = menuItems.find((mi) => mi.id === meal.menu_item.id) ?? meal.menu_item;
 
   const handlePatientSave = async () => {
+    if (isUpdating) return;
+    
     if (selectedPatientId !== meal.patient.id) {
       await onUpdate(selectedPatientId, undefined);
     }
@@ -112,6 +114,8 @@ export function MealDetail({
   };
 
   const handleMenuItemSave = async () => {
+    if (isUpdating) return;
+    
     if (selectedMenuItemId !== meal.menu_item.id) {
       await onUpdate(undefined, selectedMenuItemId);
     }

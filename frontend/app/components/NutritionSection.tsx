@@ -16,7 +16,7 @@ export default function NutritionSection() {
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-            View Nutrition
+            View Nutrition Reports
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
             This section is coming soon.

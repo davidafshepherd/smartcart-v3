@@ -115,6 +115,8 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
   };
 
   const handleSaveModal = async () => {
+    if (isSaving) return;
+    
     const id = parseInt(modalPatientId, 10);
     if (isNaN(id) || id < 0) {
       setModalError('Please enter a valid non-negative number');
@@ -152,6 +154,8 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
   };
 
   const handleDeletePatient = async (patientId: number) => {
+    if (deletingPatientId !== null) return;
+    
     setDeletingPatientId(patientId);
     try {
       await patientsApi.delete(patientId);

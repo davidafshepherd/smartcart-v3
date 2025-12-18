@@ -79,6 +79,8 @@ export default function UploadSection() {
    * @param file - The ZIP file to upload.
    */
   const handleFileUpload = useCallback(async (file: File) => {
+    if (isUploading) return;
+    
     setUploading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -102,7 +104,7 @@ export default function UploadSection() {
     } finally {
       setUploading(false);
     }
-  }, [addUpload, setUploading, setErrorMessage, setSuccessMessage]);
+  }, [isUploading, addUpload, setUploading, setErrorMessage, setSuccessMessage]);
 
   /**
    * Handles discarding a snapshot.
@@ -145,6 +147,8 @@ export default function UploadSection() {
    * Handles saving a meal from matched snapshots.
    */
   const handleSaveMeal = async () => {
+    if (isSaving) return;
+    
     if (selectedIds.length !== 2 || !selectedMenuItemId) return;
 
     const beforeSnapshot = getSnapshotById(selectedIds[0]);

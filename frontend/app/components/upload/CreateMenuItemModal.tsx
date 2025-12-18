@@ -157,6 +157,8 @@ export function CreateMenuItemModal({ isOpen, onClose, onCreated }: CreateMenuIt
    * Handles the creation of a new menu item.
    */
   const handleCreate = async () => {
+    if (isCreating) return;
+    
     if (!name.trim()) {
       setError('Please enter a name');
       return;

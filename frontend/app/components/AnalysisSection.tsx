@@ -117,7 +117,7 @@ export default function AnalysisSection() {
   // ===========================================================================
 
   const handleComputeVolume = async (beforeMasks: FoodMask[], afterMasks: FoodMask[]) => {
-    if (!selectedMeal) return;
+    if (!selectedMeal || isComputingNutrition) return;
     
     setIsComputingNutrition(true);
     try {
@@ -157,7 +157,7 @@ export default function AnalysisSection() {
             Analyse Meals
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            Select a meal to analyse and generate a detailed nutritional report.
+            Select a meal to analyse and generate a detailed nutrition report.
           </p>
         </div>
 

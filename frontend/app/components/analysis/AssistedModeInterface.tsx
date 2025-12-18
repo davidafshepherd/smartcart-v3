@@ -232,6 +232,8 @@ export function AssistedModeInterface({
   };
 
   const handleRunSam3 = async () => {
+    if (isRunning) return;
+    
     setIsRunning(true);
     try {
       let response;

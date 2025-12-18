@@ -199,6 +199,8 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
   };
 
   const handleSaveModal = async () => {
+    if (isSaving) return;
+    
     if (!modalName.trim()) {
       setModalError('Please enter a name');
       return;
@@ -232,6 +234,8 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
   };
 
   const handleDeleteMenuItem = async (itemId: number) => {
+    if (deletingItemId !== null) return;
+    
     setDeletingItemId(itemId);
     try {
       await menuApi.delete(itemId);

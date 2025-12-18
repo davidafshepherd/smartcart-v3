@@ -86,6 +86,8 @@ export function AutomatedModeInterface({
   // ---------------------------------------------------------------------------
   
   const handleRunSam3 = async () => {
+    if (isRunning) return;
+    
     setIsRunning(true);
     try {
       const foodIds = foods.map(f => f.id);
