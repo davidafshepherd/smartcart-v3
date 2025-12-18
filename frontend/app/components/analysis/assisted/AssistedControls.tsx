@@ -118,30 +118,27 @@ export function AssistedControls({
         </div>
       </div>
 
-      {/* Confidence Threshold - Only for text mode */}
+      {/* Text Prompt Input */}
       {inputType === 'text' && (
-        <div className="flex-1 max-w-xs mx-auto">
+        <div className="flex-1">
           <label
             className="text-sm font-semibold mb-2 block whitespace-nowrap"
             style={{ color: 'var(--foreground)' }}
           >
-            Confidence Threshold
+            Text Prompt
           </label>
-          <div className="flex items-center gap-2 py-2">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={confidenceThreshold}
-              onChange={(e) => onConfidenceThresholdChange(parseFloat(e.target.value))}
-              className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
-              style={{ background: 'var(--card-border)' }}
-            />
-            <span className="text-sm" style={{ color: 'var(--text-muted)', minWidth: '3rem' }}>
-              {confidenceThreshold.toFixed(2)}
-            </span>
-          </div>
+          <input
+            type="text"
+            value={textPrompt}
+            onChange={(e) => onTextPromptChange(e.target.value)}
+            placeholder="e.g. chicken drumstick"
+            className="w-full px-4 py-2 rounded-lg border transition-all"
+            style={{
+              borderColor: 'var(--card-border)',
+              background: 'var(--background)',
+              color: 'var(--foreground)',
+            }}
+          />
         </div>
       )}
 
@@ -226,27 +223,30 @@ export function AssistedControls({
         </div>
       )}
 
-      {/* Text Prompt Input */}
+      {/* Confidence Threshold - Only for text mode */}
       {inputType === 'text' && (
-        <div className="flex-1">
+        <div className="flex-1 max-w-xs mx-auto">
           <label
             className="text-sm font-semibold mb-2 block whitespace-nowrap"
             style={{ color: 'var(--foreground)' }}
           >
-            Text Prompt
+            Confidence Threshold
           </label>
-          <input
-            type="text"
-            value={textPrompt}
-            onChange={(e) => onTextPromptChange(e.target.value)}
-            placeholder="e.g. chicken drumstick"
-            className="w-full px-4 py-2 rounded-lg border transition-all"
-            style={{
-              borderColor: 'var(--card-border)',
-              background: 'var(--background)',
-              color: 'var(--foreground)',
-            }}
-          />
+          <div className="flex items-center gap-2 py-2">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={confidenceThreshold}
+              onChange={(e) => onConfidenceThresholdChange(parseFloat(e.target.value))}
+              className="flex-1 h-2 rounded-lg appearance-none cursor-pointer range-slider"
+              style={{ background: 'var(--card-border)' }}
+            />
+            <span className="text-sm" style={{ color: 'var(--text-muted)', minWidth: '3rem' }}>
+              {confidenceThreshold.toFixed(2)}
+            </span>
+          </div>
         </div>
       )}
     </div>

@@ -94,3 +94,49 @@ body {
   background: var(--accent-primary);
   color: white;
 }
+
+/* Range slider styles */
+input[type="range"].range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+input[type="range"].range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  cursor: pointer;
+  border: 2px solid var(--card-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease;
+}
+
+input[type="range"].range-slider:hover::-webkit-slider-thumb,
+input[type="range"].range-slider:active::-webkit-slider-thumb {
+  background: var(--accent-primary-dim);
+}
+
+input[type="range"].range-slider:focus {
+  outline: none;
+}
+
+/* Firefox */
+input[type="range"].range-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  cursor: pointer;
+  border: 2px solid var(--card-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease;
+}
+
+input[type="range"].range-slider:hover::-moz-range-thumb,
+input[type="range"].range-slider:active::-moz-range-thumb {
+  background: var(--accent-primary-dim);
+}

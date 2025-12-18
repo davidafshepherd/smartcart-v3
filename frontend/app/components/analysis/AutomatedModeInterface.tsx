@@ -57,6 +57,7 @@ export function AutomatedModeInterface({
   // Loading state
   const [isRunning, setIsRunning] = useState(false);
 
+
   // ---------------------------------------------------------------------------
   // Derived State
   // ---------------------------------------------------------------------------
@@ -154,7 +155,7 @@ export function AutomatedModeInterface({
                 step="0.05"
                 value={confidenceThreshold}
                 onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
-                className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 rounded-lg appearance-none cursor-pointer range-slider"
                 style={{ background: 'var(--card-border)' }}
               />
               <span className="text-sm" style={{ color: 'var(--text-muted)', minWidth: '3rem' }}>
