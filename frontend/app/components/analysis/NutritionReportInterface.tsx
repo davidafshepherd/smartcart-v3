@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { ComputeNutritionResponse, Food } from '../../lib/types';
 import { NutritionWheel } from './nutrition/NutritionWheel';
 import { NutritionTable } from './nutrition/NutritionTable';
@@ -44,15 +44,27 @@ export function NutritionReportInterface({
   isSavingReport = false,
 }: NutritionReportInterfaceProps) {
   // Selected food IDs (initially all foods are selected)
-  const [selectedFoodIds, setSelectedFoodIds] = useState<Set<number>>(new Set());
+  // Use lazy initializer to compute initial state from nutritionData
+  const [selectedFoodIds, setSelectedFoodIds] = useState<Set<number>>(() => {
+    if (nutritionData && nutritionData.food_nutrition.length > 0) {
+      return new Set(nutritionData.food_nutrition.map((food) => food.food_id));
+    }
+    return new Set<number>();
+  });
 
-  // Initialize selectedFoodIds with all food IDs when nutritionData changes
-  useEffect(() => {
+  // Track previous nutritionData to reset selection when it changes
+  // This pattern (adjusting state during render) is recommended by React docs
+  // instead of using useEffect, to avoid cascading renders
+  const [prevNutritionData, setPrevNutritionData] = useState<ComputeNutritionResponse | null>(null);
+  if (nutritionData !== prevNutritionData) {
+    setPrevNutritionData(nutritionData);
     if (nutritionData && nutritionData.food_nutrition.length > 0) {
       const allFoodIds = new Set(nutritionData.food_nutrition.map((food) => food.food_id));
       setSelectedFoodIds(allFoodIds);
+    } else {
+      setSelectedFoodIds(new Set());
     }
-  }, [nutritionData]);
+  }
 
   /**
    * Combines nutrition data from selected foods.

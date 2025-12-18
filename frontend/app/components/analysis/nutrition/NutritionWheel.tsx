@@ -30,18 +30,7 @@ export function NutritionWheel({ protein, carbs, fat }: NutritionWheelProps) {
   const size = 200;
   const radius = 75;
   const center = size / 2;
-  const circumference = 2 * Math.PI * radius;
   const strokeWidth = 28;
-
-  // Calculate stroke dasharray for each segment
-  const proteinDash = (proteinPct / 100) * circumference;
-  const carbsDash = (carbsPct / 100) * circumference;
-  const fatDash = (fatPct / 100) * circumference;
-
-  // Calculate offset for each segment (cumulative)
-  const proteinOffset = 0;
-  const carbsOffset = circumference - proteinDash;
-  const fatOffset = circumference - proteinDash - carbsDash;
 
   // Helper to create arc path
   const createArc = (startAngle: number, endAngle: number) => {

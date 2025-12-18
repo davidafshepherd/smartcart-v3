@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import type { MealData, FoodMask, ComputeNutritionResponse } from '../../lib/types';
-import { imagesApi, nutritionApi, ApiError } from '../../lib/api';
+import { imagesApi, nutritionApi } from '../../lib/api';
 import { InputModeSelector } from './InputModeSelector';
 import { AssistedModeInterface } from './AssistedModeInterface';
 import { AutomatedModeInterface } from './AutomatedModeInterface';
@@ -141,7 +141,7 @@ export function AnalysisInterface({
               // Reset the section after successful save
               setNutritionData(null);
               onInputModeChange(null);
-            } catch (err) {
+            } catch {
               // Silently fail - if save fails, section won't reset and user can try again
             } finally {
               setIsSavingReport(false);
