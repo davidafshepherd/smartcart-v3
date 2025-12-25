@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { Food, Point, FoodMask } from '../../lib/types';
-import { analysisApi, ApiError } from '../../lib/api';
-import { getFoodColor, formatFoodName, mergeMasks } from '../../lib/utils';
-import { ProgressBar } from './assisted/ProgressBar';
-import { AssistedControls } from './assisted/AssistedControls';
-import { ImageWithMasksAndPoints } from './assisted/ImageWithMasksAndPoints';
+import type { Food, Point, FoodMask } from '../../../../lib/types';
+import { analysisApi, ApiError } from '../../../../lib/api';
+import { getFoodColor, formatFoodName, mergeMasks } from '../../../../lib/utils';
+import { ProgressBar } from './ProgressBar';
+import { AssistedControls } from './AssistedControls';
+import { ImageWithMasksAndPoints } from './ImageWithMasksAndPoints';
 
 // =============================================================================
 // Types

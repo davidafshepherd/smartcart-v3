@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { MealData, FoodMask, ComputeNutritionResponse } from '../../lib/types';
-import { imagesApi, nutritionApi } from '../../lib/api';
+import type { MealData, FoodMask, ComputeNutritionResponse } from '../../../lib/types';
+import { imagesApi, nutritionApi } from '../../../lib/api';
 import { InputModeSelector } from './InputModeSelector';
-import { AssistedModeInterface } from './AssistedModeInterface';
-import { AutomatedModeInterface } from './AutomatedModeInterface';
-import { NutritionReportInterface } from './NutritionReportInterface';
+import { AssistedModeInterface } from './assisted/AssistedModeInterface';
+import { AutomatedModeInterface } from './automated/AutomatedModeInterface';
+import { NutritionReportInterface } from '../nutrition/NutritionReportInterface';
 
 // =============================================================================
 // Types

@@ -12,8 +12,8 @@ interface MealsPanelProps {
   mealsData: MealsData;
   /** ID of the currently selected meal, or null. */
   selectedMealId: number | null;
-  /** Callback invoked when a meal is selected. */
-  onMealSelect: (meal: MealData) => void;
+  /** Callback invoked when a meal is clicked (for context menu). */
+  onMealClick: (meal: MealData, event: React.MouseEvent) => void;
   /** Set of expanded patient IDs (controlled). */
   expandedPatients: Set<string>;
   /** Set of expanded date keys (controlled). */
@@ -42,8 +42,8 @@ interface PatientNodeProps {
   onToggle: () => void;
   /** Callback to toggle expansion of a date node. */
   onToggleDate: (key: string) => void;
-  /** Callback to select a meal. */
-  onMealSelect: (meal: MealData) => void;
+  /** Callback invoked when a meal is clicked. */
+  onMealClick: (meal: MealData, event: React.MouseEvent) => void;
 }
 
 /** Props for the DateNode sub-component. */
@@ -60,8 +60,8 @@ interface DateNodeProps {
   selectedMealId: number | null;
   /** Callback to toggle expansion of this date node. */
   onToggle: () => void;
-  /** Callback to select a meal. */
-  onMealSelect: (meal: MealData) => void;
+  /** Callback invoked when a meal is clicked. */
+  onMealClick: (meal: MealData, event: React.MouseEvent) => void;
 }
 
 // =============================================================================
@@ -77,7 +77,7 @@ interface DateNodeProps {
 export function MealsPanel({
   mealsData,
   selectedMealId,
-  onMealSelect,
+  onMealClick,
   expandedPatients,
   expandedDates,
   onTogglePatient,
@@ -153,7 +153,7 @@ export function MealsPanel({
                 selectedMealId={selectedMealId}
                 onToggle={() => onTogglePatient(patientId)}
                 onToggleDate={onToggleDate}
-                onMealSelect={onMealSelect}
+                onMealClick={onMealClick}
               />
             ))}
           </div>
@@ -208,7 +208,7 @@ function PatientNode({
   selectedMealId,
   onToggle,
   onToggleDate,
-  onMealSelect,
+  onMealClick,
 }: PatientNodeProps) {
   // Sort dates in reverse chronological order.
   const dates = Object.keys(data).sort().reverse();
@@ -247,7 +247,7 @@ function PatientNode({
               isExpanded={expandedDates.has(`${patientId}-${date}`)}
               selectedMealId={selectedMealId}
               onToggle={() => onToggleDate(`${patientId}-${date}`)}
-              onMealSelect={onMealSelect}
+              onMealClick={onMealClick}
             />
           ))}
         </div>
@@ -265,7 +265,7 @@ function DateNode({
   isExpanded,
   selectedMealId,
   onToggle,
-  onMealSelect,
+  onMealClick,
 }: DateNodeProps) {
   // Sort time ranges chronologically.
   const timeRanges = Object.keys(data).sort();
@@ -306,7 +306,11 @@ function DateNode({
             return (
               <button
                 key={timeRange}
-                onClick={() => onMealSelect(meal)}
+                onClick={(e) => onMealClick(meal, e)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  onMealClick(meal, e);
+                }}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors cursor-pointer"
                 style={{
                   background: isSelected ? 'var(--accent-primary)' : 'transparent',

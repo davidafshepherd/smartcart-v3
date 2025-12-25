@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import type { FoodMask, Point } from '../../../lib/types';
+import type { FoodMask, Point } from '../../../../lib/types';
 import { MaskOverlay } from '../MaskOverlay';
 import { PointMarker } from './PointMarker';
 

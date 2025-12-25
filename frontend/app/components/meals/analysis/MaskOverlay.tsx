@@ -1,7 +1,7 @@
 'use client';
 
-import type { FoodMask } from '../../lib/types';
-import { getFoodColor, getMaskColor } from '../../lib/utils';
+import type { FoodMask } from '../../../lib/types';
+import { getFoodColor, getMaskColor } from '../../../lib/utils';
 
 // =============================================================================
 // Types

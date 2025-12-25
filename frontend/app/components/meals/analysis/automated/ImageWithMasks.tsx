@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import type { FoodMask } from '../../lib/types';
-import { MaskOverlay } from './MaskOverlay';
+import type { FoodMask } from '../../../../lib/types';
+import { MaskOverlay } from '../MaskOverlay';
 
 /** Image dimensions for rendering overlays. */
 interface ImageDimensions {

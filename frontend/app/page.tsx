@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import UploadSection from './components/UploadSection';
 import MealsSection from './components/MealsSection';
-import AnalysisSection from './components/AnalysisSection';
 import NutritionSection from './components/NutritionSection';
 
 // =============================================================================
@@ -12,7 +11,7 @@ import NutritionSection from './components/NutritionSection';
 // =============================================================================
 
 /** The available application sections. */
-type Section = 'upload' | 'meals' | 'analysis' | 'nutrition';
+type Section = 'upload' | 'meals' | 'nutrition';
 
 // =============================================================================
 // Component
@@ -56,7 +55,6 @@ export default function Home() {
       <main className="lg:ml-64 min-h-screen">
         {activeSection === 'upload' && <UploadSection />}
         {activeSection === 'meals' && <MealsSection />}
-        {activeSection === 'analysis' && <AnalysisSection />}
         {activeSection === 'nutrition' && <NutritionSection />}
       </main>
     </div>

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { menuApi, foodsApi, ApiError } from '../../lib/api';
 import type { MenuItem, Food } from '../../lib/types';
-import { formatFoodName } from '../../lib/utils';
 import { FoodSearchInput } from '../upload/FoodSearchInput';
 import { SelectedFoodsList } from '../upload/SelectedFoodsList';
 
@@ -389,7 +388,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
           <div className="flex items-center gap-2">
             <MenuIcon />
             <span className="font-medium text-sm" style={{ color: 'var(--foreground)' }}>
-              Menu Items
+              Menu
             </span>
             <span
               className="px-2 py-0.5 rounded-full text-xs font-medium"
@@ -468,7 +467,7 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
                     {item.name}
                   </span>
                   <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                    {item.foods?.map((f) => formatFoodName(f.short_name)).join(', ') || 'No ingredients'}
+                    {item.foods?.map((f) => f.short_name).join(', ') || 'No ingredients'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">

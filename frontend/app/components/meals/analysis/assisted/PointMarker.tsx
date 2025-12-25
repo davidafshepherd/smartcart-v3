@@ -1,6 +1,6 @@
 'use client';
 
-import type { Point } from '../../../lib/types';
+import type { Point } from '../../../../lib/types';
 
 // =============================================================================
 // Types

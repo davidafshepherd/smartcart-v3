@@ -1,7 +1,7 @@
 'use client';
 
-import type { Food } from '../../../lib/types';
-import { getFoodColor } from '../../../lib/utils';
+import type { Food } from '../../../../lib/types';
+import { getFoodColor } from '../../../../lib/utils';
 
 // =============================================================================
 // Types

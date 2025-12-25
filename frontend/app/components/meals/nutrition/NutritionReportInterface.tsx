@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import type { ComputeNutritionResponse, Food } from '../../lib/types';
-import { NutritionWheel } from './nutrition/NutritionWheel';
-import { NutritionTable } from './nutrition/NutritionTable';
-import { FoodSelection } from './nutrition/FoodSelection';
-import { NutritionHeader } from './nutrition/NutritionHeader';
-import { NutritionActions } from './nutrition/NutritionActions';
+import type { ComputeNutritionResponse, Food } from '../../../lib/types';
+import { NutritionWheel } from './NutritionWheel';
+import { NutritionTable } from './NutritionTable';
+import { FoodSelection } from './FoodSelection';
+import { NutritionHeader } from './NutritionHeader';
+import { NutritionActions } from './NutritionActions';
 
 // =============================================================================
 // Types

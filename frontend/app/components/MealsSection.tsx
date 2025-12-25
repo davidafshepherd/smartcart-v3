@@ -1,19 +1,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { mealsApi, menuApi, patientsApi, ApiError } from '../lib/api';
-import type { MealsData, MealData, MenuItem, Patient } from '../lib/types';
+import { createPortal } from 'react-dom';
+import { mealsApi, menuApi, patientsApi, analysisApi, ApiError } from '../lib/api';
+import type { MealsData, MealData, MenuItem, Patient, FoodMask, ComputeNutritionResponse } from '../lib/types';
 import { MealsPanel } from './meals/MealsPanel';
-import { MealDetail } from './meals/MealDetail';
+import { MealDetail } from './meals/view/MealDetail';
 import { PatientsPanel } from './meals/PatientsPanel';
 import { MenuPanel } from './meals/MenuPanel';
+import { MealContextMenu } from './meals/MealContextMenu';
+import { AnalysisInterface } from './meals/analysis/AnalysisInterface';
+
+// =============================================================================
+// Type Definitions
+// =============================================================================
+
+type InputMode = 'automated' | 'assisted';
+type ViewMode = 'view' | 'analyse' | null;
 
 // =============================================================================
 // Component
 // =============================================================================
 
 /**
- * Renders the meals section of the application.
+ * Renders the meals section of the application with merged view and analysis functionality.
  *
  * @returns The meals section element.
  */
@@ -26,9 +36,24 @@ export default function MealsSection() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMeal, setSelectedMeal] = useState<MealData | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(null);
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    meal: MealData;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // View mode state
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+
+  // Analysis mode state
+  const [inputMode, setInputMode] = useState<InputMode | null>(null);
+  const [nutritionData, setNutritionData] = useState<ComputeNutritionResponse | null>(null);
+  const [isComputingNutrition, setIsComputingNutrition] = useState(false);
 
   // Tree view expansion state (lifted up to preserve across patient ID changes)
   const [expandedPatients, setExpandedPatients] = useState<Set<string>>(new Set());
@@ -44,6 +69,14 @@ export default function MealsSection() {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Reset analysis state when meal changes
+  useEffect(() => {
+    if (selectedMeal && viewMode === 'analyse') {
+      setInputMode(null);
+      setNutritionData(null);
+    }
+  }, [selectedMeal, viewMode]);
 
   // ---------------------------------------------------------------------------
   // Data Fetching
@@ -116,7 +149,45 @@ export default function MealsSection() {
   };
 
   // ---------------------------------------------------------------------------
-  // Event Handlers
+  // Context Menu Handlers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Handles meal click to show context menu.
+   */
+  const handleMealClick = (meal: MealData, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Use the exact click coordinates - these are viewport-relative
+    // which matches fixed positioning perfectly
+    setContextMenu({
+      meal,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
+
+  /**
+   * Handles viewing a meal.
+   */
+  const handleViewMeal = (meal: MealData) => {
+    setSelectedMeal(meal);
+    setViewMode('view');
+    setContextMenu(null);
+  };
+
+  /**
+   * Handles analysing a meal.
+   */
+  const handleAnalyseMeal = (meal: MealData) => {
+    setSelectedMeal(meal);
+    setViewMode('analyse');
+    setContextMenu(null);
+  };
+
+  // ---------------------------------------------------------------------------
+  // View Mode Handlers
   // ---------------------------------------------------------------------------
 
   /**
@@ -132,6 +203,7 @@ export default function MealsSection() {
     try {
       await mealsApi.delete(mealId);
       setSelectedMeal(null);
+      setViewMode(null);
       fetchMeals();
     } catch (err) {
       console.error('Failed to delete meal:', err);
@@ -171,6 +243,33 @@ export default function MealsSection() {
       }
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Analysis Mode Handlers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Handles computing nutrition from food masks.
+   */
+  const handleComputeVolume = async (beforeMasks: FoodMask[], afterMasks: FoodMask[]) => {
+    if (!selectedMeal || isComputingNutrition) return;
+    
+    setIsComputingNutrition(true);
+    try {
+      const result = await analysisApi.computeNutrition(
+        selectedMeal.before_depth_path,
+        selectedMeal.after_depth_path,
+        beforeMasks,
+        afterMasks
+      );
+      setNutritionData(result);
+    } catch (err) {
+      console.error('Nutrition computation failed:', err);
+      alert(err instanceof ApiError ? err.message : 'Failed to compute nutrition');
+    } finally {
+      setIsComputingNutrition(false);
     }
   };
 
@@ -271,10 +370,10 @@ export default function MealsSection() {
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-            View Meals
+            Meals
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            View and manage meals organized by patient, date and time.
+            View meals organized by patient, date and time or analyse meals to generate detailed nutrition reports.
           </p>
         </div>
 
@@ -285,7 +384,7 @@ export default function MealsSection() {
             <MealsPanel
               mealsData={mealsData}
               selectedMealId={selectedMeal?.id ?? null}
-              onMealSelect={setSelectedMeal}
+              onMealClick={handleMealClick}
               expandedPatients={expandedPatients}
               expandedDates={expandedDates}
               onTogglePatient={togglePatient}
@@ -295,9 +394,9 @@ export default function MealsSection() {
             <MenuPanel onDataChange={handleDataChange} />
           </div>
 
-          {/* Right Panel: Meal Detail or Empty State */}
+          {/* Right Panel: Meal Detail, Analysis Interface, or Empty State */}
           <div className="flex-1">
-            {selectedMeal ? (
+            {selectedMeal && viewMode === 'view' ? (
               <MealDetail
                 meal={selectedMeal}
                 onDelete={() => handleDeleteMeal(selectedMeal.id)}
@@ -310,12 +409,36 @@ export default function MealsSection() {
                 patients={patients}
                 menuItems={menuItems}
               />
+            ) : selectedMeal && viewMode === 'analyse' ? (
+              <AnalysisInterface
+                meal={selectedMeal}
+                inputMode={inputMode}
+                onInputModeChange={setInputMode}
+                onBackToInputSelection={() => setInputMode(null)}
+                onComputeVolume={handleComputeVolume}
+                nutritionData={nutritionData}
+                setNutritionData={setNutritionData}
+                isComputingNutrition={isComputingNutrition}
+              />
             ) : (
               <EmptySelection />
             )}
           </div>
         </div>
       </div>
+
+      {/* Context Menu - Render in portal to avoid positioning context issues */}
+      {contextMenu && typeof document !== 'undefined' && createPortal(
+        <MealContextMenu
+          meal={contextMenu.meal}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onViewMeal={handleViewMeal}
+          onAnalyseMeal={handleAnalyseMeal}
+          onClose={() => setContextMenu(null)}
+        />,
+        document.body
+      )}
     </div>
   );
 }
@@ -359,10 +482,10 @@ function EmptySelection() {
         </svg>
       </div>
       <p className="text-lg font-medium" style={{ color: 'var(--foreground)' }}>
-        Select a meal to view details
+        Select a meal to get started
       </p>
       <p className="mt-1" style={{ color: 'var(--text-muted)' }}>
-        Click on a time range in the tree view
+        Click on a time range in the tree view to view or analyse a meal
       </p>
     </div>
   );

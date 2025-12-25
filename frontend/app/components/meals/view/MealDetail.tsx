@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import type { MealData, MenuItem, Patient } from '../../lib/types';
-import { imagesApi } from '../../lib/api';
-import { NumberBadge } from '../ui/NumberBadge';
+import type { MealData, MenuItem, Patient } from '../../../lib/types';
+import { imagesApi } from '../../../lib/api';
+import { NumberBadge } from '../../ui/NumberBadge';
 
 // =============================================================================
 // Type Definitions

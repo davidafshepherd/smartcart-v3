@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { Food, FoodMask } from '../../lib/types';
-import { analysisApi, ApiError } from '../../lib/api';
+import type { Food, FoodMask } from '../../../../lib/types';
+import { analysisApi, ApiError } from '../../../../lib/api';
 import { ImageWithMasks } from './ImageWithMasks';
 
 // =============================================================================
