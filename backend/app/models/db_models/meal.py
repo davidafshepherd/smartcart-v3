@@ -99,3 +99,10 @@ class Meal(Base):
         ),
         nullable=False,
     )
+
+    nutrition_report = relationship(
+        "NutritionReport",
+        back_populates="meal",
+        uselist=False,          # 1–1
+        cascade="all, delete-orphan",
+    )

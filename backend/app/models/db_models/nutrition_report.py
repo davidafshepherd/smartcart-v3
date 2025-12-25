@@ -1,17 +1,14 @@
-from sqlalchemy import Column, Float, Integer, String
+from sqlalchemy import Column, Float, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.db import Base
 
 
-class Food(Base):
-    """A food entry from the McCance & Widdowson's dataset.
+class NutritionReport(Base):
+    """A nutrition report for a singular meal.
 
     Attributes:
-        id (int): Unique identifier for the food.
-        food_name (str): Human-readable name of the food.
-        short_name (str): Shortened name of the food.
-        density (float): Density (g/cm^3) of the food.
+        meal_id (int): Unique identifier of the meal.
         kcal (float | None): Energy (kcal) per 100g.
         kj (float | None): Energy (kj) per 100g.
         protein (float | None): Protein (g) per 100g.
@@ -42,23 +39,21 @@ class Food(Base):
         vitamin_b12 (float | None): Vitamin B12 (µg) per 100g.
         folate (float | None): Folate (µg) per 100g.
         vitamin_c (float | None): Vitamin C (mg) per 100g.
-        menu_items (list[MenuItem]): Menu items that use the food.
     """
 
     # Table name.
-    __tablename__ = "foods"
+    __tablename__ = "nutrition_reports"
 
-    # Primary key for the food record.
-    id = Column(Integer, primary_key=True, index=True)
+    # Shared PK: same value as meals.id
+    meal_id = Column(
+        Integer,
+        ForeignKey("meals.id", ondelete="CASCADE", onupdate="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
 
-    # Human-readable name of the food (e.g. "apples, eating, dried").
-    food_name = Column(String, nullable=False, index=True)
-
-    # Shortened name of the food (e.g. "apples").
-    short_name = Column(String, nullable=False, index=True)
-
-    # Density (g/cm^3) of the food.
-    density = Column(Float, nullable=False)
+    # Mass.
+    mass = Column(Float, nullable=True)
 
     # Calories.
     kcal = Column(Float, nullable=True)
@@ -98,14 +93,10 @@ class Food(Base):
     folate = Column(Float, nullable=True)
     vitamin_c = Column(Float, nullable=True)
 
-    # Many-to-many relationship: a food can be used in multiple menu items.
-    menu_items = relationship(
-        "MenuItem",
-        secondary="menu_item_foods",  # Association table.
-        back_populates="foods",
-    )
+    meal = relationship("Meal", back_populates="nutrition_report")
     
-    nutrition_report_items = relationship(
+    food_items = relationship(
         "NutritionReportFood",
-        back_populates="food",
+        back_populates="report",
+        cascade="all, delete-orphan",
     )

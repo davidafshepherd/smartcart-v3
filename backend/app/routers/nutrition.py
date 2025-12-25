@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models.db_models import Meal
+from app.models.db_models import NutritionReport, NutritionReportFood
 from app.schemas import (
     CreateNutritionReportRequest,
     FoodNutrition,
@@ -33,119 +33,16 @@ def get_nutrition_report(
     Raises:
         HTTPException: If the meal or nutrition report does not exist.
     """
-        
-    # TODO: Implement database retrieval logic here
-    # This is a stub endpoint for now
-    
-    # Return a dummy nutrition report.
-    return NutritionReportResponse(
-        id=1,
-        meal_id=meal_id,
-        meal_nutrition=MealNutrition(
-            mass=250.0,
-            kcal=450.0,
-            kj=1883.0,
-            protein=25.0,
-            fat=15.0,
-            carbohydrate=50.0,
-            sugar=10.0,
-            fibre=5.0,
-            saturated_fat=5.0,
-            sodium=500.0,
-            potassium=800.0,
-            calcium=200.0,
-            magnesium=50.0,
-            phosphorus=300.0,
-            iron=5.0,
-            copper=0.5,
-            zinc=3.0,
-            selenium=30.0,
-            iodine=50.0,
-            retinol=100.0,
-            carotene=500.0,
-            vitamin_d=5.0,
-            vitamin_e=10.0,
-            vitamin_k1=50.0,
-            thiamin=1.0,
-            riboflavin=1.5,
-            niacin=10.0,
-            vitamin_b6=1.5,
-            vitamin_b12=2.0,
-            folate=200.0,
-            vitamin_c=60.0,
-        ),
-        food_nutrition=[
-            FoodNutrition(
-                food_id=1,
-                mass=150.0,
-                kcal=250.0,
-                kj=1046.0,
-                protein=15.0,
-                fat=8.0,
-                carbohydrate=30.0,
-                sugar=5.0,
-                fibre=3.0,
-                saturated_fat=2.0,
-                sodium=300.0,
-                potassium=500.0,
-                calcium=100.0,
-                magnesium=30.0,
-                phosphorus=200.0,
-                iron=3.0,
-                copper=0.3,
-                zinc=2.0,
-                selenium=20.0,
-                iodine=30.0,
-                retinol=50.0,
-                carotene=300.0,
-                vitamin_d=3.0,
-                vitamin_e=5.0,
-                vitamin_k1=30.0,
-                thiamin=0.5,
-                riboflavin=0.8,
-                niacin=5.0,
-                vitamin_b6=0.8,
-                vitamin_b12=1.0,
-                folate=100.0,
-                vitamin_c=30.0,
-            ),
-            FoodNutrition(
-                food_id=2,
-                mass=100.0,
-                kcal=200.0,
-                kj=837.0,
-                protein=10.0,
-                fat=7.0,
-                carbohydrate=20.0,
-                sugar=5.0,
-                fibre=2.0,
-                saturated_fat=3.0,
-                sodium=200.0,
-                potassium=300.0,
-                calcium=100.0,
-                magnesium=20.0,
-                phosphorus=100.0,
-                iron=2.0,
-                copper=0.2,
-                zinc=1.0,
-                selenium=10.0,
-                iodine=20.0,
-                retinol=50.0,
-                carotene=200.0,
-                vitamin_d=2.0,
-                vitamin_e=5.0,
-                vitamin_k1=20.0,
-                thiamin=0.5,
-                riboflavin=0.7,
-                niacin=5.0,
-                vitamin_b6=0.7,
-                vitamin_b12=1.0,
-                folate=100.0,
-                vitamin_c=30.0,
-            ),
-        ],
-    )
 
+    report = db.query(NutritionReport).filter(NutritionReport.meal_id == meal_id).first()
+
+    if report is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Nutrition report for meal {meal_id} not found.",
+        )
+    
+    return _report_to_response(report)
 
 # POST endpoint to create a new nutrition report.
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -168,13 +65,87 @@ def create_nutrition_report(
         HTTPException: If the meal does not exist.
     """
     
-    # TODO: Implement database save logic here
-    # This is a stub endpoint for now
+    existing = db.query(NutritionReport).filter(NutritionReport.meal_id == request.meal_id).first()
+
+    # Check if a report with the same meal id exists.
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A nutrition report with the same meal id already exists.",
+        )
     
-    # Return a dummy nutrition report.
+    report_data = request.meal_nutrition.model_dump(exclude_unset=True)
+    new_report = NutritionReport(meal_id=request.meal_id, **report_data)
+
+    db.add(new_report)
+    db.flush()
+
+    items: list[NutritionReportFood] = []
+    for fn in request.food_nutrition:
+        item = NutritionReportFood(
+            report_meal_id=request.meal_id,
+            food_id=fn.food_id,
+            mass=fn.mass,
+        )
+        items.append(item)
+
+    db.add_all(items)
+    db.flush()
+    db.commit()
+
+    # Return the nutrition report.
+    return _report_to_response(new_report)
+
+# DELETE endpoint to delete a meal.
+@router.delete("/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_nutrition_report(meal_id: int, db: Session = Depends(get_db)) -> None:
+    """Deletes a nutrition report.
+
+    Args:
+        meal_id: The ID of the nutrition report to delete.
+        db: SQLAlchemy database session.
+
+    Raises:
+        HTTPException: If the nutrition report does not exist.
+    """
+
+    # Fetch the nutrition report.
+    report = db.query(NutritionReport).filter(NutritionReport.meal_id == meal_id).first()
+
+    # Check if the meal exists.
+    if report is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Nutrition report for meal {meal_id} not found.",
+        )
+
+    # Delete the meal and commit the change.
+    db.delete(report)
+    db.commit()
+
+def _food_to_nutrition(food_item: NutritionReportFood) -> FoodNutrition:
+    food = food_item.food
+    factor = food_item.mass / 100.0
+
+    data = {
+        field: (
+            getattr(food, field) * factor
+            if getattr(food, field) is not None
+            else None
+        )
+        for field in FoodNutrition.model_fields
+        if field not in {"food_id", "mass"}
+    }
+
+    return FoodNutrition(
+        food_id=food_item.food_id,
+        mass=food_item.mass,
+        **data,
+    )
+
+def _report_to_response(nutrition_report: NutritionReport) -> NutritionReportResponse:
     return NutritionReportResponse(
-        id=1,
-        meal_id=request.meal_id,
-        meal_nutrition=request.meal_nutrition,
-        food_nutrition=request.food_nutrition,
+        meal_id=nutrition_report.meal_id,
+        meal_nutrition=MealNutrition.model_validate(nutrition_report, from_attributes=True),
+        food_nutrition=[_food_to_nutrition(item) for item in nutrition_report.food_items]
     )
