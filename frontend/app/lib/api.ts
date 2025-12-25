@@ -626,7 +626,7 @@ export const nutritionApi = {
   async saveReport(
     mealId: number,
     nutritionData: ComputeNutritionResponse
-  ): Promise<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
+  ): Promise<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
     const response = await fetch(`${config.apiUrl}/nutrition`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -637,7 +637,7 @@ export const nutritionApi = {
       }),
     });
 
-    return handleResponse<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
+    return handleResponse<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
   },
 
   /**
@@ -647,8 +647,23 @@ export const nutritionApi = {
    * @returns A promise resolving to the nutrition report.
    * @throws {ApiError} If the nutrition report doesn't exist.
    */
-  async getReport(mealId: number): Promise<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
+  async getReport(mealId: number): Promise<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
     const response = await fetch(`${config.apiUrl}/nutrition/${mealId}`);
-    return handleResponse<{ id: number; meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
+    return handleResponse<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
+  },
+
+  /**
+   * Deletes a nutrition report.
+   *
+   * @param mealId - The ID of the nutrition report to delete.
+   * @returns A promise that resolves when the nutrition report is deleted.
+   * @throws {ApiError} If the nutrition report doesn't exist or deletion fails.
+   */
+  async delete(mealId: number): Promise<void> {
+    const response = await fetch(`${config.apiUrl}/nutrition/${mealId}`, {
+      method: 'DELETE',
+    });
+
+    return handleResponse<void>(response);
   },
 };
