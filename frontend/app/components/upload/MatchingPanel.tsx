@@ -92,7 +92,7 @@ export function MatchingPanel({
           label="After (Post-meal)"
           number={2}
           snapshot={afterSnapshot}
-          color="var(--accent-secondary)"
+          color="var(--accent-primary)"
         />
       </div>
 

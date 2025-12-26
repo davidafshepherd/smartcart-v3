@@ -52,7 +52,7 @@ export function SnapshotCard({
       : 'var(--accent-secondary)'
     : 'var(--card-border)';
 
-  const badgeColor = selectionIndex === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)';
+  const badgeColor = 'var(--accent-primary)';
 
   return (
     <div
