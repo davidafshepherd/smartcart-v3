@@ -325,7 +325,7 @@ export function MealDetail({
             >
               {patients.map((patient) => (
                 <option key={patient.id} value={patient.id}>
-                  Patient #{patient.id}
+                  {patient.id}
                 </option>
               ))}
             </select>
