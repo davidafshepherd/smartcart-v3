@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { ComputeNutritionResponse, Food } from '../../../lib/types';
+import type { ComputeNutritionResponse } from '../../../lib/types';
 import { NutritionWheel } from './NutritionWheel';
 import { NutritionTable } from './NutritionTable';
 import { FoodSelection } from './FoodSelection';
@@ -17,13 +17,19 @@ interface NutritionReportInterfaceProps {
   /** Computed nutrition data from the backend. */
   nutritionData: ComputeNutritionResponse | null;
   /** List of foods for displaying names. */
-  foods?: Food[];
+  foods?: Array<{ id: number; short_name: string }>;
   /** Callback to save the nutrition report. */
-  onSave: () => void;
+  onSave?: () => void;
   /** Callback to discard/clear the nutrition report. */
   onDiscard: () => void;
+  /** Callback to delete the nutrition report (for saved reports). */
+  onDelete?: () => void;
   /** Whether the save operation is in progress. */
   isSavingReport?: boolean;
+  /** Whether the delete operation is in progress. */
+  isDeletingReport?: boolean;
+  /** Whether this is a read-only view (shows close/delete instead of save/discard). */
+  readOnly?: boolean;
 }
 
 // =============================================================================
@@ -41,7 +47,10 @@ export function NutritionReportInterface({
   foods = [],
   onSave,
   onDiscard,
+  onDelete,
   isSavingReport = false,
+  isDeletingReport = false,
+  readOnly = false,
 }: NutritionReportInterfaceProps) {
   // Selected food IDs (initially all foods are selected)
   // Use lazy initializer to compute initial state from nutritionData
@@ -176,15 +185,15 @@ export function NutritionReportInterface({
   };
 
   return (
-    <>
+    <div
+      className="rounded-2xl border overflow-hidden shadow-sm"
+      style={{
+        background: 'var(--card-bg)',
+        borderColor: 'var(--card-border)',
+      }}
+    >
       {nutritionData ? (
-                  <div
-          className="rounded-t-2xl border-t border-x"
-                    style={{
-            background: 'var(--card-bg)',
-                      borderColor: 'var(--card-border)',
-                    }}
-                  >
+        <div>
           <NutritionHeader mass={displayNutrition.mass} />
 
           <div className="p-6">
@@ -238,9 +247,51 @@ export function NutritionReportInterface({
         )}
 
       {/* Action Buttons */}
-      {nutritionData && (
+      {nutritionData && !readOnly && onSave && (
         <NutritionActions onSave={onSave} onDiscard={onDiscard} isSaving={isSavingReport} />
       )}
-    </>
+      {nutritionData && readOnly && (
+        <div className="px-8 py-6 border-t border-b border-x flex gap-4 rounded-b-2xl" style={{ borderColor: 'var(--card-border)', background: 'var(--card-bg)' }}>
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              disabled={isDeletingReport}
+              className="px-8 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: '#ef4444',
+                color: 'white',
+              }}
+              onMouseEnter={(e) => {
+                if (!isDeletingReport && !e.currentTarget.disabled) {
+                  e.currentTarget.style.background = '#b91c1c';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#ef4444';
+              }}
+            >
+              {isDeletingReport ? 'Deleting...' : 'Delete Report'}
+            </button>
+          )}
+          <button
+            onClick={onDiscard}
+            className="px-8 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer border"
+            style={{
+              background: 'var(--card-bg)',
+              color: 'var(--foreground)',
+              borderColor: 'var(--card-border)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--card-bg)';
+            }}
+          >
+            Close Report
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

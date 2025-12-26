@@ -68,7 +68,9 @@ export function InputModeSelector({ onSelect }: InputModeSelectorProps) {
             </h3>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Let SAM3 automatically segment all foods at once. Fast and convenient.
+            Let SAM3 automatically segment all foods at once.
+            <br />
+            Fast and convenient.
           </p>
         </button>
         <button
@@ -104,7 +106,9 @@ export function InputModeSelector({ onSelect }: InputModeSelectorProps) {
             </h3>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Guide SAM3 with prompts or points for each food. More control and precision.
+            Guide SAM3 with prompts or points for each food.
+            <br />
+            More control and precision.
           </p>
         </button>
       </div>

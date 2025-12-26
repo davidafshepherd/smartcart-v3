@@ -78,6 +78,7 @@ export interface MealData {
   before_depth_path: string;
   after_rgb_path: string;
   after_depth_path: string;
+  is_analysed: boolean;
   patient: Patient;
   menu_item: MenuItem;
 }
@@ -144,6 +145,8 @@ export interface SAM3Response {
 export interface FoodNutrition {
   food_id: number;
   mass: number;
+  food_name?: string | null;
+  short_name?: string | null;
   kcal: number | null;
   kj: number | null;
   protein: number | null;

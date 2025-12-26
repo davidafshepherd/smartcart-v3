@@ -105,6 +105,8 @@ class FoodNutrition(BaseModel):
     """Nutrition values for a specific food."""
     food_id: int
     mass: float
+    food_name: str
+    short_name: str
     kcal: Optional[float] = None
     kj: Optional[float] = None
     protein: Optional[float] = None

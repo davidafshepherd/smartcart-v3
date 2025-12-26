@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { mealsApi, menuApi, patientsApi, analysisApi, ApiError } from '../lib/api';
+import { mealsApi, menuApi, patientsApi, analysisApi, nutritionApi, ApiError } from '../lib/api';
 import type { MealsData, MealData, MenuItem, Patient, FoodMask, ComputeNutritionResponse } from '../lib/types';
 import { MealsPanel } from './meals/MealsPanel';
 import { MealDetail } from './meals/view/MealDetail';
@@ -10,13 +10,14 @@ import { PatientsPanel } from './meals/PatientsPanel';
 import { MenuPanel } from './meals/MenuPanel';
 import { MealContextMenu } from './meals/MealContextMenu';
 import { AnalysisInterface } from './meals/analysis/AnalysisInterface';
+import { NutritionReportInterface } from './meals/nutrition/NutritionReportInterface';
 
 // =============================================================================
 // Type Definitions
 // =============================================================================
 
 type InputMode = 'automated' | 'assisted';
-type ViewMode = 'view' | 'analyse' | null;
+type ViewMode = 'view' | 'analyse' | 'nutrition' | null;
 
 // =============================================================================
 // Component
@@ -54,10 +55,19 @@ export default function MealsSection() {
   const [inputMode, setInputMode] = useState<InputMode | null>(null);
   const [nutritionData, setNutritionData] = useState<ComputeNutritionResponse | null>(null);
   const [isComputingNutrition, setIsComputingNutrition] = useState(false);
+  
+  // Nutrition report view state
+  const [isLoadingNutritionReport, setIsLoadingNutritionReport] = useState(false);
+  const [isDeletingNutritionReport, setIsDeletingNutritionReport] = useState(false);
 
   // Tree view expansion state (lifted up to preserve across patient ID changes)
   const [expandedPatients, setExpandedPatients] = useState<Set<string>>(new Set());
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+
+  // Track previous meal ID to detect actual meal changes (not just data updates)
+  const prevMealIdRef = useRef<number | null>(null);
+  // Track if we're closing the view (to prevent re-selecting meal in event listener)
+  const isClosingRef = useRef<boolean>(false);
 
   // ---------------------------------------------------------------------------
   // Effects
@@ -70,12 +80,75 @@ export default function MealsSection() {
     fetchAllData();
   }, []);
 
-  // Reset analysis state when meal changes
+  // Track previous view mode to detect when switching to analyse mode
+  const prevViewModeRef = useRef<ViewMode>(null);
+
+  // Reset analysis state when meal changes (but not when just updating meal data)
   useEffect(() => {
-    if (selectedMeal && viewMode === 'analyse') {
-      setInputMode(null);
-      setNutritionData(null);
+    const currentMealId = selectedMeal?.id ?? null;
+    const mealChanged = prevMealIdRef.current !== currentMealId;
+    prevMealIdRef.current = currentMealId;
+    
+    if (mealChanged) {
+      if (selectedMeal && viewMode === 'analyse') {
+        setInputMode(null);
+        setNutritionData(null);
+      }
+      if (selectedMeal && viewMode === 'nutrition') {
+        setNutritionData(null);
+      }
     }
+  }, [selectedMeal?.id, viewMode]);
+
+  // Reset analysis state when switching to analyse mode (e.g., from view mode)
+  // Use useLayoutEffect to reset synchronously before browser paints to prevent flash
+  useLayoutEffect(() => {
+    const prevViewMode = prevViewModeRef.current;
+    prevViewModeRef.current = viewMode;
+    
+    // If switching TO analyse mode (from a different mode or null)
+    // Only reset if state hasn't already been reset (to avoid unnecessary updates)
+    if (viewMode === 'analyse' && prevViewMode !== 'analyse' && selectedMeal) {
+      // Check if state needs resetting (handleAnalyseMeal might have already done it)
+      if (inputMode !== null || nutritionData !== null) {
+        setInputMode(null);
+        setNutritionData(null);
+      }
+    }
+  }, [viewMode, selectedMeal, inputMode, nutritionData]);
+  
+  // Refresh meals data when nutrition report is saved or deleted (to update is_analysed)
+  useEffect(() => {
+    const handleNutritionReportSaved = async () => {
+      const updatedMeals = await mealsApi.getAll();
+      setMealsData(updatedMeals);
+      
+      // Don't update selected meal if we're closing the view
+      if (isClosingRef.current) {
+        return;
+      }
+      
+      // Only update selected meal if we're still viewing/analysing that meal
+      // (don't update if viewMode is null, meaning we've closed the view)
+      if (selectedMeal && viewMode !== null) {
+        // Find the updated meal in the new data
+        for (const patientMeals of Object.values(updatedMeals)) {
+          for (const dateMeals of Object.values(patientMeals)) {
+            for (const meal of Object.values(dateMeals)) {
+              if (meal.id === selectedMeal.id) {
+                setSelectedMeal(meal);
+                break;
+              }
+            }
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('nutrition-report-saved', handleNutritionReportSaved);
+    return () => {
+      window.removeEventListener('nutrition-report-saved', handleNutritionReportSaved);
+    };
   }, [selectedMeal, viewMode]);
 
   // ---------------------------------------------------------------------------
@@ -120,13 +193,41 @@ export default function MealsSection() {
 
   /**
    * Toggles the expansion state of a patient node.
+   * When collapsing, also collapses all dates within that patient.
+   * If the collapsed patient contains the currently selected meal, reset to empty state.
    */
   const togglePatient = (patientId: string) => {
     setExpandedPatients((prev) => {
       const next = new Set(prev);
-      if (next.has(patientId)) {
+      const isCurrentlyExpanded = next.has(patientId);
+      
+      if (isCurrentlyExpanded) {
+        // Collapsing: remove patient and all its dates
         next.delete(patientId);
+        
+        // Check if the collapsed patient contains the currently selected meal
+        if (selectedMeal && selectedMeal.patient.id.toString() === patientId) {
+          // Reset to empty state
+          setSelectedMeal(null);
+          setViewMode(null);
+          setContextMenu(null);
+          setInputMode(null);
+          setNutritionData(null);
+        }
+        
+        // Also collapse all dates for this patient
+        setExpandedDates((prevDates) => {
+          const nextDates = new Set(prevDates);
+          // Remove all date keys that start with this patientId
+          prevDates.forEach((dateKey) => {
+            if (dateKey.startsWith(`${patientId}-`)) {
+              nextDates.delete(dateKey);
+            }
+          });
+          return nextDates;
+        });
       } else {
+        // Expanding: just add the patient
         next.add(patientId);
       }
       return next;
@@ -135,17 +236,48 @@ export default function MealsSection() {
 
   /**
    * Toggles the expansion state of a date node.
+   * If the collapsed date contains the currently selected meal, reset to empty state.
    */
   const toggleDate = (key: string) => {
+    const isCurrentlyExpanded = expandedDates.has(key);
+    
+    // Check if collapsing and if the collapsed date contains the currently selected meal
+    // Do this before updating state to avoid stale closure issues
+    let shouldReset = false;
+    if (isCurrentlyExpanded && selectedMeal) {
+      // Date key format is: `${patientId}-${date}` (date may contain dashes like "2024-01-15")
+      const firstDashIndex = key.indexOf('-');
+      if (firstDashIndex !== -1) {
+        const patientId = key.substring(0, firstDashIndex);
+        const date = key.substring(firstDashIndex + 1);
+        const mealPatientId = selectedMeal.patient.id.toString();
+        const mealDate = selectedMeal.date;
+        
+        if (mealPatientId === patientId && mealDate === date) {
+          shouldReset = true;
+        }
+      }
+    }
+    
+    // Update expanded dates
     setExpandedDates((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) {
+      if (isCurrentlyExpanded) {
         next.delete(key);
       } else {
         next.add(key);
       }
       return next;
     });
+    
+    // Reset to empty state if needed (outside the setState callback)
+    if (shouldReset) {
+      setSelectedMeal(null);
+      setViewMode(null);
+      setContextMenu(null);
+      setInputMode(null);
+      setNutritionData(null);
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -181,9 +313,84 @@ export default function MealsSection() {
    * Handles analysing a meal.
    */
   const handleAnalyseMeal = (meal: MealData) => {
+    // Reset analysis state immediately to prevent flash of old state
+    setInputMode(null);
+    setNutritionData(null);
     setSelectedMeal(meal);
     setViewMode('analyse');
     setContextMenu(null);
+  };
+
+  /**
+   * Handles viewing a nutrition report for a meal.
+   */
+  const handleViewNutritionReport = async (meal: MealData) => {
+    setSelectedMeal(meal);
+    setViewMode('nutrition');
+    setContextMenu(null);
+    setIsLoadingNutritionReport(true);
+    setNutritionData(null);
+    
+    try {
+      const report = await nutritionApi.getReport(meal.id);
+      setNutritionData({
+        meal_nutrition: report.meal_nutrition,
+        food_nutrition: report.food_nutrition,
+      });
+    } catch (err) {
+      console.error('Failed to fetch nutrition report:', err);
+      alert(err instanceof ApiError ? err.message : 'Failed to load nutrition report');
+    } finally {
+      setIsLoadingNutritionReport(false);
+    }
+  };
+
+  /**
+   * Handles closing the nutrition report view.
+   */
+  const handleCloseNutritionReport = () => {
+    setViewMode(null);
+    setSelectedMeal(null);
+    setNutritionData(null);
+  };
+
+  /**
+   * Handles deleting a nutrition report.
+   */
+  const handleDeleteNutritionReport = async (mealId: number) => {
+    // Prevent double-clicks
+    if (isDeletingNutritionReport) return;
+
+    setIsDeletingNutritionReport(true);
+    try {
+      await nutritionApi.delete(mealId);
+      // Refresh meals data to update is_analysed status
+      const updatedMeals = await mealsApi.getAll();
+      setMealsData(updatedMeals);
+      
+      // Update selected meal if it's the one that was deleted
+      if (selectedMeal && selectedMeal.id === mealId) {
+        // Find the updated meal in the new data
+        for (const patientMeals of Object.values(updatedMeals)) {
+          for (const dateMeals of Object.values(patientMeals)) {
+            for (const meal of Object.values(dateMeals)) {
+              if (meal.id === mealId) {
+                setSelectedMeal(meal);
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      // Close the view
+      handleCloseNutritionReport();
+    } catch (err) {
+      console.error('Failed to delete nutrition report:', err);
+      alert(err instanceof ApiError ? err.message : 'Failed to delete nutrition report');
+    } finally {
+      setIsDeletingNutritionReport(false);
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -370,10 +577,10 @@ export default function MealsSection() {
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-            Meals
+            Analyse Meals
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            View meals organized by patient, date and time or analyse meals to generate detailed nutrition reports.
+            Analyse meals to generate detailed nutrition reports.
           </p>
         </div>
 
@@ -400,6 +607,10 @@ export default function MealsSection() {
               <MealDetail
                 meal={selectedMeal}
                 onDelete={() => handleDeleteMeal(selectedMeal.id)}
+                onClose={() => {
+                  setViewMode(null);
+                  setSelectedMeal(null);
+                }}
                 onUpdate={(patientId, menuItemId) =>
                   handleUpdateMeal(selectedMeal.id, patientId, menuItemId)
                 }
@@ -415,11 +626,43 @@ export default function MealsSection() {
                 inputMode={inputMode}
                 onInputModeChange={setInputMode}
                 onBackToInputSelection={() => setInputMode(null)}
+                onClose={() => {
+                  isClosingRef.current = true;
+                  setViewMode(null);
+                  setSelectedMeal(null);
+                  setNutritionData(null);
+                  setInputMode(null);
+                  // Reset the flag after a brief delay to allow event listeners to see it
+                  setTimeout(() => {
+                    isClosingRef.current = false;
+                  }, 100);
+                }}
                 onComputeVolume={handleComputeVolume}
                 nutritionData={nutritionData}
                 setNutritionData={setNutritionData}
                 isComputingNutrition={isComputingNutrition}
               />
+            ) : selectedMeal && viewMode === 'nutrition' ? (
+              isLoadingNutritionReport ? (
+                <div className="rounded-2xl border p-8 text-center shadow-sm" style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+                  <div className="w-12 h-12 rounded-xl shimmer mx-auto"></div>
+                  <p className="mt-4" style={{ color: 'var(--text-muted)' }}>Loading nutrition report...</p>
+                </div>
+              ) : nutritionData ? (
+                <NutritionReportInterface
+                  nutritionData={nutritionData}
+                  foods={nutritionData.food_nutrition.map(fn => ({
+                    id: fn.food_id,
+                    short_name: fn.short_name || `Food ${fn.food_id}`,
+                  })) as Array<{ id: number; short_name: string }>}
+                  onDiscard={handleCloseNutritionReport}
+                  onDelete={() => handleDeleteNutritionReport(selectedMeal.id)}
+                  isDeletingReport={isDeletingNutritionReport}
+                  readOnly={true}
+                />
+              ) : (
+                <EmptySelection />
+              )
             ) : (
               <EmptySelection />
             )}
@@ -435,6 +678,7 @@ export default function MealsSection() {
           y={contextMenu.y}
           onViewMeal={handleViewMeal}
           onAnalyseMeal={handleAnalyseMeal}
+          onViewNutritionReport={handleViewNutritionReport}
           onClose={() => setContextMenu(null)}
         />,
         document.body

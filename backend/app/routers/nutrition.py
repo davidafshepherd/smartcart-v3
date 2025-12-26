@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models.db_models import NutritionReport, NutritionReportFood
+from app.models.db_models import Meal, NutritionReport, NutritionReportFood
 from app.schemas import (
     CreateNutritionReportRequest,
     FoodNutrition,
@@ -91,6 +91,12 @@ def create_nutrition_report(
 
     db.add_all(items)
     db.flush()
+    
+    # Mark the meal as analysed
+    meal = db.query(Meal).filter(Meal.id == request.meal_id).first()
+    if meal:
+        meal.is_analysed = True
+    
     db.commit()
 
     # Return the nutrition report.
@@ -119,7 +125,12 @@ def delete_nutrition_report(meal_id: int, db: Session = Depends(get_db)) -> None
             detail=f"Nutrition report for meal {meal_id} not found.",
         )
 
-    # Delete the meal and commit the change.
+    # Mark the meal as not analysed
+    meal = db.query(Meal).filter(Meal.id == meal_id).first()
+    if meal:
+        meal.is_analysed = False
+
+    # Delete the nutrition report and commit the change.
     db.delete(report)
     db.commit()
 
@@ -134,12 +145,14 @@ def _food_to_nutrition(food_item: NutritionReportFood) -> FoodNutrition:
             else None
         )
         for field in FoodNutrition.model_fields
-        if field not in {"food_id", "mass"}
+        if field not in {"food_id", "mass", "food_name", "short_name"}
     }
 
     return FoodNutrition(
         food_id=food_item.food_id,
         mass=food_item.mass,
+        food_name=food.food_name,
+        short_name=food.short_name,
         **data,
     )
 

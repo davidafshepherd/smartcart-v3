@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { MealData, MenuItem, Patient } from '../../../lib/types';
 import { imagesApi } from '../../../lib/api';
 import { NumberBadge } from '../../ui/NumberBadge';
@@ -15,6 +15,8 @@ interface MealDetailProps {
   meal: MealData;
   /** Callback invoked when the delete button is clicked. */
   onDelete: () => void;
+  /** Callback invoked when the close button is clicked. */
+  onClose: () => void;
   /** Callback invoked when the meal is updated. */
   onUpdate: (patientId?: number, menuItemId?: number) => Promise<void>;
   /** Whether a delete operation is in progress. */
@@ -74,6 +76,7 @@ interface ImageCardProps {
 export function MealDetail({
   meal,
   onDelete,
+  onClose,
   onUpdate,
   isDeleting = false,
   isUpdating = false,
@@ -85,6 +88,18 @@ export function MealDetail({
   const [isEditingMenuItem, setIsEditingMenuItem] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(meal.patient.id);
   const [selectedMenuItemId, setSelectedMenuItemId] = useState(meal.menu_item.id);
+  
+  // Refs to measure row heights
+  const patientRowRef = useRef<HTMLDivElement>(null);
+  const menuItemRowRef = useRef<HTMLDivElement>(null);
+  const [patientRowHeight, setPatientRowHeight] = useState<number | null>(null);
+  const [menuItemRowHeight, setMenuItemRowHeight] = useState<number | null>(null);
+  // Track heights for both view and edit modes separately
+  const menuItemViewHeightRef = useRef<number | null>(null);
+  const menuItemEditHeightRef = useRef<number | null>(null);
+  const currentMenuItemIdRef = useRef<number>(meal.menu_item.id);
+  // Keep a ref to the current height to maintain it during transitions
+  const currentHeightRef = useRef<number | null>(null);
   
   // Track previous meal props in state to reset editing state when meal changes
   // This is the React-recommended pattern for adjusting state based on props
@@ -99,10 +114,139 @@ export function MealDetail({
     setIsEditingMenuItem(false);
     setSelectedPatientId(meal.patient.id);
     setSelectedMenuItemId(meal.menu_item.id);
+    // Reset heights when meal changes
+    setPatientRowHeight(null);
+    setMenuItemRowHeight(null);
+    menuItemViewHeightRef.current = null;
+    menuItemEditHeightRef.current = null;
   }
 
   // Get current menu item details for display
   const currentMenuItem = menuItems.find((mi) => mi.id === meal.menu_item.id) ?? meal.menu_item;
+
+  // Measure and set row heights to prevent height changes when switching modes
+  useEffect(() => {
+    if (patientRowRef.current) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        if (patientRowRef.current) {
+          const height = patientRowRef.current.scrollHeight;
+          setPatientRowHeight((prev) => prev === null ? height : Math.max(prev, height));
+        }
+      });
+    }
+  }, [isEditingPatient, meal.patient.id]);
+
+  useEffect(() => {
+    // Reset heights when menu item changes
+    if (currentMenuItemIdRef.current !== meal.menu_item.id) {
+      currentMenuItemIdRef.current = meal.menu_item.id;
+      menuItemViewHeightRef.current = null;
+      menuItemEditHeightRef.current = null;
+      setMenuItemRowHeight(null);
+    }
+  }, [meal.menu_item.id]);
+
+  // Track content to detect changes - use a more robust comparison
+  const menuItemContentKeyRef = useRef<string>('');
+  
+  const getContentKey = () => {
+    const foodIds = currentMenuItem.foods?.map(f => f.id).sort().join(',') || '';
+    return `${currentMenuItem.name}|${foodIds}`;
+  };
+
+  useEffect(() => {
+    // When content changes (ingredients or name), reset both mode heights
+    // This allows height to decrease when content shrinks
+    const currentContentKey = getContentKey();
+    
+    if (menuItemContentKeyRef.current !== currentContentKey) {
+      const previousKey = menuItemContentKeyRef.current;
+      menuItemContentKeyRef.current = currentContentKey;
+      
+      // Only reset if this is actually a content change (not initial load)
+      if (previousKey !== '') {
+        menuItemViewHeightRef.current = null;
+        menuItemEditHeightRef.current = null;
+        // Clear height to allow remeasurement with new content
+        setMenuItemRowHeight(null);
+      }
+    }
+  }, [currentMenuItem.foods, currentMenuItem.name]);
+  
+  // Initialize content key on mount
+  useEffect(() => {
+    if (menuItemContentKeyRef.current === '') {
+      menuItemContentKeyRef.current = getContentKey();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (menuItemRowRef.current) {
+      // Preserve current height during measurement to prevent flicker when switching modes
+      const preservedHeight = currentHeightRef.current || menuItemRowHeight;
+      
+      // Immediately set the preserved height to prevent flicker during mode switch
+      if (preservedHeight && menuItemRowRef.current) {
+        menuItemRowRef.current.style.height = `${preservedHeight}px`;
+      }
+      
+      // Use multiple animation frames and a small delay to ensure DOM is fully updated
+      // This is especially important for wrapped content like ingredients
+      const measureHeight = () => {
+        if (menuItemRowRef.current) {
+          // Temporarily set to auto to measure natural height
+          menuItemRowRef.current.style.height = 'auto';
+          
+          // Force a reflow to get accurate measurement
+          void menuItemRowRef.current.offsetHeight;
+          
+          const height = menuItemRowRef.current.scrollHeight;
+          
+          // Store height for current mode
+          if (isEditingMenuItem) {
+            menuItemEditHeightRef.current = height;
+          } else {
+            menuItemViewHeightRef.current = height;
+          }
+          
+          // Use the maximum of both modes for the current menu item
+          // This ensures consistent height when switching between view and edit
+          // But if one mode hasn't been measured yet, use the current height
+          const viewHeight = menuItemViewHeightRef.current;
+          const editHeight = menuItemEditHeightRef.current;
+          
+          let maxHeight: number;
+          if (viewHeight !== null && editHeight !== null) {
+            // Both modes measured - use the max to prevent height changes when switching
+            maxHeight = Math.max(viewHeight, editHeight);
+          } else if (viewHeight !== null) {
+            // Only view measured - use it (edit will be measured when we switch to edit mode)
+            maxHeight = viewHeight;
+          } else if (editHeight !== null) {
+            // Only edit measured - use it (view will be measured when we switch to view mode)
+            maxHeight = editHeight;
+          } else {
+            // Neither measured (shouldn't happen, but fallback to current)
+            maxHeight = height;
+          }
+          
+          // Always set the height, even if it's smaller than before
+          // This allows height to decrease when content shrinks
+          setMenuItemRowHeight(maxHeight);
+          
+          // Immediately apply the max height to prevent flicker
+          menuItemRowRef.current.style.height = `${maxHeight}px`;
+        }
+      };
+      
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(measureHeight, 10);
+        });
+      });
+    }
+  }, [isEditingMenuItem, meal.menu_item.id, currentMenuItem.foods, currentMenuItem.name, menuItemRowHeight]);
 
   const handlePatientSave = async () => {
     if (isUpdating) return;
@@ -149,31 +293,21 @@ export function MealDetail({
     >
       {/* Header Section */}
       <div
-        className="p-6 border-b flex items-center justify-between"
-        style={{ borderColor: 'var(--card-border)' }}
+        className="px-6 py-5 border-b rounded-t-2xl"
+        style={{ borderColor: 'var(--card-border)', background: 'var(--accent-light)' }}
       >
-        <div>
-          <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>
-            Meal Details
-          </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            {meal.date} • {meal.start_time} - {meal.end_time}
-          </p>
-        </div>
-        <button
-          onClick={onDelete}
-          disabled={isDeleting || isUpdating}
-          className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          style={{ color: 'var(--danger)' }}
-        >
-          {isDeleting ? 'Deleting...' : 'Delete Meal'}
-        </button>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+          Meal Details
+        </h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          {meal.date} • {meal.start_time} - {meal.end_time}
+        </p>
       </div>
 
       {/* Patient Section */}
       <div
         className="p-6 border-b flex items-center justify-between"
-        style={{ borderColor: 'var(--card-border)' }}
+        style={{ borderColor: 'var(--card-border)', height: '88px' }}
       >
         {isEditingPatient ? (
           <div className="flex items-center gap-3 flex-1">
@@ -198,16 +332,36 @@ export function MealDetail({
             <button
               onClick={handlePatientSave}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: 'var(--accent-primary)', color: 'white' }}
+              onMouseEnter={(e) => {
+                if (!isUpdating && !e.currentTarget.disabled) {
+                  e.currentTarget.style.background = 'var(--accent-primary-dim)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--accent-primary)';
+              }}
             >
               {isUpdating ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={handlePatientCancel}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
-              style={{ color: 'var(--text-muted)' }}
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer border disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: 'var(--card-bg)',
+                color: 'var(--foreground)',
+                borderColor: 'var(--card-border)',
+              }}
+              onMouseEnter={(e) => {
+                if (!isUpdating && !e.currentTarget.disabled) {
+                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--card-bg)';
+              }}
             >
               Cancel
             </button>
@@ -242,8 +396,13 @@ export function MealDetail({
 
       {/* Menu Item Section */}
       <div
+        ref={menuItemRowRef}
         className="p-6 border-b flex items-center justify-between"
-        style={{ borderColor: 'var(--card-border)' }}
+        style={{ 
+          borderColor: 'var(--card-border)',
+          height: menuItemRowHeight ? `${menuItemRowHeight}px` : 'auto',
+          minHeight: menuItemRowHeight ? `${menuItemRowHeight}px` : undefined,
+        }}
       >
         {isEditingMenuItem ? (
           <div className="flex items-center gap-3 flex-1">
@@ -268,23 +427,43 @@ export function MealDetail({
             <button
               onClick={handleMenuItemSave}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: 'var(--accent-primary)', color: 'white' }}
+              onMouseEnter={(e) => {
+                if (!isUpdating && !e.currentTarget.disabled) {
+                  e.currentTarget.style.background = 'var(--accent-primary-dim)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--accent-primary)';
+              }}
             >
               {isUpdating ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={handleMenuItemCancel}
               disabled={isUpdating}
-              className="px-3 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
-              style={{ color: 'var(--text-muted)' }}
+              className="px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer border disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: 'var(--card-bg)',
+                color: 'var(--foreground)',
+                borderColor: 'var(--card-border)',
+              }}
+              onMouseEnter={(e) => {
+                if (!isUpdating && !e.currentTarget.disabled) {
+                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--card-bg)';
+              }}
             >
               Cancel
             </button>
           </div>
         ) : (
           <>
-            <div>
+            <div className="flex-1">
               <h3 className="font-medium" style={{ color: 'var(--foreground)' }}>
                 Menu Item
               </h3>
@@ -308,7 +487,7 @@ export function MealDetail({
             <button
               onClick={startEditingMenuItem}
               disabled={isUpdating}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex-shrink-0"
               style={{ color: 'var(--accent-primary)' }}
             >
               Edit
@@ -349,11 +528,54 @@ export function MealDetail({
           <ImageColumn
             label="After (Post-meal)"
             number={2}
-            color="var(--accent-secondary)"
+            color="var(--accent-primary)"
             rgbPath={meal.after_rgb_path}
             depthPath={meal.after_depth_path}
           />
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="px-8 py-6 border-t flex gap-4" style={{ borderColor: 'var(--card-border)', background: 'var(--card-bg)' }}>
+        <button
+          onClick={onDelete}
+          disabled={isDeleting || isUpdating}
+          className="px-8 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: '#ef4444',
+            color: 'white',
+          }}
+          onMouseEnter={(e) => {
+            if (!isDeleting && !isUpdating && !e.currentTarget.disabled) {
+              e.currentTarget.style.background = '#b91c1c';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#ef4444';
+          }}
+        >
+          {isDeleting ? 'Deleting...' : 'Delete Meal'}
+        </button>
+        <button
+          onClick={onClose}
+          disabled={isDeleting || isUpdating}
+          className="px-8 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer border disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: 'var(--card-bg)',
+            color: 'var(--foreground)',
+            borderColor: 'var(--card-border)',
+          }}
+          onMouseEnter={(e) => {
+            if (!isDeleting && !isUpdating && !e.currentTarget.disabled) {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--card-bg)';
+          }}
+        >
+          Close Meal
+        </button>
       </div>
     </div>
   );

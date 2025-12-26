@@ -11,7 +11,7 @@ interface NutritionActionsProps {
  */
 export function NutritionActions({ onSave, onDiscard, isSaving = false }: NutritionActionsProps) {
   return (
-    <div className="px-8 py-6 border-t border-b border-x flex gap-4 rounded-b-2xl" style={{ borderColor: 'var(--card-border)', background: 'var(--card-bg)' }}>
+    <div className="px-8 py-6 border-t flex gap-4" style={{ borderColor: 'var(--card-border)', background: 'var(--card-bg)' }}>
       <button
         onClick={onSave}
         disabled={isSaving}

@@ -156,6 +156,7 @@ def create_meal(
         before_depth_path=image_paths["before_depth"],
         after_rgb_path=image_paths["after_rgb"],
         after_depth_path=image_paths["after_depth"],
+        is_analysed=False,
         patient_id=patient.id,
         menu_item_id=request.menu_item_id,
     )
@@ -315,6 +316,7 @@ def _meal_to_response(meal: Meal) -> MealResponse:
         before_depth_path=meal.before_depth_path,
         after_rgb_path=meal.after_rgb_path,
         after_depth_path=meal.after_depth_path,
+        is_analysed=meal.is_analysed,
         patient=PatientResponse(id=meal.patient.id),
         menu_item=MenuItemResponse(
             id=meal.menu_item.id,

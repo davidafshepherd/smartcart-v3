@@ -189,7 +189,7 @@ export function NutritionTable({ data }: NutritionTableProps) {
   return (
     <div>
       {/* Table Tabs */}
-      <div className="border-b mb-0" style={{ borderColor: 'var(--card-border)' }}>
+      <div className="border-b mb-0" style={{ borderColor: 'var(--card-border)', background: 'rgba(0, 0, 0, 0.06)' }}>
         <nav className="flex space-x-1">
           <button
             onClick={() => setTableTab('macros')}
@@ -199,7 +199,7 @@ export function NutritionTable({ data }: NutritionTableProps) {
             style={{
               color: tableTab === 'macros' ? 'var(--accent-primary)' : 'var(--text-muted)',
               borderBottomColor: tableTab === 'macros' ? 'var(--accent-primary)' : 'transparent',
-              borderBottomWidth: tableTab === 'macros' ? '3px' : '2px',
+              borderBottomWidth: '3px',
             }}
           >
             Macronutrients
@@ -212,7 +212,7 @@ export function NutritionTable({ data }: NutritionTableProps) {
             style={{
               color: tableTab === 'minerals' ? 'var(--accent-primary)' : 'var(--text-muted)',
               borderBottomColor: tableTab === 'minerals' ? 'var(--accent-primary)' : 'transparent',
-              borderBottomWidth: tableTab === 'minerals' ? '3px' : '2px',
+              borderBottomWidth: '3px',
             }}
           >
             Minerals
@@ -225,7 +225,7 @@ export function NutritionTable({ data }: NutritionTableProps) {
             style={{
               color: tableTab === 'vitamins' ? 'var(--accent-primary)' : 'var(--text-muted)',
               borderBottomColor: tableTab === 'vitamins' ? 'var(--accent-primary)' : 'transparent',
-              borderBottomWidth: tableTab === 'vitamins' ? '3px' : '2px',
+              borderBottomWidth: '3px',
             }}
           >
             Vitamins
@@ -236,16 +236,6 @@ export function NutritionTable({ data }: NutritionTableProps) {
       {/* Table Content */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse" style={{ borderColor: 'var(--card-border)' }}>
-          <thead>
-            <tr style={{ background: 'var(--card-border)', borderColor: 'var(--card-border)' }}>
-              <th className="px-4 py-3 text-left font-semibold border-b" style={{ color: 'var(--foreground)', borderColor: 'var(--card-border)' }}>
-                Nutrient
-              </th>
-              <th className="px-4 py-3 text-right font-semibold border-b" style={{ color: 'var(--foreground)', borderColor: 'var(--card-border)' }}>
-                Amount
-              </th>
-            </tr>
-          </thead>
           <tbody>
             {renderTableContent()}
           </tbody>

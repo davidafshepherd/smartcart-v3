@@ -452,7 +452,12 @@ def _calculate_food_nutrition(
     mass_factor = mass / 100.0
 
     # Create a dictionary to store the nutritional values of the food.
-    food_nutrition_dict = {'food_id': food.id, 'mass': mass}
+    food_nutrition_dict = {
+        'food_id': food.id,
+        'mass': mass,
+        'food_name': food.food_name,
+        'short_name': food.short_name,
+    }
     
     # Iterate over each nutrient in the food.
     for nutrient in nutrients:

@@ -105,7 +105,7 @@ export default function Sidebar({
             onClick={() => onSectionChange('upload')}
           />
           <NavButton
-            label="View Meals"
+            label="Analyse Meals"
             icon={<MealsIcon />}
             isActive={activeSection === 'meals'}
             onClick={() => onSectionChange('meals')}
@@ -203,7 +203,7 @@ function MealsIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={2}
-        d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
       />
     </svg>
   );

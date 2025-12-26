@@ -19,6 +19,7 @@ class MealResponse(BaseModel):
     before_depth_path: str
     after_rgb_path: str
     after_depth_path: str
+    is_analysed: bool
     patient: PatientResponse
     menu_item: MenuItemResponse
 

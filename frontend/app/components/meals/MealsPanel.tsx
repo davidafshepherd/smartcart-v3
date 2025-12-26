@@ -212,6 +212,11 @@ function PatientNode({
 }: PatientNodeProps) {
   // Sort dates in reverse chronological order.
   const dates = Object.keys(data).sort().reverse();
+  
+  // Check if patient has any unanalyzed meals
+  const hasUnanalyzedMeals = dates.some((date) =>
+    Object.values(data[date]).some((meal) => !meal.is_analysed)
+  );
 
   return (
     <div className="mb-1">
@@ -232,7 +237,7 @@ function PatientNode({
         <span className="font-medium" style={{ color: 'var(--foreground)' }}>
           Patient #{patientId}
         </span>
-        <CountBadge count={mealCount} />
+        <CountBadge count={mealCount} isAmber={hasUnanalyzedMeals} />
       </button>
 
       {/* Date Children */}
@@ -269,6 +274,9 @@ function DateNode({
 }: DateNodeProps) {
   // Sort time ranges chronologically.
   const timeRanges = Object.keys(data).sort();
+  
+  // Check if date has any unanalyzed meals
+  const hasUnanalyzedMeals = timeRanges.some((timeRange) => !data[timeRange].is_analysed);
 
   return (
     <div className="mb-1">
@@ -293,7 +301,7 @@ function DateNode({
           />
         </svg>
         <span style={{ color: 'var(--text-secondary)' }}>{date}</span>
-        <CountBadge count={timeRanges.length} />
+        <CountBadge count={timeRanges.length} isAmber={hasUnanalyzedMeals} />
       </button>
 
       {/* Time Range Children (Meals) */}
@@ -336,6 +344,13 @@ function DateNode({
                   />
                 </svg>
                 <span>{timeRange}</span>
+                {!meal.is_analysed && (
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0 ml-auto mr-1.5"
+                    style={{ background: '#f59e0b' }}
+                    title="Not analysed"
+                  />
+                )}
               </button>
             );
           })}
@@ -365,11 +380,14 @@ function ChevronIcon({ isExpanded }: { isExpanded: boolean }) {
 /**
  * Renders a count badge (e.g., number of meals).
  */
-function CountBadge({ count }: { count: number }) {
+function CountBadge({ count, isAmber = false }: { count: number; isAmber?: boolean }) {
   return (
     <span
       className="ml-auto text-xs px-2 py-0.5 rounded-full"
-      style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
+      style={{
+        background: isAmber ? '#fde68a' : 'var(--accent-light)',
+        color: isAmber ? '#d97706' : 'var(--accent-primary)',
+      }}
     >
       {count}
     </span>

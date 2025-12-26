@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    Boolean,
     Column,
     Date,
     Float,
@@ -27,6 +28,7 @@ class Meal(Base):
         before_depth_path (str): Path to the pre-meal depth image.
         after_rgb_path (str): Path to the post-meal RGB image.
         after_depth_path (str): Path to the post-meal depth image.
+        is_analysed (bool): Whether the meal has been analysed.
         patient (Patient): Patient who consumed the meal.
         menu_item (MenuItem): Menu item that describes the meal.
         patient_id (int): Foreign key referencing the associated patient.
@@ -64,6 +66,9 @@ class Meal(Base):
     before_depth_path = Column(String, nullable=False)
     after_rgb_path = Column(String, nullable=False)
     after_depth_path = Column(String, nullable=False)
+
+    # Analysis status.
+    is_analysed = Column(Boolean, nullable=False)
 
     # Many-to-one relationship: multiple meals can have the same patient.
     patient = relationship(
