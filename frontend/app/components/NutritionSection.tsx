@@ -1,5 +1,7 @@
 'use client';
 
+import { PatientNutritionPanel } from "./meals/PatientNutritionPanel";
+
 // =============================================================================
 // Component
 // =============================================================================
@@ -19,9 +21,10 @@ export default function NutritionSection() {
             View Patient Nutrition
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            This section is coming soon.
+            View a nutrition report for a specific patient.
           </p>
         </div>
+        <PatientNutritionPanel />
       </div>
     </div>
   );

@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
+
+import datetime
 
 from app.db import get_db
-from app.models.db_models import Meal, NutritionReport, NutritionReportFood
+from app.models.db_models import Meal, NutritionReport, NutritionReportFood, Patient
 from app.schemas import (
     CreateNutritionReportRequest,
     FoodNutrition,
@@ -133,6 +136,56 @@ def delete_nutrition_report(meal_id: int, db: Session = Depends(get_db)) -> None
     # Delete the nutrition report and commit the change.
     db.delete(report)
     db.commit()
+
+@router.get("/patient/{patient_id}")
+def get_patient_nutrition(patient_id: int, report_from: str, report_to: str, db: Session = Depends(get_db)) -> list[NutritionReportResponse]:
+    """Gets a nutrition reports for a patient over a time period.
+
+    Args:
+        patient_id: The ID of the patient to get a report for.
+        report_from: The ISO timestamp to get the report from.
+        report_to: The ISO timestamp to get the report to.
+        db: SQLAlchemy database session.
+
+    Raises:
+        HTTPException: If the patient id doesn't exist.
+    """
+    
+    # first check if patient exists
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if patient is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient {patient_id} not found.",
+        )
+
+    # check datetimes are valid ISO
+    try:
+        from_dt = datetime.datetime.fromisoformat(report_from)
+        to_dt = datetime.datetime.fromisoformat(report_to)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid timestamps or range given.",
+        )
+    
+    # Get analysed meal ids
+    relevant_meals = db.query(Meal).filter(and_(
+            Meal.is_analysed.is_(True),
+            Meal.date.between(from_dt.date(), to_dt.date())
+        )).all()
+
+    if relevant_meals is None:
+        return {}
+    
+    all_meal_ids = [x.id for x in relevant_meals]
+    # get all nutrition reports
+    relevant_nutrition_reports =  db.query(NutritionReport).filter(NutritionReport.meal_id.in_(all_meal_ids)).all()
+    if relevant_nutrition_reports is None:
+        return {}
+    
+    return [_report_to_response(x) for x in relevant_nutrition_reports]
+
 
 def _food_to_nutrition(food_item: NutritionReportFood) -> FoodNutrition:
     food = food_item.food

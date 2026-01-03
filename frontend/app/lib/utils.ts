@@ -2,6 +2,8 @@
 // Color Utilities
 // =============================================================================
 
+import { MealNutrition } from "./types";
+
 /** Color palette for food items and masks. */
 const FOOD_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
@@ -152,4 +154,49 @@ export function formatNutritionValue(
 ): string {
   if (value === null || value === undefined) return 'N/A';
   return `${formatNumber(value, decimals)} ${unit}`;
+}
+
+export function sumMealNutrition(
+  items: MealNutrition[]
+): MealNutrition {
+  const result: Partial<MealNutrition> = {};
+
+  for (const item of items) {
+    for (const key of Object.keys(item) as (keyof MealNutrition)[]) {
+      const value = item[key];
+
+      if (typeof value === "number") {
+        const current = result[key];
+
+        result[key] =
+          typeof current === "number" ? current + value : value;
+      }
+    }
+  }
+
+  // Ensure required field
+  result.mass ??= 0;
+
+  return result as MealNutrition;
+}
+
+export function mergeObjects<T>(objects: T[]): T | null {
+    if (objects.length === 0) {
+      return null;
+    }
+
+    const result: Record<string, number> = {};
+
+    for (const obj of objects) {
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                const value = obj[key];
+                if (typeof value === 'number') {
+                    result[key] = (result[key] ?? 0) + value;
+                }
+            }
+        }
+    }
+
+    return result as T;
 }

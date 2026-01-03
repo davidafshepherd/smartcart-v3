@@ -13,6 +13,7 @@ import type {
   MealNutrition,
   FoodNutrition,
 } from './types';
+import { mergeObjects } from './utils';
 
 // =============================================================================
 // Error Handling
@@ -665,5 +666,19 @@ export const nutritionApi = {
     });
 
     return handleResponse<void>(response);
+  },
+
+  /**
+   * Retrieves a nutrition report for a patient over a date period
+   * 
+   * @param patientId - Id for a patient
+   * @param startDate - Start date of range
+   * @param endDate - End date of range
+   * @returns A promise resolving to the set of nutrition reports to compile
+   */
+  async getPatientReport(patientId: number, startDate: Date, endDate: Date): Promise<MealNutrition | null> {
+    const response = await fetch(`${config.apiUrl}/nutrition/patient/${patientId}?report_from=${startDate.toISOString()}&report_to=${endDate.toISOString()}`);
+    const handledResponse = await handleResponse<Array<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>>(response);
+    return mergeObjects<MealNutrition>(handledResponse.map(x => x.meal_nutrition));
   },
 };
