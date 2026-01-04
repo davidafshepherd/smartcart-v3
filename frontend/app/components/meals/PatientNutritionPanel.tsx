@@ -6,7 +6,6 @@ import { NutritionHeader } from './nutrition/NutritionHeader';
 import { NutritionTable } from './nutrition/NutritionTable';
 import { Spinner } from '../ui/Spinner';
 import { sumMealNutrition } from '@/app/lib/utils';
-import * as d3 from "d3";
 import SingleVarTimePlot from './nutrition/SingleVarTimePlot';
 
 export const PatientNutritionPanel: React.FC = () => {
@@ -49,10 +48,14 @@ export const PatientNutritionPanel: React.FC = () => {
     }, [selectedNutrient]);
 
     const handleFetchNutrition = async () => {
+        /**
+         * Gets patient report data
+         */
         if (!selectedPatientId || !startDate || !endDate) return;
 
         resetState();
 
+        // Check date range if end is before start or more than MAX_DAYS
         if(isInvalidDateRange(new Date(startDate), new Date(endDate), MAX_DAYS)) {
             setResult(`Invalid date range, end date cannot be before start date and range cannot be > ${MAX_DAYS} days.`);
             setLoading(false);
@@ -62,19 +65,22 @@ export const PatientNutritionPanel: React.FC = () => {
         try {
             const data = await nutritionApi.getPatientReport(selectedPatientId, new Date(startDate), new Date(endDate));
             if(!data) {
+                // No data
                 setResult('No nutrition data for requested patient or period!');
                 setLoading(false);
                 return;
             }
             const dates = Object.keys(data);
             if(dates.length == 0) {
+                // Again, no data
                 setResult('No nutrition data for requested patient or period!');
                 setLoading(false);
                 return;
             }
+            // Set data stuff
             const meals = Object.values(data).map(x => x.meal_nutrition);
             setOriginalNutritionData(meals);
-            computeCompiledMeal(meals);
+            setNutritionData(sumMealNutrition(meals));
             setReadOnly(true);
             setNutrientNames(meals.length > 0 ? Object.keys(meals[0]) : []);
             setSelectedNutrient(meals.length > 0 ? 'kcal' : '');
@@ -95,6 +101,9 @@ export const PatientNutritionPanel: React.FC = () => {
         end: Date,
         maxDays: number
         ): boolean {
+            /**
+             * Checks for invalid date range
+             */
         if (!(start instanceof Date) || isNaN(start.getTime())) return true;
         if (!(end instanceof Date) || isNaN(end.getTime())) return true;
         if (maxDays < 0) return true;
@@ -113,10 +122,6 @@ export const PatientNutritionPanel: React.FC = () => {
         }
 
         return false;
-    }
-
-    function computeCompiledMeal(meals: MealNutrition[]) {
-        setNutritionData(sumMealNutrition(meals));
     }
 
     function resetState() {
@@ -288,15 +293,17 @@ export const PatientNutritionPanel: React.FC = () => {
                                 ))}
                             </select>
                         </div>
+                        {/* Plot for time series based nutrient values */}
                         <div className="flex-row justify-center content-center">
-                            <SingleVarTimePlot xData={dateSeries} yData={valueSeries} width={1000} height={500} />
+                            {/*  Width and height can be set statically, as this gives a reasonable maximum, but d3 scales it anyway with viewport as just svg */}
+                            <SingleVarTimePlot xData={dateSeries} yData={valueSeries} width={(window.innerWidth/3)*2} height={500} />
                         </div>
                     </div>)}
                     <div className="p-6">
         
                     {/* Nutrition Wheel and Table Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Nutrition Wheel - Takes 1/3 on large screens */}
+                        {/* Nutrition Wheel */}
                         <div className="lg:col-span-1">
                         <h5 className="text-lg font-bold mb-4 flex items-center" style={{ color: 'var(--foreground)' }}>
                             <span className="w-1 h-6 rounded-full mr-3" style={{ background: 'var(--accent-primary)' }}></span>
@@ -305,7 +312,7 @@ export const PatientNutritionPanel: React.FC = () => {
                             <NutritionWheel protein={nutritionData.protein} carbs={nutritionData.carbohydrate} fat={nutritionData.fat} />
                             </div>
         
-                        {/* Nutrition Table - Takes 2/3 on large screens */}
+                        {/* Nutrition Table */}
                         <div className="lg:col-span-2">
                         <h5 className="text-lg font-bold mb-4 flex items-center" style={{ color: 'var(--foreground)' }}>
                             <span className="w-1 h-6 rounded-full mr-3" style={{ background: 'var(--accent-primary)' }}></span>
