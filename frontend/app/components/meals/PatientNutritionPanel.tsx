@@ -131,9 +131,14 @@ export const PatientNutritionPanel: React.FC = () => {
         setReadOnly(false);
     }
 
-    function getDateRangeSubtitle(): string {
-        if (!(currentReportStart.current) || !(currentReportEnd.current)) return '';
-        return `Patient #${currentPatientId.current} ${currentReportStart.current?.getDate()}/${currentReportStart.current?.getMonth() + 1}/${currentReportStart.current?.getFullYear()} to ${currentReportEnd.current?.getDate()}/${currentReportEnd.current?.getMonth() + 1}/${currentReportEnd.current?.getFullYear()}`
+    function generateNutrientDisplayName(rawName: string): string {
+        if(rawName.length == 0) return '';
+        const no_under = rawName.split("_");
+        const no_under_upper = [];
+        for(const i of no_under) {
+            no_under_upper.push(i.charAt(0).toUpperCase() + i.slice(1));
+        }
+        return no_under_upper.join(" ");
     }
 
     function dateToString(obj: Date | null): string {
@@ -278,7 +283,7 @@ export const PatientNutritionPanel: React.FC = () => {
                                 <option value="">Choose a nutrient...</option>
                                 {nutrientNames.map((nutrient) => (
                                     <option key={nutrient} value={nutrient}>
-                                        {nutrient}
+                                        {generateNutrientDisplayName(nutrient)}
                                     </option>
                                 ))}
                             </select>

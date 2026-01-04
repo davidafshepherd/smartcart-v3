@@ -60,14 +60,18 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
     // Add x-axis
     svg.append('g')
       .attr('transform', `translate(0,${height - marginBottom})`)
-      .call(d3.axisBottom(x).ticks(6))
-      .style('color', '#6b7280');
+      .call(d3.axisBottom(x).ticks(d3.timeDay.every(1)))
+      .style('color', '#6b7280')
+      .style("font-size", "14px")
+      .style("font-weight", "bold");
 
     // Add y-axis
     svg.append('g')
       .attr('transform', `translate(${marginLeft},0)`)
       .call(d3.axisLeft(y))
-      .style('color', '#6b7280');
+      .style('color', '#6b7280')
+      .style("font-size", "14px")
+      .style("font-weight", "bold");
 
     // Create line generator
     const line = d3.line<{date: Date | null, value: number}>()
@@ -155,7 +159,7 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
   }, [xData, yData, width, height, marginTop, marginRight, marginBottom, marginLeft]);
 
   return (
-    <div className="w-full p-6 bg-white rounded-lg shadow-sm">
+    <div className="w-full p-6">
       <svg ref={svgRef}></svg>
     </div>
   );
