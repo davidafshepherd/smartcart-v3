@@ -676,9 +676,8 @@ export const nutritionApi = {
    * @param endDate - End date of range
    * @returns A promise resolving to the set of nutrition reports to compile
    */
-  async getPatientReport(patientId: number, startDate: Date, endDate: Date): Promise<MealNutrition | null> {
+  async getPatientReport(patientId: number, startDate: Date, endDate: Date): Promise<Record<string, { meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> | null> {
     const response = await fetch(`${config.apiUrl}/nutrition/patient/${patientId}?report_from=${startDate.toISOString()}&report_to=${endDate.toISOString()}`);
-    const handledResponse = await handleResponse<Array<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>>(response);
-    return mergeObjects<MealNutrition>(handledResponse.map(x => x.meal_nutrition));
+    return handleResponse<Record<string, { meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>>(response);
   },
 };

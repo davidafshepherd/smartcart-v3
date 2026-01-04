@@ -138,7 +138,7 @@ def delete_nutrition_report(meal_id: int, db: Session = Depends(get_db)) -> None
     db.commit()
 
 @router.get("/patient/{patient_id}")
-def get_patient_nutrition(patient_id: int, report_from: str, report_to: str, db: Session = Depends(get_db)) -> list[NutritionReportResponse]:
+def get_patient_nutrition(patient_id: int, report_from: str, report_to: str, db: Session = Depends(get_db)) -> dict[str, NutritionReportResponse]:
     """Gets a nutrition reports for a patient over a time period.
 
     Args:
@@ -178,14 +178,30 @@ def get_patient_nutrition(patient_id: int, report_from: str, report_to: str, db:
     if relevant_meals is None:
         return {}
     
-    all_meal_ids = [x.id for x in relevant_meals]
+    all_meals = {}
+    for x in relevant_meals:
+        all_meals[x.id] = x
     # get all nutrition reports
-    relevant_nutrition_reports =  db.query(NutritionReport).filter(NutritionReport.meal_id.in_(all_meal_ids)).all()
+    relevant_nutrition_reports =  db.query(NutritionReport).filter(NutritionReport.meal_id.in_(all_meals.keys())).all()
     if relevant_nutrition_reports is None:
         return {}
     
-    return [_report_to_response(x) for x in relevant_nutrition_reports]
+    # first set meal id as key
+    ret_dict = {}
+    for x in relevant_nutrition_reports:
+        ret_dict[x.meal_id] = x
 
+    # search meal id key and replace with date
+    for k in ret_dict.copy().keys():
+        m: Meal = all_meals.get(k, None)
+        if m is None:
+            ret_dict.pop(k)
+            continue
+        val = ret_dict[k]
+        ret_dict[m.date.strftime("%Y-%m-%d")] = _report_to_response(val)
+        ret_dict.pop(k)
+
+    return ret_dict
 
 def _food_to_nutrition(food_item: NutritionReportFood) -> FoodNutrition:
     food = food_item.food
