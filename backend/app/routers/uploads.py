@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, time, datetime, timezone
 import json
 from pathlib import Path
 import shutil
@@ -338,8 +338,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
     The JSON object must follow the format:
         {
           "patient_id": 34340602,
-          "date": "2025-11-28",
-          "time": "17:00",
+          "datetime": 123445556,
           "weight": 450.0
         }
 
@@ -377,8 +376,7 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
     # Extract the fields.
     try:
         patient_id = int(data["patient_id"])
-        date_str = str(data["date"])
-        time_str = str(data["time"])
+        unix_datetime = float(data["datetime"])
         weight = float(data["weight"])
     except (KeyError, ValueError, TypeError):
         raise HTTPException(
@@ -386,10 +384,13 @@ def _get_metadata(folder: Path) -> Tuple[int, date, time, float]:
             detail=f"Invalid '{METADATA_FILENAME}'.",
         )
     
+    # Convert unix datetime to dt object
+    unix_dt_obj = datetime.fromtimestamp(unix_datetime, tz=timezone.utc)
+    
     # Convert the date and time into their expected data types.
     try:
-        meal_date = date.fromisoformat(date_str)
-        meal_time = time.fromisoformat(time_str)
+        meal_date = unix_dt_obj.date()
+        meal_time = unix_dt_obj.time()
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
