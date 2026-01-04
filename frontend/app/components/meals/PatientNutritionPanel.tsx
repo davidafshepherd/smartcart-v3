@@ -260,7 +260,7 @@ export const PatientNutritionPanel: React.FC = () => {
                 <div>
                     <NutritionHeader mass={nutritionData.mass}/>
                     {dateSeries && valueSeries && (<div className="flex-col justify-start content-between p-6">
-                        <div>
+                        <div className="flex flex-row justify-start content-center">
                             <h5 className="text-lg font-bold mb-4 flex items-center" style={{ color: 'var(--foreground)' }}>
                                 <span className="w-1 h-6 rounded-full mr-3" style={{ background: 'var(--accent-primary)' }}></span>
                                 Time Series Intake for
@@ -268,7 +268,12 @@ export const PatientNutritionPanel: React.FC = () => {
                             <select
                                 value={selectedNutrient}
                                 onChange={(e) => setSelectedNutrient(e.target.value)}
-                                className="border-none rounded m-4 text-lg font-bold "
+                                className="ml-2 mb-4 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer border disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{
+                                    background: 'var(--card-bg)',
+                                    color: 'var(--foreground)',
+                                    borderColor: 'var(--card-border)',
+                                }}
                             >
                                 <option value="">Choose a nutrient...</option>
                                 {nutrientNames.map((nutrient) => (
