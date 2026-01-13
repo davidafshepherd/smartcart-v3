@@ -36,6 +36,7 @@ export default function MealsSection() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mealsError, setMealsError] = useState<string | null>(null);
   const [selectedMeal, setSelectedMeal] = useState<MealData | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(null);
   
@@ -170,27 +171,35 @@ export default function MealsSection() {
   // Refresh meals data when nutrition report is saved or deleted (to update is_analysed)
   useEffect(() => {
     const handleNutritionReportSaved = async () => {
-      const updatedMeals = await mealsApi.getAll();
-      setMealsData(updatedMeals);
-      
-      // Don't update selected meal if we're closing the view
-      if (isClosingRef.current) {
-        return;
-      }
-      
-      // Only update selected meal if we're still viewing/analysing that meal
-      // (don't update if viewMode is null, meaning we've closed the view)
-      if (selectedMeal && viewMode !== null) {
-        // Find the updated meal in the new data
-        for (const patientMeals of Object.values(updatedMeals)) {
-          for (const dateMeals of Object.values(patientMeals)) {
-            for (const meal of Object.values(dateMeals)) {
-              if (meal.id === selectedMeal.id) {
-                setSelectedMeal(meal);
-                break;
+      try {
+        const updatedMeals = await mealsApi.getAll();
+        setMealsData(updatedMeals);
+        
+        // Don't update selected meal if we're closing the view
+        if (isClosingRef.current) {
+          return;
+        }
+        
+        // Only update selected meal if we're still viewing/analysing that meal
+        // (don't update if viewMode is null, meaning we've closed the view)
+        if (selectedMeal && viewMode !== null) {
+          // Find the updated meal in the new data
+          for (const patientMeals of Object.values(updatedMeals)) {
+            for (const dateMeals of Object.values(patientMeals)) {
+              for (const meal of Object.values(dateMeals)) {
+                if (meal.id === selectedMeal.id) {
+                  setSelectedMeal(meal);
+                  break;
+                }
               }
             }
           }
+        }
+      } catch (err) {
+        console.error('Failed to refresh meals after nutrition report save:', err);
+        // Silently fail - don't update data if API is unreachable
+        if (err instanceof ApiError && err.status === 0) {
+          // Network error - API unreachable, don't update data
         }
       }
     };
@@ -218,8 +227,21 @@ export default function MealsSection() {
       setMealsData(mealsResult);
       setPatients(patientsResult);
       setMenuItems(menuItemsResult);
+      setMealsError(null);
     } catch (err) {
       console.error('Failed to fetch data:', err);
+      // Handle network errors - set empty data structures to prevent crashes
+      if (err instanceof ApiError && err.status === 0) {
+        // Network error - API unreachable
+        setMealsData({});
+        setPatients([]);
+        setMenuItems([]);
+        setMealsError('Unable to reach the server. Please check your connection.');
+      } else {
+        // Other errors
+        setMealsData({});
+        setMealsError('Failed to load meals');
+      }
     } finally {
       setLoading(false);
     }
@@ -232,8 +254,18 @@ export default function MealsSection() {
     try {
       const data = await mealsApi.getAll();
       setMealsData(data);
+      setMealsError(null);
     } catch (err) {
       console.error('Failed to fetch meals:', err);
+      // Handle network errors - set empty data structure to prevent crashes
+      if (err instanceof ApiError && err.status === 0) {
+        // Network error - API unreachable
+        setMealsData({});
+        setMealsError('Unable to reach the server. Please check your connection.');
+      } else {
+        setMealsData({});
+        setMealsError('Failed to load meals');
+      }
     }
   };
 
@@ -587,14 +619,21 @@ export default function MealsSection() {
    * @param patientIdChange - Optional info about a patient ID change.
    */
   const handleDataChange = async (patientIdChange?: { oldId: number; newId: number }) => {
-    // Fetch fresh data first
-    const [mealsResult, patientsResult, menuItemsResult] = await Promise.all([
-      mealsApi.getAll(),
-      patientsApi.getAll(),
-      menuApi.getAll(),
-    ]);
+    try {
+      // Fetch fresh data first
+      const [mealsResult, patientsResult, menuItemsResult] = await Promise.all([
+        mealsApi.getAll(),
+        patientsApi.getAll(),
+        menuApi.getAll(),
+      ]);
 
-    // Update all state together to avoid visual flicker
+      // Handle network errors - if API is unreachable, don't update data
+      if (!mealsResult || !patientsResult || !menuItemsResult) {
+        console.error('Failed to fetch data: API returned empty results');
+        return;
+      }
+
+      // Update all state together to avoid visual flicker
     // If a patient ID changed, update the expansion state to use the new ID
     if (patientIdChange) {
       const { oldId, newId } = patientIdChange;
@@ -628,31 +667,43 @@ export default function MealsSection() {
       });
     }
 
-    // Update data state
-    setMealsData(mealsResult);
-    setPatients(patientsResult);
-    setMenuItems(menuItemsResult);
+      // Update data state
+      setMealsData(mealsResult);
+      setPatients(patientsResult);
+      setMenuItems(menuItemsResult);
+      setMealsError(null);
 
-    // If a meal is selected, find it by ID in the fresh data and update it
-    if (selectedMeal) {
-      let foundMeal: MealData | null = null;
+      // If a meal is selected, find it by ID in the fresh data and update it
+      if (selectedMeal) {
+        let foundMeal: MealData | null = null;
 
-      // Search through all meals to find one with matching ID
-      for (const patientMeals of Object.values(mealsResult)) {
-        for (const dateMeals of Object.values(patientMeals)) {
-          for (const meal of Object.values(dateMeals)) {
-            if (meal.id === selectedMeal.id) {
-              foundMeal = meal;
-              break;
+        // Search through all meals to find one with matching ID
+        for (const patientMeals of Object.values(mealsResult)) {
+          for (const dateMeals of Object.values(patientMeals)) {
+            for (const meal of Object.values(dateMeals)) {
+              if (meal.id === selectedMeal.id) {
+                foundMeal = meal;
+                break;
+              }
             }
+            if (foundMeal) break;
           }
           if (foundMeal) break;
         }
-        if (foundMeal) break;
-      }
 
-      // Update with fresh data or clear if meal no longer exists
-      setSelectedMeal(foundMeal);
+        // Update with fresh data or clear if meal no longer exists
+        setSelectedMeal(foundMeal);
+      }
+    } catch (err) {
+      console.error('Failed to fetch data in handleDataChange:', err);
+      // Handle network errors - don't update data if API is unreachable
+      if (err instanceof ApiError && err.status === 0) {
+        // Network error - API unreachable, don't update data
+        setMealsError('Unable to reach the server. Please check your connection.');
+        return;
+      }
+      // For other errors, still don't update to avoid inconsistent state
+      setMealsError('Failed to load meals');
     }
   };
 
@@ -697,6 +748,7 @@ export default function MealsSection() {
               expandedDates={expandedDates}
               onTogglePatient={togglePatient}
               onToggleDate={toggleDate}
+              error={mealsError}
             />
             <PatientsPanel onDataChange={handleDataChange} />
             <MenuPanel onDataChange={handleDataChange} />

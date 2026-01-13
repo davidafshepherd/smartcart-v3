@@ -23,6 +23,8 @@ interface MealsPanelProps {
   onTogglePatient: (patientId: string) => void;
   /** Callback to toggle date expansion. */
   onToggleDate: (key: string) => void;
+  /** Error message to display if meals failed to load. */
+  error?: string | null;
 }
 
 /** Props for the PatientNode sub-component. */
@@ -83,6 +85,7 @@ export function MealsPanel({
   expandedDates,
   onTogglePatient,
   onToggleDate,
+  error,
 }: MealsPanelProps) {
   // Sort patient IDs numerically.
   const patientIds = Object.keys(mealsData).sort((a, b) => Number(a) - Number(b));
@@ -139,7 +142,13 @@ export function MealsPanel({
         </div>
 
         {/* Tree Content */}
-        {patientIds.length === 0 ? (
+        {error ? (
+          <div className="p-4 text-center">
+            <span className="text-sm" style={{ color: 'var(--danger)' }}>
+              {error}
+            </span>
+          </div>
+        ) : patientIds.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="p-2 max-h-[600px] overflow-y-auto">

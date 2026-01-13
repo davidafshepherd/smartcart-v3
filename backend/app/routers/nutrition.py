@@ -191,14 +191,16 @@ def get_patient_nutrition(patient_id: int, report_from: str, report_to: str, db:
     for x in relevant_nutrition_reports:
         ret_dict[x.meal_id] = x
 
-    # search meal id key and replace with date
+    # search meal id key and replace with date_mealid to ensure uniqueness
+    # (multiple meals can occur on the same date)
     for k in ret_dict.copy().keys():
         m: Meal = all_meals.get(k, None)
         if m is None:
             ret_dict.pop(k)
             continue
         val = ret_dict[k]
-        ret_dict[m.date.strftime("%Y-%m-%d")] = _report_to_response(val)
+        # Use date_mealid as key to handle multiple meals on same day
+        ret_dict[f"{m.date.strftime('%Y-%m-%d')}_{m.id}"] = _report_to_response(val)
         ret_dict.pop(k)
 
     return ret_dict
