@@ -120,6 +120,53 @@ export default function MealsSection() {
     }
   }, [viewMode, selectedMeal, inputMode, nutritionData]);
   
+  // Auto-expand tree nodes for the selected meal
+  // Use a ref to track the last expanded meal to avoid unnecessary updates
+  const lastExpandedMealRef = useRef<{ id: number; patientId: number; date: string } | null>(null);
+  
+  useEffect(() => {
+    if (selectedMeal && viewMode !== null) {
+      const patientId = selectedMeal.patient.id.toString();
+      const dateKey = `${patientId}-${selectedMeal.date}`;
+      
+      // Only update if this is a different meal than we last expanded
+      const lastExpanded = lastExpandedMealRef.current;
+      if (
+        !lastExpanded ||
+        lastExpanded.id !== selectedMeal.id ||
+        lastExpanded.patientId !== selectedMeal.patient.id ||
+        lastExpanded.date !== selectedMeal.date
+      ) {
+        // Expand the patient's tree node if not already expanded
+        setExpandedPatients((prev) => {
+          if (!prev.has(patientId)) {
+            const next = new Set(prev);
+            next.add(patientId);
+            return next;
+          }
+          return prev;
+        });
+        
+        // Expand the date node if not already expanded
+        setExpandedDates((prev) => {
+          if (!prev.has(dateKey)) {
+            const next = new Set(prev);
+            next.add(dateKey);
+            return next;
+          }
+          return prev;
+        });
+        
+        // Update ref to track what we just expanded
+        lastExpandedMealRef.current = {
+          id: selectedMeal.id,
+          patientId: selectedMeal.patient.id,
+          date: selectedMeal.date,
+        };
+      }
+    }
+  }, [selectedMeal?.id, selectedMeal?.patient.id, selectedMeal?.date, viewMode]);
+
   // Refresh meals data when nutrition report is saved or deleted (to update is_analysed)
   useEffect(() => {
     const handleNutritionReportSaved = async () => {
@@ -440,11 +487,38 @@ export default function MealsSection() {
     // Prevent double-clicks.
     if (isUpdating) return;
 
+    // Track if patient ID is changing for immediate tree expansion
+    const oldPatientId = selectedMeal?.patient.id;
+    const isPatientChanging = patientId !== undefined && patientId !== oldPatientId;
+
     setIsUpdating(true);
     setUpdateError(null);
     try {
       const updatedMeal = await mealsApi.update(mealId, patientId, menuItemId);
+      
+      // If patient ID changed, expand the new patient's tree immediately (before state updates)
+      // This prevents flicker by expanding before the meals data refreshes
+      if (isPatientChanging && updatedMeal) {
+        const newPatientId = updatedMeal.patient.id.toString();
+        const dateKey = `${newPatientId}-${updatedMeal.date}`;
+        
+        // Expand synchronously before updating selectedMeal
+        setExpandedPatients((prev) => {
+          const next = new Set(prev);
+          next.add(newPatientId);
+          return next;
+        });
+        
+        setExpandedDates((prev) => {
+          const next = new Set(prev);
+          next.add(dateKey);
+          return next;
+        });
+      }
+      
+      // Update selected meal - this triggers the useEffect as a fallback
       setSelectedMeal(updatedMeal);
+      // Fetch meals data in the background (don't await to avoid delay)
       fetchMeals();
     } catch (err) {
       if (err instanceof ApiError) {
