@@ -38,13 +38,17 @@ interface NutritionData {
 
 interface NutritionTableProps {
   data: NutritionData;
+  perDay?: boolean;
 }
 
 /**
  * Renders a nutrition table with tabs for different nutrient categories.
  */
-export function NutritionTable({ data }: NutritionTableProps) {
+export function NutritionTable({ data, perDay = false }: NutritionTableProps) {
   const [tableTab, setTableTab] = useState<string>('macros');
+  
+  // Add "/day" suffix to units if perDay is true
+  const formatUnit = (unit: string) => perDay ? `${unit} / day` : unit;
 
   // Color palette for different nutrients
   const getNutrientColor = (label: string): string => {
@@ -98,7 +102,7 @@ export function NutritionTable({ data }: NutritionTableProps) {
     const numericValueInGrams = convertToGrams(value, unit);
     const percentage = totalValue > 0 ? (numericValueInGrams / totalValue) * 100 : 0;
     const color = getNutrientColor(label);
-    const displayValue = formatNutritionValue(value, unit, decimals);
+    const displayValue = formatNutritionValue(value, formatUnit(unit), decimals);
 
     return (
       <>
