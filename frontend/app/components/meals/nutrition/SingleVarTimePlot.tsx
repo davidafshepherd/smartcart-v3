@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import { formatDateObject } from '../../../lib/dateUtils';
 
 interface LineChartProps {
   xData: string[];
@@ -138,7 +139,7 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
 
         tooltip
           .style('opacity', 1)
-          .html(`<strong>Date:</strong> ${d3.timeFormat('%Y-%m-%d')(d.date as Date)}<br/><strong>Value:</strong> ${d.value}`)
+          .html(`<strong>Date:</strong> ${formatDateObject(d.date as Date)}<br/><strong>Value:</strong> ${d.value}`)
           .style('left', (event.pageX + 15) + 'px')
           .style('top', (event.pageY - 28) + 'px');
       })

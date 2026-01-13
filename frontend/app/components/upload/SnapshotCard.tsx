@@ -3,6 +3,7 @@
 import type { Snapshot } from '../../lib/types';
 import { imagesApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
+import { formatDate } from '../../lib/dateUtils';
 
 // =============================================================================
 // Type Definitions
@@ -94,7 +95,7 @@ export function SnapshotCard({
           </span>
         </div>
         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          {snapshot.date} at {snapshot.time}
+          {formatDate(snapshot.date)} at {snapshot.time}
         </p>
 
         {/* Discard Button */}

@@ -1,6 +1,7 @@
 'use client';
 
 import type { MealsData, MealData } from '../../lib/types';
+import { formatDate } from '../../lib/dateUtils';
 
 // =============================================================================
 // Type Definitions
@@ -300,7 +301,7 @@ function DateNode({
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
-        <span style={{ color: 'var(--text-secondary)' }}>{date}</span>
+        <span style={{ color: 'var(--text-secondary)' }}>{formatDate(date)}</span>
         <CountBadge count={timeRanges.length} isAmber={hasUnanalyzedMeals} />
       </button>
 
