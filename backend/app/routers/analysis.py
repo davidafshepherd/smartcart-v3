@@ -33,6 +33,7 @@ from app.schemas.analysis import (
 )
 
 
+
 # Create a new API router to group analysis-related endpoints.
 router = APIRouter()
 
@@ -355,24 +356,26 @@ def _calculate_volumes(
         A list containing the consumed volume (cm^3) of each food in the meal.
     """
     
-    # TODO: Implement actual volume calculation from depth images.
+    
+    # Load Depth Images
+    before_depth = load_depth(before_depth_path)
+    after_depth = load_depth(after_depth_path)
 
 
-    # DUMMY CODE: generate a random consumed volume per food.
     volumes = []
     
     # Generate random volume for each before mask.
     before_volumes = {}
     for before_mask in before_masks:
         food_id = before_mask.food_id
-        before_volume = random.uniform(100.0, 450.0)
+        before_volume = volume_from_depth_and_mask(before_depth,before_mask.mask,500.0, 500.0, 320.0, 240.0, 50)
         before_volumes[food_id] = before_volume
     
     # Generate random volume for each after mask.
     after_volumes = {}
     for after_mask in after_masks:
         food_id = after_mask.food_id
-        after_volume = random.uniform(100.0, 450.0)
+        after_volume = volume_from_depth_and_mask(after_depth,after_mask.mask,500.0, 500.0, 320.0, 240.0, 50)
         after_volumes[food_id] = after_volume
     
     # Calculate consumed volume for each food.
@@ -605,3 +608,132 @@ def _calculate_meal_nutrition(
     
     # Return the nutritional values of the meal.
     return MealNutrition(**meal_nutrition_dict)
+
+
+def load_depth(depth_path: str) -> np.ndarray:
+    return cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+
+def mask_to_bool(
+    mask_data: List[List[int]], 
+    target_shape: Tuple[int, int]
+) -> np.ndarray:
+    """
+    Convert a segmentation mask to a boolean array matching depth image shape
+
+    Args:
+        mask_data (List[List[int]]): Segmentation mask
+        target_shape (Tuple[int, int]): Depth image shape
+
+    Returns:
+        np.ndarray: A 2D boolean NumPy array
+"""
+    
+    #  Binary Segmentation mask to boolean array
+    mask = np.array(mask_data, dtype=np.uint8)
+     
+
+     # Match mask shape to depth image shape
+    if mask.shape != target_shape:
+        mask = cv2.resize(
+            mask,
+            (target_shape[1], target_shape[0]),
+            interpolation=cv2.INTER_NEAREST
+        )
+
+    return mask.astype(bool)
+
+
+def apply_mask(
+    depth: np.ndarray, 
+    mask: np.ndarray
+) -> np.ndarray:
+    """Apply a boolean segmentation mask to a depth image
+
+    Args:
+        depth: A 2D NumPy of depth image.
+        mask: A 2D boolean NumPy array where True indicates pixels to keep
+
+    Returns:
+        np.ndarray: A 2D NumPy array with depth values outside the mask set to zero
+    """
+    depth_masked = depth.copy()
+    depth_masked[~mask] = 0
+    return depth_masked
+
+def get_3D_point_cloud(
+    depth_mm: np.ndarray,
+    fx: float, fy: float, cx: float, cy: float,
+    min_points: int = 50
+) -> np.ndarray:
+    """Generate a 3D point cloud from a depth image
+
+    Converts a depth image into a 3D point cloud
+    Args:
+        depth_mm: A 2D NumPy array containing depth values in millimeters
+        fx: fx
+        fy: fy
+        cx: cx
+        cy: cy
+        min_points: Minimum number of valid 3D points required
+
+    Returns:
+        np.ndarray: 3D point cloud 
+    """
+    v_coords, u_coords = np.nonzero(depth_mm > 0)
+    z_mm = depth_mm[v_coords, u_coords]
+
+    Z = z_mm / 10.0  # mm -> cm
+    X = (u_coords - cx) * Z / fx
+    Y = (v_coords - cy) * Z / fy
+
+    points = np.stack([X, Y, Z], axis=1)
+
+    if points.shape[0] < min_points:
+        raise RuntimeError(f"Not enough points: {points.shape[0]}")
+
+    return points
+
+
+def calculate_volume_cm3(
+    points_cm: np.ndarray
+) -> float:
+    """Compute the volume enclosed by a 3D point cloud.
+
+    Calculates the volume (in cubic centimeters) of a 3D object representedby a point cloud using its convex hull
+
+    Args:
+        points_cm: A NumPy array of shape `(N, 3)` containing 3D points in centimeters
+
+    Returns:
+        float: The volume in cubic centimeters.
+    """
+    hull = ConvexHull(points_cm)
+    return float(hull.volume)
+
+def volume_from_depth_and_mask(
+    depth: np.ndarray,
+    mask_data: List[List[int]],
+    fx: float, fy: float, cx: float, cy: float,
+    min_points: int = 50
+) -> float:
+    """Estimate food volume from a depth image and segmentation mask.
+
+    Computes the volume of a segmented food item
+
+    Args:
+        depth: A 2D NumPy array of the depth image
+        mask_data: Segmentation mask 
+        fx: fx 
+        fy: fy
+        cx: cx
+        cy: cy
+        min_points: Minimum number of valid 3D points required
+
+    Returns:
+        float: Estimated volume of the segmented object in cubic centimeters
+    """
+    
+    mask = mask_to_bool(mask_data, depth.shape)
+    depth_masked = apply_mask(depth, mask)
+    points = get_3D_point_cloud(depth_masked, fx, fy, cx, cy, min_points)
+    return calculate_volume_cm3(points)

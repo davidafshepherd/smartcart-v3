@@ -103,7 +103,12 @@ export function MenuPanel({ onDataChange }: MenuPanelProps) {
       setError(null);
     } catch (err) {
       console.error('Failed to fetch menu items:', err);
-      setError('Failed to load menu items');
+      // Handle network errors with user-friendly message
+      if (err instanceof ApiError && err.status === 0) {
+        setError('Unable to reach the server. Please check your connection.');
+      } else {
+        setError('Failed to load menu items');
+      }
     } finally {
       setLoading(false);
     }

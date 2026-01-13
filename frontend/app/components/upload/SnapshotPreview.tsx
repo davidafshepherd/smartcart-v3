@@ -3,6 +3,7 @@
 import type { Snapshot } from '../../lib/types';
 import { imagesApi } from '../../lib/api';
 import { NumberBadge } from '../ui/NumberBadge';
+import { formatDate } from '../../lib/dateUtils';
 
 // =============================================================================
 // Type Definitions
@@ -57,7 +58,7 @@ export function SnapshotPreview({ label, number, snapshot, color }: SnapshotPrev
             className="w-full h-32 object-cover rounded-lg mb-2"
           />
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Patient: {snapshot.patient_id} | {snapshot.date} {snapshot.time}
+            Patient: {snapshot.patient_id} | {formatDate(snapshot.date)} {snapshot.time}
           </p>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             Weight: {snapshot.weight}g

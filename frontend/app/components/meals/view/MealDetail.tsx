@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { MealData, MenuItem, Patient } from '../../../lib/types';
 import { imagesApi } from '../../../lib/api';
 import { NumberBadge } from '../../ui/NumberBadge';
+import { formatDate } from '../../../lib/dateUtils';
 
 // =============================================================================
 // Type Definitions
@@ -300,7 +301,7 @@ export function MealDetail({
           Meal Details
         </h2>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-          {meal.date} • {meal.start_time} - {meal.end_time}
+          {formatDate(meal.date)} • {meal.start_time} - {meal.end_time}
         </p>
       </div>
 
