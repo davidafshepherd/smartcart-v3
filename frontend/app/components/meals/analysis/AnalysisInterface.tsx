@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { MealData, FoodMask, ComputeNutritionResponse } from '../../../lib/types';
 import { imagesApi, nutritionApi, ApiError } from '../../../lib/api';
 import { InputModeSelector } from './InputModeSelector';
@@ -65,6 +65,35 @@ export function AnalysisInterface({
   const [isSavingReport, setIsSavingReport] = useState(false);
   const [isDeletingReport, setIsDeletingReport] = useState(false);
   const [isReportSaved, setIsReportSaved] = useState(false);
+  
+  // Track previous meal ID and nutrition data to detect changes
+  const prevMealIdRef = useRef<number | null>(null);
+  const prevNutritionDataRef = useRef<ComputeNutritionResponse | null>(null);
+  
+  // Reset isReportSaved when meal changes or when new nutrition data is generated
+  useEffect(() => {
+    // Reset when meal changes
+    if (prevMealIdRef.current !== null && prevMealIdRef.current !== meal.id) {
+      setIsReportSaved(false);
+      setIsSavingReport(false);
+      setIsDeletingReport(false);
+    }
+    prevMealIdRef.current = meal.id;
+    
+    // Reset when nutritionData changes from null to a value (new report generated)
+    // or when it changes from one value to another (regenerated report)
+    // Don't reset if it's the same reference (saved report)
+    if (prevNutritionDataRef.current !== nutritionData) {
+      if (nutritionData !== null) {
+        // New nutrition data was generated, reset saved state
+        setIsReportSaved(false);
+      } else {
+        // Report was discarded
+        setIsReportSaved(false);
+      }
+    }
+    prevNutritionDataRef.current = nutritionData;
+  }, [meal.id, nutritionData]);
   
   const foods = meal.menu_item.foods;
   const beforeImageUrl = imagesApi.getImageUrl(meal.before_rgb_path);

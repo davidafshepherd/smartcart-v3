@@ -64,6 +64,9 @@ export default function MealsSection() {
   const [expandedPatients, setExpandedPatients] = useState<Set<string>>(new Set());
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
+  // Track meal ID for nutrition computation to prevent race conditions
+  const computingMealIdRef = useRef<number | null>(null);
+  
   // Track previous meal ID to detect actual meal changes (not just data updates)
   const prevMealIdRef = useRef<number | null>(null);
   // Track if we're closing the view (to prevent re-selecting meal in event listener)
@@ -316,6 +319,9 @@ export default function MealsSection() {
     // Reset analysis state immediately to prevent flash of old state
     setInputMode(null);
     setNutritionData(null);
+    // Clear any ongoing computation for the previous meal
+    computingMealIdRef.current = null;
+    setIsComputingNutrition(false);
     setSelectedMeal(meal);
     setViewMode('analyse');
     setContextMenu(null);
@@ -463,20 +469,41 @@ export default function MealsSection() {
   const handleComputeVolume = async (beforeMasks: FoodMask[], afterMasks: FoodMask[]) => {
     if (!selectedMeal || isComputingNutrition) return;
     
+    // Capture the meal ID at the start to prevent race conditions
+    // if the user switches meals while computation is in progress
+    const mealIdAtStart = selectedMeal.id;
+    const beforeDepthPath = selectedMeal.before_depth_path;
+    const afterDepthPath = selectedMeal.after_depth_path;
+    
+    // Store the meal ID in a ref so we can check it even if state changes
+    computingMealIdRef.current = mealIdAtStart;
     setIsComputingNutrition(true);
+    
     try {
       const result = await analysisApi.computeNutrition(
-        selectedMeal.before_depth_path,
-        selectedMeal.after_depth_path,
+        beforeDepthPath,
+        afterDepthPath,
         beforeMasks,
         afterMasks
       );
-      setNutritionData(result);
+      
+      // Only set nutrition data if we're still on the same meal
+      // This prevents applying results to the wrong meal if user switched meals
+      if (computingMealIdRef.current === mealIdAtStart && selectedMeal?.id === mealIdAtStart) {
+        setNutritionData(result);
+      }
     } catch (err) {
       console.error('Nutrition computation failed:', err);
-      alert(err instanceof ApiError ? err.message : 'Failed to compute nutrition');
+      // Only show error if we're still on the same meal
+      if (computingMealIdRef.current === mealIdAtStart && selectedMeal?.id === mealIdAtStart) {
+        alert(err instanceof ApiError ? err.message : 'Failed to compute nutrition');
+      }
     } finally {
-      setIsComputingNutrition(false);
+      // Clear the ref and computing flag
+      if (computingMealIdRef.current === mealIdAtStart) {
+        computingMealIdRef.current = null;
+        setIsComputingNutrition(false);
+      }
     }
   };
 
@@ -632,6 +659,9 @@ export default function MealsSection() {
                   setSelectedMeal(null);
                   setNutritionData(null);
                   setInputMode(null);
+                  // Clear any ongoing computation
+                  computingMealIdRef.current = null;
+                  setIsComputingNutrition(false);
                   // Reset the flag after a brief delay to allow event listeners to see it
                   setTimeout(() => {
                     isClosingRef.current = false;
