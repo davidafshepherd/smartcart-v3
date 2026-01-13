@@ -15,7 +15,7 @@ from app.constants import (
     BACKEND_DIR,
     DEPTH_FILENAME,
     METADATA_FILENAME,
-    RGB_FILENAME,
+    RGB_FILENAMES,
     UPLOAD_DIR,
 )
 from app.db import get_db
@@ -417,17 +417,24 @@ def _get_image_paths(folder: Path) -> Tuple[Path, Path]:
         HTTPException: If the images are missing, misnamed or invalid.
     """
 
-    # Store the paths to the RGB image and to the depth image.
-    rgb_path = folder / RGB_FILENAME
-    depth_path = folder / DEPTH_FILENAME
-
+    # Store the path to the RGB image.
+    actual_rgb_path = None
+    for rgb_filename in RGB_FILENAMES:
+        rgb_path = folder / rgb_filename
+        if rgb_path.is_file():
+            actual_rgb_path = rgb_path
+            break
+    
     # Check if the RGB image exists.
-    if not rgb_path.is_file():
+    if actual_rgb_path is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Missing '{RGB_FILENAME}'.",
+            detail=f"Missing '{RGB_FILENAMES[1]}'.",
         )
     
+    # Store the path to the depth image.
+    depth_path = folder / DEPTH_FILENAME
+
     # Check if the depth image exists.
     if not depth_path.is_file():
         raise HTTPException(
@@ -436,11 +443,11 @@ def _get_image_paths(folder: Path) -> Tuple[Path, Path]:
         )
     
     # Check if the RGB image and the depth image are valid images.
-    _validate_image(rgb_path)
+    _validate_image(actual_rgb_path)
     _validate_image(depth_path)
 
     # Return the paths to the RGB image and to the depth image.
-    return rgb_path, depth_path
+    return actual_rgb_path, depth_path
     
 
 def _validate_image(path: Path) -> None:

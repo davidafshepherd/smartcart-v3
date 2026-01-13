@@ -12,7 +12,7 @@ IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 # Define the names of the metadata file, the RGB image and the depth image.
 METADATA_FILENAME = "metadata.json"
-RGB_FILENAME = "rgb.jpeg"
+RGB_FILENAMES = ["rgb.jpeg", "rgb.jpg"]
 DEPTH_FILENAME = "depth.png"
 
 # Define the path to the nutrition dataset CSV file.
