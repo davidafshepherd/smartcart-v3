@@ -509,6 +509,7 @@ export const analysisApi = {
         mask_id: `after_${timestamp}_${idx}`,
         color_index: idx,
       })),
+      warnings: data.warnings || [],
     };
   },
 
@@ -526,6 +527,7 @@ export const analysisApi = {
     beforeRgbPath: string,
     afterRgbPath: string,
     textPrompt: string,
+    foodId: number,
     confidenceThreshold: number = 0.5
   ): Promise<SAM3Response> {
     const data = await handleApiCall<SAM3Response>(
@@ -537,6 +539,7 @@ export const analysisApi = {
           after_rgb_path: afterRgbPath,
           confidence_threshold: confidenceThreshold,
           text_prompt: textPrompt,
+          food_id: foodId,
         }),
       })
     );
@@ -557,6 +560,7 @@ export const analysisApi = {
         mask_id: `after_${timestamp}_${idx}`,
         color_index: idx,
       })),
+      warnings: data.warnings || [],
     };
   },
 
@@ -606,6 +610,7 @@ export const analysisApi = {
         mask_id: `after_${timestamp}_${idx}`,
         color_index: idx,
       })),
+      warnings: data.warnings || [],
     };
   },
 

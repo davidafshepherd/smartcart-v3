@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { Food, Point, FoodMask } from '../../../../lib/types';
+import type { Food, Point, FoodMask, SAM3Warning } from '../../../../lib/types';
 import { analysisApi, ApiError } from '../../../../lib/api';
 import { getFoodColor, formatFoodName, mergeMasks } from '../../../../lib/utils';
 import { ProgressBar } from './ProgressBar';
@@ -98,6 +98,12 @@ export function AssistedModeInterface({
   // Loading state
   const [isRunning, setIsRunning] = useState(false);
   
+  // Warnings from SAM3 (for text mode)
+  const [warnings, setWarnings] = useState<SAM3Warning[]>([]);
+  
+  // Dismissed warnings (by index)
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<number>>(new Set());
+
   // Refs for buttons to reset hover state when disabled
   const runSam3ButtonRef = useRef<HTMLButtonElement>(null);
   const saveMasksButtonRef = useRef<HTMLButtonElement>(null);
@@ -148,7 +154,7 @@ export function AssistedModeInterface({
   // Effects
   // ---------------------------------------------------------------------------
   
-  // Reset state when changing foods
+  // Reset state when moving to next food
   useEffect(() => {
     setBeforePoints([]);
     setAfterPoints([]);
@@ -157,7 +163,15 @@ export function AssistedModeInterface({
     setTextAfterMasks([]);
     setPointsBeforeMasks([]);
     setPointsAfterMasks([]);
+    setWarnings([]);
+    setDismissedWarnings(new Set());
   }, [currentFoodIndex]);
+  
+  // Clear warnings when switching input type
+  useEffect(() => {
+    setWarnings([]);
+    setDismissedWarnings(new Set());
+  }, [inputType]);
 
   // For points mode: when a foreground point is deleted, remove its corresponding mask
   // Each foreground point generates one mask at the same index
@@ -235,6 +249,7 @@ export function AssistedModeInterface({
     if (isRunning) return;
     
     setIsRunning(true);
+    setWarnings([]);
     try {
       let response;
       if (inputType === 'text') {
@@ -243,8 +258,12 @@ export function AssistedModeInterface({
           beforeRgbPath,
           afterRgbPath,
           textPrompt,
+          currentFood.id,
           confidenceThreshold
         );
+        // Set warnings from backend
+        setWarnings(response.warnings || []);
+        setDismissedWarnings(new Set()); // Reset dismissed warnings when new results come in
       } else {
         // Send points directly in pixel coordinates (backend gets dimensions from image files)
         response = await analysisApi.sam3AssistedPoints(
@@ -563,6 +582,42 @@ export function AssistedModeInterface({
             }
           />
         </div>
+
+        {/* Warnings (for text mode) */}
+        {inputType === 'text' && warnings.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {warnings.map((warning, index) => {
+              if (dismissedWarnings.has(index)) return null;
+              
+              return (
+                <div 
+                  key={index} 
+                  className="p-3 rounded-lg flex items-center gap-2 relative" 
+                  style={{ background: '#F59E0B20', border: '1px solid #F59E0B' }}
+                >
+                  <svg className="w-4 h-4 shrink-0" style={{ color: '#F59E0B' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <p className="text-sm pr-8" style={{ color: '#F59E0B' }}>
+                    {warning.message}
+                  </p>
+                  <button
+                    onClick={() => setDismissedWarnings(prev => new Set(prev).add(index))}
+                    className="absolute top-2 right-2 p-1 rounded-lg transition-colors cursor-pointer"
+                    style={{ color: '#F59E0B' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#F59E0B40')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    aria-label="Dismiss"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Info: At least 1 before mask required */}
         <div className="mb-6 p-3 rounded-lg flex items-center gap-2" style={{ background: '#3B82F620', border: '1px solid #3B82F6' }}>

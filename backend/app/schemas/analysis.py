@@ -16,6 +16,7 @@ class SAM3AssistedTextRequest(BaseModel):
     before_rgb_path: str
     after_rgb_path: str
     confidence_threshold: float = 0.5
+    food_id: int
     text_prompt: str
 
 
@@ -40,10 +41,18 @@ class FoodMask(BaseModel):
     mask: List[List[int]]
 
 
+class SAM3Warning(BaseModel):
+    """A warning message from SAM3 inference."""
+    food_id: int
+    food_name: str
+    message: str
+
+
 class SAM3Response(BaseModel):
     """Response schema from SAM3 inference."""
     before_masks: List[FoodMask]
     after_masks: List[FoodMask]
+    warnings: List[SAM3Warning] = []
 
 
 class ComputeNutritionRequest(BaseModel):

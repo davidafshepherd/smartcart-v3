@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -8,7 +9,7 @@ from app.constants import (
     BACKEND_DIR,
     DEPTH_FILENAME,
     IMAGES_DIR,
-    RGB_FILENAME,
+    RGB_FILENAMES,
     UPLOAD_DIR,
 )
 from app.db import get_db
@@ -450,11 +451,15 @@ def _save_images(before: MealSnapshot, after: MealSnapshot) -> Dict[str, str]:
     meal_directory = IMAGES_DIR / patient_id / date / f"{start_time}-{end_time}"
     meal_directory.mkdir(parents=True, exist_ok=True)
 
+    # Store the file extension of the before/after RGB images (.jpeg or .jpg).
+    before_rgb_suffix = Path(str(before.rgb_path)).suffix
+    after_rgb_suffix = Path(str(after.rgb_path)).suffix
+
     # Define the current and desired paths of each image.
     paths = {
         "before_rgb": (
             BACKEND_DIR / before.rgb_path, 
-            meal_directory / f"before_{RGB_FILENAME}",
+            meal_directory / f"before_rgb{before_rgb_suffix}",
         ),
         "before_depth": (
             BACKEND_DIR / before.depth_path, 
@@ -462,7 +467,7 @@ def _save_images(before: MealSnapshot, after: MealSnapshot) -> Dict[str, str]:
         ),
         "after_rgb": (
             BACKEND_DIR / after.rgb_path, 
-            meal_directory / f"after_{RGB_FILENAME}",
+            meal_directory / f"after_rgb{after_rgb_suffix}",
         ),
         "after_depth": (
             BACKEND_DIR / after.depth_path, 

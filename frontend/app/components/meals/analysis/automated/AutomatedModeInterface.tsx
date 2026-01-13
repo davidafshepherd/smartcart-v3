@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { Food, FoodMask } from '../../../../lib/types';
+import type { Food, FoodMask, SAM3Warning } from '../../../../lib/types';
 import { analysisApi, ApiError } from '../../../../lib/api';
 import { ImageWithMasks } from './ImageWithMasks';
 
@@ -54,6 +54,12 @@ export function AutomatedModeInterface({
   const [generatedBeforeMasks, setGeneratedBeforeMasks] = useState<FoodMask[]>([]);
   const [generatedAfterMasks, setGeneratedAfterMasks] = useState<FoodMask[]>([]);
   
+  // Warnings from SAM3
+  const [warnings, setWarnings] = useState<SAM3Warning[]>([]);
+
+  // Dismissed warnings (by index)
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<number>>(new Set());
+  
   // Loading state
   const [isRunning, setIsRunning] = useState(false);
 
@@ -67,6 +73,10 @@ export function AutomatedModeInterface({
   
   const hasMasks = generatedBeforeMasks.length > 0 || generatedAfterMasks.length > 0;
   const canRunSam3 = foods.length > 0;
+  
+  // Check if all foods have a before mask (no warnings about missing before masks)
+  const hasAllBeforeMasks = warnings.length === 0 && generatedBeforeMasks.length === foods.length;
+  const canComputeNutrients = hasMasks && hasAllBeforeMasks;
 
   // Reset button backgrounds when they become disabled/running
   useEffect(() => {
@@ -76,10 +86,10 @@ export function AutomatedModeInterface({
   }, [isRunning, canRunSam3]);
 
   useEffect(() => {
-    if (computeButtonRef.current && (isComputingNutrition || !hasMasks)) {
+    if (computeButtonRef.current && (isComputingNutrition || !canComputeNutrients)) {
       computeButtonRef.current.style.background = '#10B981';
     }
-  }, [isComputingNutrition, hasMasks]);
+  }, [isComputingNutrition, canComputeNutrients]);
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -99,6 +109,8 @@ export function AutomatedModeInterface({
       );
       setGeneratedBeforeMasks(response.before_masks);
       setGeneratedAfterMasks(response.after_masks);
+      setWarnings(response.warnings || []);
+      setDismissedWarnings(new Set()); // Reset dismissed warnings when new results come in
     } catch (err) {
       console.error('SAM3 inference failed:', err);
       alert(err instanceof ApiError ? err.message : 'Failed to run SAM3 inference');
@@ -216,6 +228,42 @@ export function AutomatedModeInterface({
           />
         </div>
 
+        {/* Warnings */}
+        {warnings.length > 0 && (
+          <div className="mb-6 space-y-2">
+{warnings.map((warning, index) => {
+              if (dismissedWarnings.has(index)) return null;
+              
+              return (
+                <div 
+                  key={index} 
+                  className="p-3 rounded-lg flex items-center gap-2 relative" 
+                  style={{ background: '#F59E0B20', border: '1px solid #F59E0B' }}
+                >
+                  <svg className="w-4 h-4 shrink-0" style={{ color: '#F59E0B' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <p className="text-sm pr-8" style={{ color: '#F59E0B' }}>
+                    {warning.message}
+                  </p>
+                  <button
+                    onClick={() => setDismissedWarnings(prev => new Set(prev).add(index))}
+                    className="absolute top-2 right-2 p-1 rounded-lg transition-colors cursor-pointer"
+                    style={{ color: '#F59E0B' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#F59E0B40')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    aria-label="Dismiss"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Info: At least 1 before mask required */}
         <div className="mb-6 p-3 rounded-lg flex items-center gap-2" style={{ background: '#3B82F620', border: '1px solid #3B82F6' }}>
           <svg className="w-4 h-4 shrink-0" style={{ color: '#3B82F6' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,14 +312,14 @@ export function AutomatedModeInterface({
           <button
             ref={computeButtonRef}
             onClick={handleComputeVolume}
-            disabled={!hasMasks || isComputingNutrition}
+            disabled={!canComputeNutrients || isComputingNutrition}
             className="px-6 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: '#10B981',
               color: 'white',
             }}
             onMouseEnter={(e) => {
-              if (!isComputingNutrition && hasMasks && !e.currentTarget.disabled) {
+              if (!isComputingNutrition && canComputeNutrients && !e.currentTarget.disabled) {
                 e.currentTarget.style.background = '#059669';
               }
             }}
