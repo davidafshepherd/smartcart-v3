@@ -1,6 +1,7 @@
 'use client';
 
 import type { MealsData, MealData } from '../../lib/types';
+import { formatDate } from '../../lib/dateUtils';
 
 // =============================================================================
 // Type Definitions
@@ -22,6 +23,8 @@ interface MealsPanelProps {
   onTogglePatient: (patientId: string) => void;
   /** Callback to toggle date expansion. */
   onToggleDate: (key: string) => void;
+  /** Error message to display if meals failed to load. */
+  error?: string | null;
 }
 
 /** Props for the PatientNode sub-component. */
@@ -82,6 +85,7 @@ export function MealsPanel({
   expandedDates,
   onTogglePatient,
   onToggleDate,
+  error,
 }: MealsPanelProps) {
   // Sort patient IDs numerically.
   const patientIds = Object.keys(mealsData).sort((a, b) => Number(a) - Number(b));
@@ -138,7 +142,13 @@ export function MealsPanel({
         </div>
 
         {/* Tree Content */}
-        {patientIds.length === 0 ? (
+        {error ? (
+          <div className="p-4 text-center">
+            <span className="text-sm" style={{ color: 'var(--danger)' }}>
+              {error}
+            </span>
+          </div>
+        ) : patientIds.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="p-2 max-h-[600px] overflow-y-auto">
@@ -300,7 +310,7 @@ function DateNode({
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
-        <span style={{ color: 'var(--text-secondary)' }}>{date}</span>
+        <span style={{ color: 'var(--text-secondary)' }}>{formatDate(date)}</span>
         <CountBadge count={timeRanges.length} isAmber={hasUnanalyzedMeals} />
       </button>
 

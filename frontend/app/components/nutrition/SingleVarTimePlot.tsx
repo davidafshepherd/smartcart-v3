@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import { formatDateObject } from '../../lib/dateUtils';
 
 interface LineChartProps {
   xData: string[];
@@ -17,9 +18,9 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
   yData,
   width = 800,
   height = 400,
-  marginTop = 20,
-  marginRight = 30,
-  marginBottom = 40,
+  marginTop = 15,
+  marginRight = 20,
+  marginBottom = 60,
   marginLeft = 50
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -32,17 +33,62 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
     d3.select(svgRef.current).selectAll('*').remove();
 
     // Parse dates and combine data
+    // Extract just the date portion (first 10 chars) in case keys include meal IDs
     const parseDate = d3.timeParse('%Y-%m-%d');
-    const parsedData = xData.map((date, i) => ({
-      date: parseDate(date),
+    const rawData = xData.map((date, i) => ({
+      date: parseDate(date.substring(0, 10)),
       value: yData[i]
     })).filter(d => d.date !== null);
 
+    if (rawData.length === 0) return;
+
+    // Aggregate values by date (sum meals on the same day)
+    const dateMap = new Map<string, { date: Date; value: number }>();
+    for (const d of rawData) {
+      const key = d.date!.toISOString();
+      if (dateMap.has(key)) {
+        dateMap.get(key)!.value += d.value;
+      } else {
+        dateMap.set(key, { date: d.date!, value: d.value });
+      }
+    }
+    const parsedData = Array.from(dateMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+
     if (parsedData.length === 0) return;
+
+    // Calculate date range to determine tick interval
+    const dateExtent = d3.extent(parsedData, d => d.date) as [Date, Date];
+    const daysDiff = Math.ceil((dateExtent[1].getTime() - dateExtent[0].getTime()) / (1000 * 60 * 60 * 24));
+
+    // Determine appropriate tick interval based on date range
+    let tickInterval: d3.TimeInterval;
+    let dateFormat: string;
+    
+    if (daysDiff <= 7) {
+      // Up to 1 week: show every day
+      tickInterval = d3.timeDay.every(1) as d3.TimeInterval;
+      dateFormat = '%d/%m/%Y';
+    } else if (daysDiff <= 31) {
+      // Up to 1 month: show every 3-5 days
+      tickInterval = d3.timeDay.every(Math.ceil(daysDiff / 7)) as d3.TimeInterval;
+      dateFormat = '%d/%m/%Y';
+    } else if (daysDiff <= 90) {
+      // Up to 3 months: show weekly
+      tickInterval = d3.timeWeek.every(1) as d3.TimeInterval;
+      dateFormat = '%d/%m/%Y';
+    } else if (daysDiff <= 365) {
+      // Up to 1 year: show bi-weekly or monthly
+      tickInterval = d3.timeMonth.every(1) as d3.TimeInterval;
+      dateFormat = '%b %Y';
+    } else {
+      // More than 1 year: show quarterly
+      tickInterval = d3.timeMonth.every(3) as d3.TimeInterval;
+      dateFormat = '%b %Y';
+    }
 
     // Create scales
     const x = d3.scaleTime()
-      .domain(d3.extent(parsedData, d => d.date) as [Date, Date])
+      .domain(dateExtent)
       .range([marginLeft, width - marginRight]);
 
     const y = d3.scaleLinear()
@@ -55,29 +101,38 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', [0, 0, width, height])
-      .attr('style', 'max-width: 100%; height: auto;');
+      .attr('style', 'max-width: 100%; display: block;');
 
-    // Add x-axis
+    // Add x-axis with adaptive ticks
+    const xAxis = d3.axisBottom(x)
+      .ticks(tickInterval)
+      .tickFormat(d3.timeFormat(dateFormat) as (d: d3.NumberValue) => string);
+    
     svg.append('g')
       .attr('transform', `translate(0,${height - marginBottom})`)
-      .call(d3.axisBottom(x).ticks(d3.timeDay.every(1)))
+      .call(xAxis)
       .style('color', '#6b7280')
-      .style("font-size", "14px")
-      .style("font-weight", "bold");
+      .style("font-size", "12px")
+      .style("font-weight", "bold")
+      .selectAll('text')
+      .attr('transform', 'rotate(-45)')
+      .style('text-anchor', 'end')
+      .attr('dx', '-0.5em')
+      .attr('dy', '0.5em');
 
     // Add y-axis
     svg.append('g')
       .attr('transform', `translate(${marginLeft},0)`)
       .call(d3.axisLeft(y))
       .style('color', '#6b7280')
-      .style("font-size", "14px")
+      .style("font-size", "12px")
       .style("font-weight", "bold");
 
     // Create line generator
     const line = d3.line<{date: Date | null, value: number}>()
       .x(d => x(d.date as Date))
       .y(d => y(d.value))
-      .curve(d3.curveMonotoneX);
+      .curve(d3.curveLinear);
 
     // Add line path
     const path = svg.append('path')
@@ -115,10 +170,10 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
       .duration(300)
       .attr('r', 5);
 
-    // Add tooltip
+    // Add tooltip (use fixed positioning to avoid affecting document size)
     const tooltip = d3.select('body')
       .append('div')
-      .style('position', 'absolute')
+      .style('position', 'fixed')
       .style('background', '#1f2937')
       .style('color', '#fff')
       .style('padding', '8px 12px')
@@ -138,9 +193,9 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
 
         tooltip
           .style('opacity', 1)
-          .html(`<strong>Date:</strong> ${d3.timeFormat('%Y-%m-%d')(d.date as Date)}<br/><strong>Value:</strong> ${d.value}`)
-          .style('left', (event.pageX + 15) + 'px')
-          .style('top', (event.pageY - 28) + 'px');
+          .html(`<strong>Date:</strong> ${formatDateObject(d.date as Date)}<br/><strong>Value:</strong> ${d.value.toFixed(2)}`)
+          .style('left', (event.clientX + 15) + 'px')
+          .style('top', (event.clientY - 28) + 'px');
       })
       .on('mouseout', function() {
         d3.select(this)
@@ -159,8 +214,8 @@ const SingleVarTimePlot: React.FC<LineChartProps> = ({
   }, [xData, yData, width, height, marginTop, marginRight, marginBottom, marginLeft]);
 
   return (
-    <div className="w-full p-6">
-      <svg ref={svgRef}></svg>
+    <div className="flex items-center justify-center overflow-hidden">
+      <svg ref={svgRef} className="block"></svg>
     </div>
   );
 };

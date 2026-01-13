@@ -83,7 +83,12 @@ export function PatientsPanel({ onDataChange }: PatientsPanelProps) {
       setError(null);
     } catch (err) {
       console.error('Failed to fetch patients:', err);
-      setError('Failed to load patients');
+      // Handle network errors with user-friendly message
+      if (err instanceof ApiError && err.status === 0) {
+        setError('Unable to reach the server. Please check your connection.');
+      } else {
+        setError('Failed to load patients');
+      }
     } finally {
       setLoading(false);
     }
