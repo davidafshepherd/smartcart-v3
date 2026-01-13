@@ -1,11 +1,7 @@
 import random
-import numpy as np
-import cv2
-
-from scipy.spatial import ConvexHull
-
 from typing import Dict, List, Tuple
 
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, status
 from PIL import Image
 from sqlalchemy.orm import Session
@@ -13,6 +9,14 @@ from sqlalchemy.orm import Session
 from app.constants import BACKEND_DIR
 from app.db import get_db
 from app.models.db_models import Food
+from app.models.sam3 import (
+    combine_masks,
+    get_model,
+    get_processor,
+    mask_to_list,
+    segment_with_points,
+    segment_with_text_prompt,
+)
 from app.schemas.analysis import (
     ComputeNutritionRequest,
     ComputeNutritionResponse,
@@ -25,6 +29,7 @@ from app.schemas.analysis import (
     SAM3AssistedPointsRequest,
     SAM3AssistedTextRequest,
     SAM3Response,
+    SAM3Warning,
 )
 
 
@@ -38,75 +43,147 @@ async def sam3_automated(
     request: SAM3AutomatedRequest,
     db: Session = Depends(get_db),
 ) -> SAM3Response:
-    """Stub for SAM3 automated segmentation."""
-
-    # Get foods.
-    foods = db.query(Food).filter(Food.id.in_(request.foods)).all()
+    """Runs SAM3 automated segmentation on before/after meal images.
     
-    # Get image dimensions.
-    before_width, before_height = _get_image_dimensions(request.before_rgb_path)
-    after_width, after_height = _get_image_dimensions(request.after_rgb_path)
+    For each food in the meal, runs SAM3 with the food's name as a text prompt.
+    All masks returned for a food are combined into a single mask.
+    
+    Args:
+        request: Request containing image paths, food IDs, and confidence threshold.
+        db: SQLAlchemy database session.
+        
+    Returns:
+        SAM3Response containing masks for before and after images.
+    """
+
+    # Fetch foods from the database.
+    foods = db.query(Food).filter(Food.id.in_(request.foods)).all()
+    foods_dict = {food.id: food for food in foods}
+    
+    # Validate that all food IDs exist.
+    missing_food_ids = set(request.foods) - set(foods_dict.keys())
+    if missing_food_ids:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Foods not found: {sorted(missing_food_ids)}",
+        )
+    
+    # Load the before and after images.
+    before_image = _load_image(request.before_rgb_path)
+    after_image = _load_image(request.after_rgb_path)
     
     before_masks = []
     after_masks = []
+    warnings = []
     
     # Iterate over each food.
-    for i, food_id in enumerate(request.foods):
-        # Generate a circular dummy mask for the food in the before image.
-        mask_data = _generate_dummy_circular_mask(
-            before_width, 
-            before_height, 
-            randomize=True,
-        )
-        before_masks.append(FoodMask(food_id=food_id, mask=mask_data))
+    for food_id in request.foods:
+        food = foods_dict[food_id]
         
-        # Generate a circular dummy mask for the food in the after image.
-        if i % 2 == 0:
-            mask_data = _generate_dummy_circular_mask(
-                after_width, 
-                after_height, 
-                randomize=True,
-            )
-            after_masks.append(FoodMask(food_id=food_id, mask=mask_data))
+        # Use the food's short name as the text prompt.
+        prompt = food.short_name
+        
+        # Run SAM3 on the before image.
+        masks, boxes, scores = segment_with_text_prompt(
+            before_image,
+            prompt,
+            confidence_threshold=request.confidence_threshold,
+        )
+        
+        # Combine all masks for this food into a single mask.
+        if masks.size > 0:
+            combined_mask = combine_masks(masks)
+            before_masks.append(FoodMask(food_id=food_id, mask=mask_to_list(combined_mask)))
+        else:
+            # Add warning for missing before mask.
+            warnings.append(SAM3Warning(
+                food_id=food_id,
+                food_name=food.short_name,
+                message=f"'{food.short_name}' was not found in the before image.",
+            ))
+        
+        # Run SAM3 on the after image.
+        masks, boxes, scores = segment_with_text_prompt(
+            after_image,
+            prompt,
+            confidence_threshold=request.confidence_threshold,
+        )
+        
+        # Combine all masks for this food into a single mask.
+        if masks.size > 0:
+            combined_mask = combine_masks(masks)
+            after_masks.append(FoodMask(food_id=food_id, mask=mask_to_list(combined_mask)))
     
-    return SAM3Response(before_masks=before_masks, after_masks=after_masks)
+    return SAM3Response(before_masks=before_masks, after_masks=after_masks, warnings=warnings)
 
 
 # POST endpoint for SAM3 assisted segmentation with text prompt.
 @router.post("/sam3/assisted/text", status_code=status.HTTP_200_OK)
 async def sam3_assisted_text(
     request: SAM3AssistedTextRequest,
+    db: Session = Depends(get_db),
 ) -> SAM3Response:
-    """Stub for SAM3 assisted segmentation with a text prompt."""
-
-    # Get image dimensions.
-    before_width, before_height = _get_image_dimensions(request.before_rgb_path)
-    after_width, after_height = _get_image_dimensions(request.after_rgb_path)
+    """Runs SAM3 assisted segmentation with a text prompt on before/after images.
+    
+    Args:
+        request: Request containing image paths, text prompt, food ID, and confidence threshold.
+        db: SQLAlchemy database session.
+        
+    Returns:
+        SAM3Response containing masks for before and after images.
+    """
+    
+    # Fetch the food from the database.
+    food = db.query(Food).filter(Food.id == request.food_id).first()
+    if food is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Food {request.food_id} not found.",
+        )
+    
+    # Load the before and after images.
+    before_image = _load_image(request.before_rgb_path)
+    after_image = _load_image(request.after_rgb_path)
     
     before_masks = []
     after_masks = []
+    warnings = []
     
-    # Generate a random number of circular dummy masks (1-4) in the before image.
-    num_before_masks = random.randint(1, 4)
-    for i in range(num_before_masks):
-        mask_data = _generate_dummy_circular_mask(
-            before_width, 
-            before_height, 
-            randomize=True,
-        )
-        before_masks.append(FoodMask(food_id=None, mask=mask_data))
+    # Run SAM3 on the before image with the text prompt.
+    masks, boxes, scores = segment_with_text_prompt(
+        before_image,
+        request.text_prompt,
+        confidence_threshold=request.confidence_threshold,
+    )
     
-    # Generate a random number of circular dummy masks (1-4) in the after image.
-    num_after_masks = random.randint(1, 4)
-    for i in range(num_after_masks):
-        mask_data = _generate_dummy_circular_mask(
-            after_width, 
-            after_height, 
-            randomize=True,
-        )
-        after_masks.append(FoodMask(food_id=None, mask=mask_data))
+    # Add each mask to the before masks list.
+    for i in range(masks.shape[0]):
+        # Text prompt masks have shape (N, 1, H, W), squeeze to (H, W).
+        mask = masks[i].squeeze(0)
+        before_masks.append(FoodMask(food_id=None, mask=mask_to_list(mask)))
     
-    return SAM3Response(before_masks=before_masks, after_masks=after_masks)
+    # Add warning if no before masks were found.
+    if len(before_masks) == 0:
+        warnings.append(SAM3Warning(
+            food_id=request.food_id,
+            food_name=food.short_name,
+            message=f"'{food.short_name}' was not found in the before image.",
+        ))
+    
+    # Run SAM3 on the after image with the text prompt.
+    masks, boxes, scores = segment_with_text_prompt(
+        after_image,
+        request.text_prompt,
+        confidence_threshold=request.confidence_threshold,
+    )
+    
+    # Add each mask to the after masks list.
+    for i in range(masks.shape[0]):
+        # Text prompt masks have shape (N, 1, H, W), squeeze to (H, W).
+        mask = masks[i].squeeze(0)
+        after_masks.append(FoodMask(food_id=None, mask=mask_to_list(mask)))
+    
+    return SAM3Response(before_masks=before_masks, after_masks=after_masks, warnings=warnings)
 
 
 # POST endpoint for SAM3 assisted segmentation with points.
@@ -114,38 +191,73 @@ async def sam3_assisted_text(
 async def sam3_assisted_points(
     request: SAM3AssistedPointsRequest,
 ) -> SAM3Response:
-    """Stub for SAM3 assisted segmentation with points."""
+    """Runs SAM3 assisted segmentation with point prompts on before/after images.
     
-    # Get image dimensions.
-    before_width, before_height = _get_image_dimensions(request.before_rgb_path)
-    after_width, after_height = _get_image_dimensions(request.after_rgb_path)
+    Uses multimask_output=True and selects the mask with the highest score.
+    
+    Args:
+        request: Request containing image paths and point coordinates/labels.
+        
+    Returns:
+        SAM3Response containing masks for before and after images.
+    """
+    
+    # Load the before and after images.
+    before_image = _load_image(request.before_rgb_path)
+    after_image = _load_image(request.after_rgb_path)
     
     before_masks = []
     after_masks = []
     
-    # Generate one circular dummy mask per foreground point in the before image.
+    # Run SAM3 on the before image with points if provided.
     if request.before_points:
-        foreground_points = [p for p in request.before_points if p.label == 1]
-        for point in foreground_points:
-            mask_data = _generate_dummy_circular_mask(
-                before_width, 
-                before_height,
-                center_x=point.x, 
-                center_y=point.y,
-            )
-            before_masks.append(FoodMask(food_id=None, mask=mask_data))
+        # Convert points to numpy arrays.
+        point_coords = np.array(
+            [[p.x, p.y] for p in request.before_points],
+            dtype=np.float32,
+        )
+        point_labels = np.array(
+            [p.label for p in request.before_points],
+            dtype=np.int32,
+        )
+        
+        # Run point-based segmentation.
+        masks, scores, logits = segment_with_points(
+            before_image,
+            point_coords,
+            point_labels,
+        )
+        
+        # Select the mask with the highest score.
+        if masks.size > 0:
+            best_idx = np.argmax(scores)
+            best_mask = masks[best_idx]  # Shape is (H, W)
+            before_masks.append(FoodMask(food_id=None, mask=mask_to_list(best_mask)))
     
-    # Generate one circular dummy mask per foreground point in the after image.
+    # Run SAM3 on the after image with points if provided.
     if request.after_points:
-        foreground_points = [p for p in request.after_points if p.label == 1]
-        for point in foreground_points:
-            mask_data = _generate_dummy_circular_mask(
-                after_width, 
-                after_height,
-                center_x=point.x, 
-                center_y=point.y,
-            )
-            after_masks.append(FoodMask(food_id=None, mask=mask_data))
+        # Convert points to numpy arrays.
+        point_coords = np.array(
+            [[p.x, p.y] for p in request.after_points],
+            dtype=np.float32,
+        )
+        point_labels = np.array(
+            [p.label for p in request.after_points],
+            dtype=np.int32,
+        )
+        
+        # Run point-based segmentation.
+        masks, scores, logits = segment_with_points(
+            after_image,
+            point_coords,
+            point_labels,
+        )
+        
+        # Select the mask with the highest score.
+        if masks.size > 0:
+            best_idx = np.argmax(scores)
+            best_mask = masks[best_idx]  # Shape is (H, W)
+            after_masks.append(FoodMask(food_id=None, mask=mask_to_list(best_mask)))
     
     return SAM3Response(before_masks=before_masks, after_masks=after_masks)
 
@@ -190,62 +302,37 @@ async def compute_nutrition(
 
 # === Helper Functions ===
 
-def _get_image_dimensions(image_path: str) -> Tuple[int, int]:
-    """Gets image dimensions from an image file."""
+def _load_image(image_path: str) -> Image.Image:
+    """Loads an image.
+    
+    Args:
+        image_path: Path to the image relative to the backend directory.
+        
+    Returns:
+        The loaded PIL Image.
+        
+    Raises:
+        HTTPException: If the image is not found or cannot be loaded.
+    """
 
+    # Store the complete path to the image.
     full_path = BACKEND_DIR / image_path
     
+    # Check if the image exists.
     if not full_path.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Image not found: {image_path}",
         )
     
+    # Return the image as a PIL Image.
     try:
-        with Image.open(full_path) as img:
-            return img.size
+        return Image.open(full_path).convert("RGB")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to read image dimensions: {str(e)}",
+            detail=f"Failed to load image: {str(e)}",
         )
-
-
-def _generate_dummy_circular_mask(
-    width: int,
-    height: int,
-    center_x: float = None,
-    center_y: float = None,
-    randomize: bool = False,
-) -> List[List[int]]:
-    """Generates a dummy food mask."""
-
-    mask_data = [[0] * width for _ in range(height)]
-    
-    min_dim = min(width, height)
-    radius = max(10, int(min_dim * 0.08))
-    
-    if center_x is not None and center_y is not None:
-        cx = round(center_x)
-        cy = round(center_y)
-    elif randomize:
-        margin = radius + 10
-        cx = random.randint(margin, max(margin, width - margin))
-        cy = random.randint(margin, max(margin, height - margin))
-    else:
-        cx = width // 2
-        cy = height // 2
-    
-    radius_squared = radius * radius
-    for y in range(height):
-        for x in range(width):
-            dx = x - cx
-            dy = y - cy
-            dist_squared = dx * dx + dy * dy
-            if dist_squared <= radius_squared:
-                mask_data[y][x] = 1
-    
-    return mask_data
 
 
 def _calculate_volumes(
@@ -268,25 +355,24 @@ def _calculate_volumes(
         A list containing the consumed volume (cm^3) of each food in the meal.
     """
     
-    
-    # Load Depth Images
-    before_depth = load_depth(before_depth_path)
-    after_depth = load_depth(after_depth_path)
-    
+    # TODO: Implement actual volume calculation from depth images.
+
+
+    # DUMMY CODE: generate a random consumed volume per food.
     volumes = []
     
     # Generate random volume for each before mask.
     before_volumes = {}
     for before_mask in before_masks:
         food_id = before_mask.food_id
-        before_volume = volume_from_depth_and_mask(before_depth,before_mask,500.0, 500.0, 320.0, 240.0, 50)
+        before_volume = random.uniform(100.0, 450.0)
         before_volumes[food_id] = before_volume
     
     # Generate random volume for each after mask.
     after_volumes = {}
     for after_mask in after_masks:
         food_id = after_mask.food_id
-        after_volume = volume_from_depth_and_mask(after_depth,after_mask,500.0, 500.0, 320.0, 240.0, 50)
+        after_volume = random.uniform(100.0, 450.0)
         after_volumes[food_id] = after_volume
     
     # Calculate consumed volume for each food.
@@ -519,143 +605,3 @@ def _calculate_meal_nutrition(
     
     # Return the nutritional values of the meal.
     return MealNutrition(**meal_nutrition_dict)
-
-#Belore are all helper fucntions for _calculate_volumes function
-def load_depth(
-    depth_path: str
-) -> np.ndarray:
-    """Uses the Path of the depth image to get its array
-
-    Args:
-        depth_path: Path to the meal deth image (pre or post)
-    
-    Returns:
-        np.ndarray: A 2D NumPy array 
-    """
-    return np.load(depth_path).astype(np.float32)
-
-
-def mask_to_bool(
-    mask_data: List[List[int]], 
-    target_shape: Tuple[int, int]
-) -> np.ndarray:
-    """
-    Convert a segmentation mask to a boolean array matching depth image shape
-
-    Args:
-        mask_data (List[List[int]]): Segmentation mask
-        target_shape (Tuple[int, int]): Depth image shape
-
-    Returns:
-        np.ndarray: A 2D boolean NumPy array
-"""
-    
-    #  Binary Segmentation mask to boolean arrau
-    mask = np.array(mask_data, dtype=np.uint8)
-     
-
-     # Match mask shape to depth image shape
-    if mask.shape != target_shape:
-        mask = cv2.resize(
-            mask,
-            (target_shape[1], target_shape[0]),
-            interpolation=cv2.INTER_NEAREST
-        )
-
-    return mask.astype(bool)
-
-
-def apply_mask(
-    depth: np.ndarray, 
-    mask: np.ndarray
-) -> np.ndarray:
-    """Apply a boolean segmentation mask to a depth image
-
-    Args:
-        depth: A 2D NumPy of depth image.
-        mask: A 2D boolean NumPy array where True indicates pixels to keep
-
-    Returns:
-        np.ndarray: A 2D NumPy array with depth values outside the mask set to zero
-    """
-    depth_masked = depth.copy()
-    depth_masked[~mask] = 0
-    return depth_masked
-
-def get_3D_point_cloud(
-    depth_mm: np.ndarray,
-    fx: float, fy: float, cx: float, cy: float,
-    min_points: int = 50
-) -> np.ndarray:
-    """Generate a 3D point cloud from a depth image
-
-    Converts a depth image into a 3D point cloud using the pinhole camera model
-    Args:
-        depth_mm: A 2D NumPy array containing depth values in millimeters
-        fx: Focal length of the camera in the x direction 
-        fy: Focal length of the camera in the y direction 
-        cx: Principal point offset in the x direction 
-        cy: Principal point offset in the y direction 
-        min_points: Minimum number of valid 3D points required
-
-    Returns:
-        np.ndarray: A NumPy array of shape (N, 3) representing the 3D point cloud in centimeters
-    """
-    v_coords, u_coords = np.nonzero(depth_mm > 0)
-    z_mm = depth_mm[v_coords, u_coords]
-
-    Z = z_mm / 10.0  # mm -> cm
-    X = (u_coords - cx) * Z / fx
-    Y = (v_coords - cy) * Z / fy
-
-    points = np.stack([X, Y, Z], axis=1)
-
-    if points.shape[0] < min_points:
-        raise RuntimeError(f"Not enough points: {points.shape[0]}")
-
-    return points
-
-
-def calculate_volume_cm3(
-    points_cm: np.ndarray
-) -> float:
-    """Compute the volume enclosed by a 3D point cloud.
-
-    Calculates the volume (in cubic centimeters) of a 3D object representedby a point cloud using its convex hull
-
-    Args:
-        points_cm: A NumPy array of shape `(N, 3)` containing 3D points in centimeters
-
-    Returns:
-        float: The volume in cubic centimeters.
-    """
-    hull = ConvexHull(points_cm)
-    return float(hull.volume)
-
-def volume_from_depth_and_mask(
-    depth: np.ndarray,
-    mask_data: List[List[int]],
-    fx: float, fy: float, cx: float, cy: float,
-    min_points: int = 50
-) -> float:
-    """Estimate food volume from a depth image and segmentation mask.
-
-    Computes the volume of a segmented food item
-
-    Args:
-        depth: A 2D NumPy array of the depth image
-        mask_data: Segmentation mask 
-        fx: Focal length of the camera in the x direction 
-        fy: Focal length of the camera in the y direction 
-        cx: Principal point offset in the x direction 
-        cy: Principal point offset in the y direction 
-        min_points: Minimum number of valid 3D points required
-
-    Returns:
-        float: Estimated volume of the segmented object in cubic centimeters
-    """
-    
-    mask = mask_to_bool(mask_data, depth.shape)
-    depth_masked = apply_mask(depth, mask)
-    points = get_3D_point_cloud(depth_masked, fx, fy, cx, cy, min_points)
-    return calculate_volume_cm3(points)

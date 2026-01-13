@@ -6,9 +6,10 @@ from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.constants import NUTRITION_CSV_PATH, UPLOAD_DIR
+from app.constants import NUTRITION_CSV_PATH, SAM3_CHECKPOINT_PATH, UPLOAD_DIR
 from app.db import Base, engine, SessionLocal
 from app.models.db_models import Food, MealSnapshot
+from app.models.sam3 import load_sam3_model
 from app.routers import (
     analysis, 
     foods, 
@@ -28,7 +29,8 @@ Base.metadata.create_all(bind=engine)
 async def lifespan(app: FastAPI):
     """Manages application startup and shutdown."""
     _cleanup_snapshots()  # Startup.
-    _load_nutrition_dataset() 
+    _load_nutrition_dataset()
+    _load_sam3_model()
     yield
     _cleanup_snapshots()  # Shutdown.
 
@@ -199,3 +201,20 @@ def _parse_float(value: str) -> Optional[float]:
         return float(value.replace(",", "."))  # Handle European decimal format.
     except ValueError:
         return None
+
+
+def _load_sam3_model() -> None:
+    """Loads the SAM3 model into GPU memory (if available)."""
+
+    # Check if the SAM3 checkpoint exists.
+    if not SAM3_CHECKPOINT_PATH.exists():
+        print(f"Warning: SAM3 checkpoint not found at {SAM3_CHECKPOINT_PATH}.")
+        print("SAM3 segmentation wil not be available.")
+        return
+
+    # Load the SAM3 model.
+    try:
+        load_sam3_model(str(SAM3_CHECKPOINT_PATH))
+    except Exception as e:
+        print(f"Error loading SAM3 model: {e}")
+        print("SAM3 segmentation will not be available.")

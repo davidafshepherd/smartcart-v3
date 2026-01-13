@@ -66,6 +66,40 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+/**
+ * Wraps a fetch call to handle network errors and convert them to ApiError.
+ *
+ * @typeParam T - The expected type of the response data.
+ * @param fetchPromise - The fetch promise to wrap.
+ * @returns A promise resolving to the parsed response data.
+ * @throws {ApiError} If the request fails (network error or HTTP error).
+ */
+async function handleApiCall<T>(fetchPromise: Promise<Response>): Promise<T> {
+  try {
+    const response = await fetchPromise;
+    return handleResponse<T>(response);
+  } catch (error) {
+    // Handle network errors (fetch fails, CORS, etc.)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new ApiError(
+        'Unable to reach the server. Please check your connection.',
+        0, // 0 indicates network error
+        { networkError: true, originalError: error.message },
+      );
+    }
+    // Re-throw ApiError as-is
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    // Handle other unexpected errors
+    throw new ApiError(
+      'An unexpected error occurred',
+      0,
+      { originalError: error },
+    );
+  }
+}
+
 // =============================================================================
 // Upload API
 // =============================================================================
@@ -85,12 +119,12 @@ export const uploadApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${config.apiUrl}/uploads`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    return handleResponse<UploadResponse>(response);
+    return handleApiCall<UploadResponse>(
+      fetch(`${config.apiUrl}/uploads`, {
+        method: 'POST',
+        body: formData,
+      })
+    );
   },
 
   /**
@@ -101,12 +135,12 @@ export const uploadApi = {
    * @throws {ApiError} If the snapshot doesn't exist or deletion fails.
    */
   async discardSnapshot(snapshotId: number): Promise<void> {
-    const response = await fetch(
-      `${config.apiUrl}/uploads/snapshots/${snapshotId}`,
-      { method: 'DELETE' },
+    return handleApiCall<void>(
+      fetch(
+        `${config.apiUrl}/uploads/snapshots/${snapshotId}`,
+        { method: 'DELETE' },
+      )
     );
-
-    return handleResponse<void>(response);
   },
 
 };
@@ -151,8 +185,9 @@ export const foodsApi = {
     if (term) params.append('term', term);
     params.append('limit', String(limit));
 
-    const response = await fetch(`${config.apiUrl}/foods?${params}`);
-    return handleResponse<Food[]>(response);
+    return handleApiCall<Food[]>(
+      fetch(`${config.apiUrl}/foods?${params}`)
+    );
   },
 
   /**
@@ -163,8 +198,9 @@ export const foodsApi = {
    * @throws {ApiError} If the food doesn't exist.
    */
   async get(foodId: number): Promise<Food> {
-    const response = await fetch(`${config.apiUrl}/foods/${foodId}`);
-    return handleResponse<Food>(response);
+    return handleApiCall<Food>(
+      fetch(`${config.apiUrl}/foods/${foodId}`)
+    );
   },
 };
 
@@ -179,8 +215,9 @@ export const menuApi = {
    * @throws {ApiError} If the request fails.
    */
   async getAll(): Promise<MenuItem[]> {
-    const response = await fetch(`${config.apiUrl}/menu`);
-    return handleResponse<MenuItem[]>(response);
+    return handleApiCall<MenuItem[]>(
+      fetch(`${config.apiUrl}/menu`)
+    );
   },
 
   /**
@@ -192,13 +229,13 @@ export const menuApi = {
    * @throws {ApiError} If creation fails (e.g., invalid food IDs).
    */
   async create(name: string, foodIds: number[]): Promise<MenuItem> {
-    const response = await fetch(`${config.apiUrl}/menu`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, food_ids: foodIds }),
-    });
-
-    return handleResponse<MenuItem>(response);
+    return handleApiCall<MenuItem>(
+      fetch(`${config.apiUrl}/menu`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, food_ids: foodIds }),
+      })
+    );
   },
 
   /**
@@ -215,13 +252,13 @@ export const menuApi = {
     name?: string,
     foodIds?: number[],
   ): Promise<MenuItem> {
-    const response = await fetch(`${config.apiUrl}/menu/${menuItemId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, food_ids: foodIds }),
-    });
-
-    return handleResponse<MenuItem>(response);
+    return handleApiCall<MenuItem>(
+      fetch(`${config.apiUrl}/menu/${menuItemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, food_ids: foodIds }),
+      })
+    );
   },
 
   /**
@@ -232,11 +269,11 @@ export const menuApi = {
    * @throws {ApiError} If the menu item doesn't exist or is in use by a meal.
    */
   async delete(menuItemId: number): Promise<void> {
-    const response = await fetch(`${config.apiUrl}/menu/${menuItemId}`, {
-      method: 'DELETE',
-    });
-
-    return handleResponse<void>(response);
+    return handleApiCall<void>(
+      fetch(`${config.apiUrl}/menu/${menuItemId}`, {
+        method: 'DELETE',
+      })
+    );
   },
 };
 
@@ -255,8 +292,9 @@ export const mealsApi = {
    * @throws {ApiError} If the request fails.
    */
   async getAll(): Promise<MealsData> {
-    const response = await fetch(`${config.apiUrl}/meals`);
-    const meals = await handleResponse<MealData[]>(response);
+    const meals = await handleApiCall<MealData[]>(
+      fetch(`${config.apiUrl}/meals`)
+    );
 
     // Transform flat list to hierarchical structure for tree view.
     const result: MealsData = {};
@@ -291,17 +329,17 @@ export const mealsApi = {
     afterSnapshotId: number,
     menuItemId: number,
   ): Promise<MealData> {
-    const response = await fetch(`${config.apiUrl}/meals`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        before_snapshot_id: beforeSnapshotId,
-        after_snapshot_id: afterSnapshotId,
-        menu_item_id: menuItemId,
-      }),
-    });
-
-    return handleResponse<MealData>(response);
+    return handleApiCall<MealData>(
+      fetch(`${config.apiUrl}/meals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          before_snapshot_id: beforeSnapshotId,
+          after_snapshot_id: afterSnapshotId,
+          menu_item_id: menuItemId,
+        }),
+      })
+    );
   },
 
   /**
@@ -312,11 +350,11 @@ export const mealsApi = {
    * @throws {ApiError} If the meal doesn't exist or deletion fails.
    */
   async delete(mealId: number): Promise<void> {
-    const response = await fetch(`${config.apiUrl}/meals/${mealId}`, {
-      method: 'DELETE',
-    });
-
-    return handleResponse<void>(response);
+    return handleApiCall<void>(
+      fetch(`${config.apiUrl}/meals/${mealId}`, {
+        method: 'DELETE',
+      })
+    );
   },
 
   /**
@@ -333,16 +371,16 @@ export const mealsApi = {
     patientId?: number,
     menuItemId?: number,
   ): Promise<MealData> {
-    const response = await fetch(`${config.apiUrl}/meals/${mealId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        patient_id: patientId,
-        menu_item_id: menuItemId,
-      }),
-    });
-
-    return handleResponse<MealData>(response);
+    return handleApiCall<MealData>(
+      fetch(`${config.apiUrl}/meals/${mealId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient_id: patientId,
+          menu_item_id: menuItemId,
+        }),
+      })
+    );
   },
 };
 
@@ -361,8 +399,9 @@ export const patientsApi = {
    * @throws {ApiError} If the request fails.
    */
   async getAll(): Promise<Patient[]> {
-    const response = await fetch(`${config.apiUrl}/patients`);
-    return handleResponse<Patient[]>(response);
+    return handleApiCall<Patient[]>(
+      fetch(`${config.apiUrl}/patients`)
+    );
   },
 
   /**
@@ -373,13 +412,13 @@ export const patientsApi = {
    * @throws {ApiError} If creation fails (e.g., ID already exists).
    */
   async create(id: number): Promise<Patient> {
-    const response = await fetch(`${config.apiUrl}/patients`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-
-    return handleResponse<Patient>(response);
+    return handleApiCall<Patient>(
+      fetch(`${config.apiUrl}/patients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+    );
   },
 
   /**
@@ -391,13 +430,13 @@ export const patientsApi = {
    * @throws {ApiError} If the patient doesn't exist or new ID is taken.
    */
   async update(patientId: number, newId: number): Promise<Patient> {
-    const response = await fetch(`${config.apiUrl}/patients/${patientId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: newId }),
-    });
-
-    return handleResponse<Patient>(response);
+    return handleApiCall<Patient>(
+      fetch(`${config.apiUrl}/patients/${patientId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: newId }),
+      })
+    );
   },
 
   /**
@@ -408,11 +447,11 @@ export const patientsApi = {
    * @throws {ApiError} If the patient doesn't exist or deletion fails.
    */
   async delete(patientId: number): Promise<void> {
-    const response = await fetch(`${config.apiUrl}/patients/${patientId}`, {
-      method: 'DELETE',
-    });
-
-    return handleResponse<void>(response);
+    return handleApiCall<void>(
+      fetch(`${config.apiUrl}/patients/${patientId}`, {
+        method: 'DELETE',
+      })
+    );
   },
 };
 
@@ -441,18 +480,18 @@ export const analysisApi = {
     foodIds: number[],
     confidenceThreshold: number = 0.5
   ): Promise<SAM3Response> {
-    const response = await fetch(`${config.apiUrl}/analysis/sam3/automated`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        before_rgb_path: beforeRgbPath,
-        after_rgb_path: afterRgbPath,
-        confidence_threshold: confidenceThreshold,
-        foods: foodIds,
-      }),
-    });
-
-    const data = await handleResponse<SAM3Response>(response);
+    const data = await handleApiCall<SAM3Response>(
+      fetch(`${config.apiUrl}/analysis/sam3/automated`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          before_rgb_path: beforeRgbPath,
+          after_rgb_path: afterRgbPath,
+          confidence_threshold: confidenceThreshold,
+          foods: foodIds,
+        }),
+      })
+    );
     
     // Add mask_id, image_type, and color_index for frontend compatibility
     // Use timestamp to create unique IDs across runs
@@ -470,6 +509,7 @@ export const analysisApi = {
         mask_id: `after_${timestamp}_${idx}`,
         color_index: idx,
       })),
+      warnings: data.warnings || [],
     };
   },
 
@@ -487,20 +527,22 @@ export const analysisApi = {
     beforeRgbPath: string,
     afterRgbPath: string,
     textPrompt: string,
+    foodId: number,
     confidenceThreshold: number = 0.5
   ): Promise<SAM3Response> {
-    const response = await fetch(`${config.apiUrl}/analysis/sam3/assisted/text`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        before_rgb_path: beforeRgbPath,
-        after_rgb_path: afterRgbPath,
-        confidence_threshold: confidenceThreshold,
-        text_prompt: textPrompt,
-      }),
-    });
-
-    const data = await handleResponse<SAM3Response>(response);
+    const data = await handleApiCall<SAM3Response>(
+      fetch(`${config.apiUrl}/analysis/sam3/assisted/text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          before_rgb_path: beforeRgbPath,
+          after_rgb_path: afterRgbPath,
+          confidence_threshold: confidenceThreshold,
+          text_prompt: textPrompt,
+          food_id: foodId,
+        }),
+      })
+    );
     
     // Add mask_id, image_type, and color_index for frontend compatibility
     // Use timestamp to create unique IDs across runs
@@ -518,6 +560,7 @@ export const analysisApi = {
         mask_id: `after_${timestamp}_${idx}`,
         color_index: idx,
       })),
+      warnings: data.warnings || [],
     };
   },
 
@@ -538,18 +581,18 @@ export const analysisApi = {
     afterPoints: Point[] | null
   ): Promise<SAM3Response> {
     // Send points directly in pixel coordinates (backend gets dimensions from image files)
-    const response = await fetch(`${config.apiUrl}/analysis/sam3/assisted/points`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        before_rgb_path: beforeRgbPath,
-        after_rgb_path: afterRgbPath,
-        before_points: beforePoints,
-        after_points: afterPoints,
-      }),
-    });
-
-    const data = await handleResponse<SAM3Response>(response);
+    const data = await handleApiCall<SAM3Response>(
+      fetch(`${config.apiUrl}/analysis/sam3/assisted/points`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          before_rgb_path: beforeRgbPath,
+          after_rgb_path: afterRgbPath,
+          before_points: beforePoints,
+          after_points: afterPoints,
+        }),
+      })
+    );
     
     // Add mask_id, image_type, and color_index for frontend compatibility
     // Use timestamp to create unique IDs across runs
@@ -567,6 +610,7 @@ export const analysisApi = {
         mask_id: `after_${timestamp}_${idx}`,
         color_index: idx,
       })),
+      warnings: data.warnings || [],
     };
   },
 
@@ -593,18 +637,18 @@ export const analysisApi = {
         mask: m.mask,
       }));
 
-    const response = await fetch(`${config.apiUrl}/analysis/compute-nutrition`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        before_depth_path: beforeDepthPath,
-        after_depth_path: afterDepthPath,
-        before_masks: formatMasks(beforeMasks),
-        after_masks: formatMasks(afterMasks),
-      }),
-    });
-
-    return handleResponse<ComputeNutritionResponse>(response);
+    return handleApiCall<ComputeNutritionResponse>(
+      fetch(`${config.apiUrl}/analysis/compute-nutrition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          before_depth_path: beforeDepthPath,
+          after_depth_path: afterDepthPath,
+          before_masks: formatMasks(beforeMasks),
+          after_masks: formatMasks(afterMasks),
+        }),
+      })
+    );
   },
 };
 
@@ -628,17 +672,17 @@ export const nutritionApi = {
     mealId: number,
     nutritionData: ComputeNutritionResponse
   ): Promise<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
-    const response = await fetch(`${config.apiUrl}/nutrition`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        meal_id: mealId,
-        meal_nutrition: nutritionData.meal_nutrition,
-        food_nutrition: nutritionData.food_nutrition,
-      }),
-    });
-
-    return handleResponse<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
+    return handleApiCall<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(
+      fetch(`${config.apiUrl}/nutrition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meal_id: mealId,
+          meal_nutrition: nutritionData.meal_nutrition,
+          food_nutrition: nutritionData.food_nutrition,
+        }),
+      })
+    );
   },
 
   /**
@@ -649,8 +693,9 @@ export const nutritionApi = {
    * @throws {ApiError} If the nutrition report doesn't exist.
    */
   async getReport(mealId: number): Promise<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> {
-    const response = await fetch(`${config.apiUrl}/nutrition/${mealId}`);
-    return handleResponse<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(response);
+    return handleApiCall<{ meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>(
+      fetch(`${config.apiUrl}/nutrition/${mealId}`)
+    );
   },
 
   /**
@@ -661,11 +706,11 @@ export const nutritionApi = {
    * @throws {ApiError} If the nutrition report doesn't exist or deletion fails.
    */
   async delete(mealId: number): Promise<void> {
-    const response = await fetch(`${config.apiUrl}/nutrition/${mealId}`, {
-      method: 'DELETE',
-    });
-
-    return handleResponse<void>(response);
+    return handleApiCall<void>(
+      fetch(`${config.apiUrl}/nutrition/${mealId}`, {
+        method: 'DELETE',
+      })
+    );
   },
 
   /**
@@ -677,7 +722,8 @@ export const nutritionApi = {
    * @returns A promise resolving to the set of nutrition reports to compile
    */
   async getPatientReport(patientId: number, startDate: Date, endDate: Date): Promise<Record<string, { meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }> | null> {
-    const response = await fetch(`${config.apiUrl}/nutrition/patient/${patientId}?report_from=${startDate.toISOString()}&report_to=${endDate.toISOString()}`);
-    return handleResponse<Record<string, { meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>>(response);
+    return handleApiCall<Record<string, { meal_id: number; meal_nutrition: MealNutrition; food_nutrition: FoodNutrition[] }>>(
+      fetch(`${config.apiUrl}/nutrition/patient/${patientId}?report_from=${startDate.toISOString()}&report_to=${endDate.toISOString()}`)
+    );
   },
 };
