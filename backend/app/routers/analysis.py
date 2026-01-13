@@ -28,6 +28,7 @@ from app.schemas.analysis import (
 )
 
 
+
 # Create a new API router to group analysis-related endpoints.
 router = APIRouter()
 
@@ -272,21 +273,22 @@ def _calculate_volumes(
     # Load Depth Images
     before_depth = load_depth(before_depth_path)
     after_depth = load_depth(after_depth_path)
-    
+
+
     volumes = []
     
     # Generate random volume for each before mask.
     before_volumes = {}
     for before_mask in before_masks:
         food_id = before_mask.food_id
-        before_volume = volume_from_depth_and_mask(before_depth,before_mask,500.0, 500.0, 320.0, 240.0, 50)
+        before_volume = volume_from_depth_and_mask(before_depth,before_mask.mask,500.0, 500.0, 320.0, 240.0, 50)
         before_volumes[food_id] = before_volume
     
     # Generate random volume for each after mask.
     after_volumes = {}
     for after_mask in after_masks:
         food_id = after_mask.food_id
-        after_volume = volume_from_depth_and_mask(after_depth,after_mask,500.0, 500.0, 320.0, 240.0, 50)
+        after_volume = volume_from_depth_and_mask(after_depth,after_mask.mask,500.0, 500.0, 320.0, 240.0, 50)
         after_volumes[food_id] = after_volume
     
     # Calculate consumed volume for each food.
@@ -520,20 +522,9 @@ def _calculate_meal_nutrition(
     # Return the nutritional values of the meal.
     return MealNutrition(**meal_nutrition_dict)
 
-#Belore are all helper fucntions for _calculate_volumes function
-def load_depth(
-    depth_path: str
-) -> np.ndarray:
-    """Uses the Path of the depth image to get its array
 
-    Args:
-        depth_path: Path to the meal deth image (pre or post)
-    
-    Returns:
-        np.ndarray: A 2D NumPy array 
-    """
-    return np.load(depth_path).astype(np.float32)
-
+def load_depth(depth_path: str) -> np.ndarray:
+    return cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
 
 def mask_to_bool(
     mask_data: List[List[int]], 
@@ -550,7 +541,7 @@ def mask_to_bool(
         np.ndarray: A 2D boolean NumPy array
 """
     
-    #  Binary Segmentation mask to boolean arrau
+    #  Binary Segmentation mask to boolean array
     mask = np.array(mask_data, dtype=np.uint8)
      
 
@@ -589,17 +580,17 @@ def get_3D_point_cloud(
 ) -> np.ndarray:
     """Generate a 3D point cloud from a depth image
 
-    Converts a depth image into a 3D point cloud using the pinhole camera model
+    Converts a depth image into a 3D point cloud
     Args:
         depth_mm: A 2D NumPy array containing depth values in millimeters
-        fx: Focal length of the camera in the x direction 
-        fy: Focal length of the camera in the y direction 
-        cx: Principal point offset in the x direction 
-        cy: Principal point offset in the y direction 
+        fx: fx
+        fy: fy
+        cx: cx
+        cy: cy
         min_points: Minimum number of valid 3D points required
 
     Returns:
-        np.ndarray: A NumPy array of shape (N, 3) representing the 3D point cloud in centimeters
+        np.ndarray: 3D point cloud 
     """
     v_coords, u_coords = np.nonzero(depth_mm > 0)
     z_mm = depth_mm[v_coords, u_coords]
@@ -645,10 +636,10 @@ def volume_from_depth_and_mask(
     Args:
         depth: A 2D NumPy array of the depth image
         mask_data: Segmentation mask 
-        fx: Focal length of the camera in the x direction 
-        fy: Focal length of the camera in the y direction 
-        cx: Principal point offset in the x direction 
-        cy: Principal point offset in the y direction 
+        fx: fx 
+        fy: fy
+        cx: cx
+        cy: cy
         min_points: Minimum number of valid 3D points required
 
     Returns:
