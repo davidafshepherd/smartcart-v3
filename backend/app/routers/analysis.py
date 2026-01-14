@@ -1,9 +1,10 @@
-import random
 from typing import Dict, List, Tuple
 
-import numpy as np
+import cv2
 from fastapi import APIRouter, Depends, HTTPException, status
+import numpy as np
 from PIL import Image
+from scipy.spatial import ConvexHull
 from sqlalchemy.orm import Session
 
 from app.constants import BACKEND_DIR
@@ -11,8 +12,6 @@ from app.db import get_db
 from app.models.db_models import Food
 from app.models.sam3 import (
     combine_masks,
-    get_model,
-    get_processor,
     mask_to_list,
     segment_with_points,
     segment_with_text_prompt,
@@ -31,7 +30,6 @@ from app.schemas.analysis import (
     SAM3Response,
     SAM3Warning,
 )
-
 
 
 # Create a new API router to group analysis-related endpoints.
@@ -356,22 +354,20 @@ def _calculate_volumes(
         A list containing the consumed volume (cm^3) of each food in the meal.
     """
     
-    
-    # Load Depth Images
+    # Load the depth images.
     before_depth = load_depth(before_depth_path)
     after_depth = load_depth(after_depth_path)
 
-
     volumes = []
     
-    # Generate random volume for each before mask.
+    # Generate volume for each before mask.
     before_volumes = {}
     for before_mask in before_masks:
         food_id = before_mask.food_id
         before_volume = volume_from_depth_and_mask(before_depth,before_mask.mask,500.0, 500.0, 320.0, 240.0, 50)
         before_volumes[food_id] = before_volume
     
-    # Generate random volume for each after mask.
+    # Generate volume for each after mask.
     after_volumes = {}
     for after_mask in after_masks:
         food_id = after_mask.food_id
