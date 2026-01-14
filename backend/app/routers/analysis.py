@@ -341,9 +341,7 @@ def _calculate_volumes(
     after_masks: List[FoodMask],
 ) -> List[FoodVolume]:
     """Calculates the consumed volume of each food in a meal.
-    
-    Currently, this is a stub that generates a random consumed volume per food.
-    
+        
     Args:
         before_depth_path: Path to the pre-meal depth image.
         after_depth_path: Path to the post-meal depth image.
