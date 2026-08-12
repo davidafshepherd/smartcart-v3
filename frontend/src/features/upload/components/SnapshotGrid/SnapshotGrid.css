@@ -1,0 +1,35 @@
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+
+.snapshot-grid-title {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+}
+
+
+/* Layout Overrides */
+
+@media (min-width: 640px) {  
+  .snapshot-grid-title {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .snapshot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@media (min-width: 1024px) {
+  .snapshot-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));    
+  }
+}

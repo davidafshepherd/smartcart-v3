@@ -1,0 +1,71 @@
+.upload-zone {
+  margin-bottom: 2rem;
+}
+
+
+.upload-zone-drop {
+  display: block;
+  text-align: center;
+  padding: 3rem;
+  
+  border: 2px dashed var(--card-border);
+  border-radius: 1rem;
+  background: var(--card-bg);
+  
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.upload-zone-drop.enabled {
+  cursor: pointer;
+}
+
+
+.upload-zone-drop.enabled:hover {
+    border-color: #3b82f6;
+    background: rgba(239, 246, 255, 0.5);
+}
+
+
+.upload-zone-drop.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: default;
+}
+
+.upload-zone-drop input {
+  display:none;
+}
+
+.upload-zone-icon-container {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  margin: 0 auto 1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--accent-light);
+}
+
+
+.upload-zone-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+
+.upload-zone-title {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--foreground);
+}
+
+
+.upload-zone-subtitle {
+  color: var(--text-muted);
+}

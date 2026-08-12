@@ -1,0 +1,106 @@
+.snapshot-card {
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.snapshot-card:hover {
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+
+.snapshot-card.selected {
+  border-width: 2px;
+}
+
+
+.snapshot-card-image {
+  position: relative;
+  height: 10rem;
+}
+
+
+.snapshot-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+}
+
+
+.snapshot-card-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;  
+}
+
+
+.snapshot-card-content {
+  padding: 1rem;
+}
+
+
+.snapshot-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+
+.snapshot-card-patient {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+
+.snapshot-card-weight {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--accent-light);
+  color: var(--accent-primary);
+}
+
+
+.snapshot-card-date {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--text-secondary);
+}
+
+
+.snapshot-card-discard-button {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--danger);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)
+}
+
+
+.snapshot-card-discard-button:not(:disabled):hover {
+  background-color: #fef2f2;
+}
+
+
+.snapshot-card-discard-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: transparent;
+}

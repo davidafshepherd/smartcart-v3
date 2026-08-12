@@ -1,0 +1,94 @@
+.upload-header {
+  position: relative; 
+  margin-bottom: 1.5rem; 
+}
+
+.upload-header-content {
+  padding-right: 0px;
+}
+
+
+.upload-header h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+
+.upload-header p {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+}
+
+
+.upload-header-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  padding: 0.75rem 1.25rem;
+  margin-top: 1rem; 
+  
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.75rem;
+  
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  border-color: var(--card-border);
+  background: var(--card-bg);
+}
+
+
+.upload-header-button.enabled {
+  cursor: pointer;
+}
+
+
+.upload-header-button.enabled:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+
+.upload-header-button.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: default;
+}
+
+
+.upload-header-button input {
+  display:none;
+}
+
+
+.upload-header-button-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--foreground);
+}
+
+
+.upload-header-button-text {
+  font-weight: 500; 
+  color: var(--foreground);
+}
+
+
+@media (min-width: 640px) {
+  .upload-header {
+    margin-bottom: 2rem; 
+  }
+
+  .upload-header-content {
+    padding-right: 12rem;
+  }
+
+  .upload-header-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: 0;
+  }
+}

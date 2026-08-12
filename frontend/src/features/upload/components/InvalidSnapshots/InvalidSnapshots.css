@@ -1,0 +1,66 @@
+.invalid-snapshots {
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem; 
+
+  border: 1px solid #fbbf24;
+  background-color: #fffbeb;
+}
+
+
+.invalid-snapshots h3 {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #d97706;
+}
+
+
+.dismiss-button {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+
+  border: none;
+  background: transparent;
+  
+  cursor: pointer;
+  transition: background .2s ease;
+              
+  color: #d97706;
+}
+
+
+.dismiss-button:hover {
+    background:#fef3c7;
+}
+
+
+.dismiss-button-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+
+.invalid-snapshot-list {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+
+.invalid-snapshot-list > * + * {
+  margin-top: 0.25rem;
+}
+
+
+.invalid-snapshot-item {
+  color: var(--text-secondary);
+}
+
+
+.invalid-snapshot-text {
+  font-family: monospace;
+}

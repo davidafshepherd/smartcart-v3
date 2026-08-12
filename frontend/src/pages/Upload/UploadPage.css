@@ -1,0 +1,35 @@
+.upload-page {
+  padding: 1rem;
+  padding-top: 4rem;
+  animation: fade-in 1s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+.upload-container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* Layout Overrides */
+
+@media (min-width: 640px) {
+  .upload-page {
+    padding: 1.5rem;
+    padding-top: 4rem;
+  }
+}
+
+
+@media (min-width: 1024px) {
+  .upload-page {
+    padding: 2rem;
+    padding-top: 2rem;
+  }
+}
