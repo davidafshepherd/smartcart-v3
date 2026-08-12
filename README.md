@@ -39,7 +39,7 @@ poetry install
 Run the backend to verify it is set up:
 
 ```bash
-poetry run uvicorn app.main:app --reload --port 8000
+poetry run uvicorn src.main:app --reload --port 8000
 ```
 
 The backend will run at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). Press `CTRL + C` to exit.

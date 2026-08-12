@@ -11,7 +11,7 @@ __pycache__/
 backend/uploads/
 backend/meal_images/
 backend/smartcart.db
-backend/app/models/sam3/sam3.pt
+backend/src/models/sam3/sam3.pt
 
 # OS
 .DS_Store
