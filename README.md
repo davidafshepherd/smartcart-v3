@@ -31,6 +31,7 @@ Next, set up the backend:
 
 ```bash
 cd backend
+conda init
 conda create -n smartcart-v3 python=3.12
 conda activate smartcart-v3
 pip install -r requirements.txt
