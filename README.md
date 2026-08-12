@@ -1,6 +1,6 @@
 # SmartCart v3
 
-- `frontend/` – Next.js dashboard
+- `frontend/` – React dashboard
 - `backend/` – FastAPI backend + ML pipeline
 
 This project requires `python>=3.12`.
@@ -33,13 +33,15 @@ Next, set up the backend:
 
 ```bash
 cd backend
-poetry install
+conda create -n smartcart-v3 python=3.12
+conda activate smartcart-v3
+pip install -r requirements-conda.txt
 ```
 
 Run the backend to verify it is set up:
 
 ```bash
-poetry run uvicorn src.main:app --reload --port 8000
+uvicorn src.main:app --reload --port 8000
 ```
 
 The backend will run at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). Press `CTRL + C` to exit.
@@ -47,6 +49,7 @@ The backend will run at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 Lastly, set up the frontend:
 
 ```bash
+conda deactivate
 cd ../frontend
 npm install
 ```
@@ -56,7 +59,7 @@ Run the frontend to verify it is set up:
 npm run dev
 ```
 
-The frontend will run at [http://localhost:3000](http://localhost:3000). Press `CTRL + C` to exit.
+The frontend will run at [http://localhost:3000](http://localhost:5173). Press `CTRL + C` to exit.
 
 ## Preview
 
