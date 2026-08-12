@@ -1,0 +1,190 @@
+.assisted-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+
+.assisted-controls-group {
+  flex-shrink: 0;
+}
+
+
+.assisted-controls-group-flex {
+  flex: 1;
+}
+
+
+.assisted-controls-group-auto {
+  margin-left: auto;
+}
+
+
+.assisted-controls-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+}
+
+
+.assisted-controls-toggle {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+
+.toggle-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 200ms;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+
+.toggle-button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+
+.toggle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.toggle-button-active {
+  border-color: var(--accent-primary);
+  background: var(--accent-light);
+  color: var(--accent-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
+.toggle-button-active:not(:disabled):hover {
+  background: var(--accent-light);
+}
+
+
+.toggle-button-green-active {
+  border-color: #10B981;
+  background: #10B98120;
+  color: #10B981;
+}
+
+
+.toggle-button-green-active:not(:disabled):hover {
+  background: #10B98120;
+}
+
+
+.toggle-button-red-active {
+  border-color: #EF4444;
+  background: #EF444420;
+  color: #EF4444;
+}
+
+
+.toggle-button-red-active:not(:disabled):hover {
+  background: #EF444420;
+}
+
+
+.clear-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 200ms;
+  font-size: 0.875rem;
+}
+
+
+.clear-button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+
+.clear-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.assisted-controls-input {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  transition: box-shadow 150ms;
+}
+
+
+.assisted-controls-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+
+.assisted-controls-threshold {
+  flex: 1;
+  max-width: 20rem;
+  margin-left: auto;
+}
+
+
+.assisted-controls-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+
+.assisted-controls-slider {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 0.5rem;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background: var(--card-border);
+}
+
+
+.assisted-controls-slider-value {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  min-width: 3rem;
+}
+
+
+/* Layout Overrides */
+
+@media (max-width: 640px) {
+  .assisted-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .assisted-controls-group-auto,
+  .assisted-controls-threshold {
+    margin-left: 0;
+    max-width: none;
+  }
+}

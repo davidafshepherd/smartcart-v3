@@ -1,0 +1,59 @@
+.analysis-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+
+.analysis-warning {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  background: #F59E0B20;
+  border: 1px solid #F59E0B;
+}
+
+
+.analysis-warning-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #F59E0B;
+  flex-shrink: 0;
+}
+
+
+.analysis-warning-text {
+  font-size: 0.875rem;
+  color: #F59E0B;
+  padding-right: 2rem;
+}
+
+
+.analysis-warning-dismiss {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #F59E0B;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+
+.analysis-warning-dismiss:hover {
+  background: #F59E0B40;
+}
+
+
+.analysis-warning-dismiss-icon {
+  width: 1rem;
+  height: 1rem;
+}

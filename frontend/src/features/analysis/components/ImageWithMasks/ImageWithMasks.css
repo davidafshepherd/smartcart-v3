@@ -1,0 +1,91 @@
+.image-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+
+.image-header-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+
+.image-header-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+
+.image-header-badge-required {
+  background: var(--accent-light);
+  color: var(--accent-primary);
+}
+
+
+.image-header-badge-optional {
+  background: var(--background);
+  color: var(--text-muted);
+  border: 1px solid var(--card-border);
+}
+
+
+.image-header-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+
+.image-container {
+  position: relative;
+  border: 2px solid var(--card-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+
+.image-container-running {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+
+.image-el {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+
+/* Point Marker */
+
+.point-marker {
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  border: 2px solid;
+  transition: transform 100ms;
+  z-index: 20;
+  cursor: pointer;
+}
+
+
+.point-marker-running {
+  cursor: default;
+}
+
+
+/* Mask Overlay */
+
+.mask-overlay-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  object-fit: fill;
+}

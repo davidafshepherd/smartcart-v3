@@ -1,0 +1,7 @@
+.analysis-card {
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--card-bg);
+  overflow: hidden;
+}

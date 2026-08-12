@@ -1,0 +1,11 @@
+.progress-bar {
+  display: flex;
+  gap: 0.25rem;
+}
+
+
+.progress-bar-segment {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 9999px;
+}
