@@ -32,7 +32,7 @@ interface Props {
   beforeRgbPath: string;
   afterRgbPath: string;
   onBackToInputSelection: () => void;
-  onComputeVolume: (beforeMasks: FoodMask[], afterMasks: FoodMask[]) => void;
+  onComputeVolume: (beforeMasks: FoodMask[], afterMasks: FoodMask[]) => Promise<void>;
   isComputingNutrition?: boolean;
 }
 
@@ -123,19 +123,19 @@ export function AssistedModeInterface({
   const handleDeletePoint = (imageType: "before" | "after", index: number) => {
     if (imageType === "before") {
       const point = beforePoints[index];
-      setBeforePoints(prev => prev.filter((_, i) => i !== index));
-      
-      if (point?.label === 1) {
-        const fgIndex = beforePoints.slice(0, index).filter(p => p.label === 1).length;
-        setGeneratedBeforeMasks(prev => prev.filter((_, i) => i !== fgIndex));
+      const nextPoints = beforePoints.filter((_, i) => i !== index);
+      setBeforePoints(nextPoints);
+
+      if (point?.label === 1 && !nextPoints.some(p => p.label === 1)) {
+        setGeneratedBeforeMasks([]);
       }
     } else {
       const point = afterPoints[index];
-      setAfterPoints(prev => prev.filter((_, i) => i !== index));
+      const nextPoints = afterPoints.filter((_, i) => i !== index);
+      setAfterPoints(nextPoints);
 
-      if (point?.label === 1) {
-        const fgIndex = afterPoints.slice(0, index).filter(p => p.label === 1).length;
-        setGeneratedAfterMasks(prev => prev.filter((_, i) => i !== fgIndex));
+      if (point?.label === 1 && !nextPoints.some(p => p.label === 1)) {
+        setGeneratedAfterMasks([]);
       }
     }
   };
