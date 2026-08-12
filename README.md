@@ -14,12 +14,10 @@ node -v
 npm -v
 ```
 
-Next, install and configure Poetry:
+Next, download [Miniconda](https://www.anaconda.com/docs/getting-started/installation) and verify it is installed:
 
 ```bash
-pip install poetry
-poetry --version
-poetry config virtualenvs.in-project true
+conda --version
 ```
 
 Next, clone the repository:
