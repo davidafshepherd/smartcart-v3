@@ -1,0 +1,91 @@
+.nutrition-wheel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+
+.nutrition-wheel-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16rem;
+}
+
+
+.nutrition-wheel-empty p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+
+.nutrition-wheel-svg {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+}
+
+
+.nutrition-wheel-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 20rem;
+}
+
+
+.nutrition-wheel-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+}
+
+
+.nutrition-wheel-legend-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+
+.nutrition-wheel-legend-item-right {
+  display: flex;
+  align-items: baseline;
+  text-align: right;
+}
+
+
+.nutrition-wheel-legend-swatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+}
+
+
+.nutrition-wheel-legend-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+
+.nutrition-wheel-legend-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+
+.nutrition-wheel-legend-pct {
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  color: var(--text-muted);
+}

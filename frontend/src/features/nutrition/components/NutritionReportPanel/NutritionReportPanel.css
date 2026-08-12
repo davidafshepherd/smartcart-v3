@@ -1,0 +1,397 @@
+.nutrition-report-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background: var(--card-bg);
+  overflow: hidden;
+}
+
+
+.nutrition-report-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+
+.nutrition-report-header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+
+.nutrition-report-mass-pill {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  white-space: nowrap;
+}
+
+
+.nutrition-report-mass-pill-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+
+.nutrition-report-mass-pill-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin-left: 0.5rem;
+}
+
+
+.nutrition-report-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+
+.nutrition-report-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+
+.nutrition-report-section-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+
+
+.nutrition-report-section-tick {
+  width: 0.25rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: var(--accent-primary);
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+
+.nutrition-report-table-card {
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  overflow: hidden;
+}
+
+
+.nutrition-report-wheel-col,
+.nutrition-report-table-col {
+  min-width: 0;
+}
+
+
+.nutrition-report-wheel-col {
+  display: flex;
+  flex-direction: column;
+}
+
+
+.nutrition-report-wheel-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.nutrition-report-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+
+.nutrition-report-empty p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+
+.nutrition-report-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  position: relative;
+  background: #EF444420;
+  border: 1px solid #EF4444;
+  margin-bottom: 1.5rem;
+}
+
+
+.nutrition-report-error-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #EF4444;
+  flex-shrink: 0;
+}
+
+
+.nutrition-report-error-text {
+  font-size: 0.875rem;
+  color: #EF4444;
+  padding-right: 2rem;
+}
+
+
+.nutrition-report-error-dismiss {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #EF4444;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+
+.nutrition-report-error-dismiss:hover {
+  background: #EF444420;
+}
+
+
+.nutrition-report-error-dismiss-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+
+.nutrition-report-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--card-border);
+  background: var(--card-bg);
+  flex-shrink: 0;
+}
+
+
+.nutrition-report-save-button {
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 200ms;
+}
+
+
+.nutrition-report-save-button:not(:disabled):hover {
+  background: var(--accent-primary-dim);
+}
+
+
+.nutrition-report-save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.nutrition-report-discard-button {
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  background: var(--card-bg);
+  color: var(--foreground);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: background-color 200ms;
+}
+
+
+.nutrition-report-discard-button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+
+.nutrition-report-discard-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.nutrition-report-delete-button {
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  background: #ef4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 200ms;
+}
+
+
+.nutrition-report-delete-button:not(:disabled):hover {
+  background: #b91c1c;
+}
+
+
+.nutrition-report-delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.nutrition-report-close-button {
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  background: var(--card-bg);
+  color: var(--foreground);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: background-color 200ms;
+}
+
+
+.nutrition-report-close-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+
+.nutrition-report-button-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+.nutrition-report-action-spinner {
+  width: 1rem;
+  height: 1rem;
+  animation: nutrition-report-spin 1s linear infinite;
+}
+
+
+/* Loading state */
+
+.nutrition-report-loading {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background: var(--card-bg);
+}
+
+
+.nutrition-report-loading-shimmer {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+
+.nutrition-report-loading p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+
+@keyframes nutrition-report-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+
+/* Error state */
+
+.nutrition-report-load-error {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background: var(--card-bg);
+}
+
+
+.nutrition-report-load-error-icon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #EF444420;
+}
+
+
+.nutrition-report-load-error-icon svg {
+  width: 2rem;
+  height: 2rem;
+  color: var(--danger);
+}
+
+
+.nutrition-report-load-error-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--foreground);
+  margin-bottom: 0.25rem;
+}
+
+
+.nutrition-report-load-error-subtitle {
+  color: var(--text-muted);
+}
+
+
+/* Layout Overrides */
+
+@media (min-width: 1024px) {
+  .nutrition-report-content {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .nutrition-report-wheel-col {
+    flex: 1;
+  }
+
+  .nutrition-report-table-col {
+    flex: 2;
+  }
+}

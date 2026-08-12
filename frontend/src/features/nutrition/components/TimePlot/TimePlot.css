@@ -1,0 +1,39 @@
+.time-plot {
+  width: 100%;
+  overflow-x: auto;
+}
+
+
+.time-plot-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  min-width: 320px;
+}
+
+
+.time-plot-dot {
+  cursor: pointer;
+  transition: r 200ms ease, fill 200ms ease;
+}
+
+
+.time-plot-empty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+
+.time-plot-tooltip {
+  position: fixed;
+  background: #1f2937;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  pointer-events: none;
+  z-index: 1000;
+}

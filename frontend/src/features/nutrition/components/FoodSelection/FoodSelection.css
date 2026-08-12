@@ -1,0 +1,45 @@
+.food-selection {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+
+.food-selection-label {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.75rem;
+}
+
+
+.food-selection-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+
+.food-selection-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+
+.food-selection-checkbox-input {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--card-border);
+  border-radius: 0.25rem;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+
+.food-selection-checkbox-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
