@@ -6,6 +6,7 @@ channels:
 dependencies:
   - python=3.12
   - pip
+  - setuptools=80.9.0
 
   - pip:
       # PyTorch CUDA 12.1
