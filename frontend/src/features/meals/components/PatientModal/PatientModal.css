@@ -1,0 +1,160 @@
+.patients-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+
+.patients-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+
+.patients-modal {
+  position: relative;
+  width: 100%;
+  max-width: 24rem;
+  padding: 1.5rem;
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  background: var(--card-bg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: patients-modal-in 150ms cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+
+@keyframes patients-modal-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+
+.patients-modal h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+
+.modal-close-button {
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.modal-close-button:hover {
+  background-color: #f3f4f6;
+}
+
+
+.modal-close-button-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+
+.modal-form > * + * {
+  margin-top: 1rem;
+}
+
+
+.modal-field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  margin-bottom: 0.25rem;
+}
+
+
+.modal-field input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+
+.modal-field input:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px #3b82f6;
+}
+
+
+.modal-error-message {
+  font-size: 0.875rem;
+  color: var(--danger);
+  margin-top: 0.375rem;
+}
+
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+
+.modal-save-button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.modal-save-button:not(:disabled):hover {
+  background: var(--accent-primary-dim);
+}
+
+
+.modal-save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.modal-cancel-button {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  font-weight: 500;
+  color: var(--foreground);
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.modal-cancel-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}

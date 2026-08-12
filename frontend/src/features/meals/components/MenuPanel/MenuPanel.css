@@ -1,0 +1,230 @@
+.menu-panel {
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background: var(--card-bg);
+}
+
+
+.menu-panel-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.menu-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+.menu-panel-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--accent-primary);
+}
+
+
+.menu-panel-title > span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+
+.menu-panel-count {
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--accent-light);
+  color: var(--accent-primary);
+}
+
+
+.menu-panel-add-btn {
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  color: var(--accent-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.menu-panel-add-btn:hover {
+  background: #eff6ff;
+}
+
+
+.menu-panel-add-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+
+.menu-panel-content {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+
+.menu-panel-error {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+
+
+.menu-panel-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+
+.menu-panel-empty-icon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-light);
+}
+
+
+.menu-panel-empty-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--accent-primary);
+}
+
+
+.menu-panel-empty > p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+
+.menu-panel-item {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.menu-panel-item:last-child {
+  border-bottom: none;
+}
+
+
+.menu-panel-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+
+.menu-panel-item-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  display: block;
+}
+
+
+.menu-panel-item-foods {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.125rem;
+}
+
+
+.menu-panel-item-delete-error {
+  font-size: 0.875rem;
+  color: var(--danger);
+  text-align: center;
+  flex: 1;
+}
+
+
+.menu-panel-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  margin-left: 0.5rem;
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.menu-panel-item:hover .menu-panel-item-actions {
+  opacity: 1;
+}
+
+
+.menu-panel-edit-btn {
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  color: var(--accent-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.menu-panel-edit-btn:hover { 
+  background: #eff6ff; 
+}
+
+
+.menu-panel-edit-btn svg { 
+  width: 0.875rem; 
+  height: 0.875rem; 
+}
+
+
+.menu-panel-delete-btn {
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  color: var(--danger);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.menu-panel-delete-btn:hover { 
+  background: #fee2e2; 
+}
+
+
+.menu-panel-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.menu-panel-delete-btn:disabled:hover {
+  background: transparent;
+}
+
+
+.menu-panel-delete-btn svg { 
+  width: 0.875rem; 
+  height: 0.875rem; 
+}

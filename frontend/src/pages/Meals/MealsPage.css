@@ -1,0 +1,107 @@
+.meals-page {
+  padding: 1rem;
+  padding-top: 4rem;
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+.meals-container {
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+
+.meals-header {
+  margin-bottom: 1.5rem;
+}
+
+
+.meals-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+
+.meals-header p {
+  color: var(--text-muted);
+}
+
+
+.meals-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+
+.meals-left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+
+.meals-right-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+
+.meals-loading {
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 25rem;
+}
+
+
+.meals-loading-shimmer {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+}
+
+
+/* Layout Overrides */
+
+@media (min-width: 640px) {
+  .meals-page {
+    padding: 1.5rem;
+    padding-top: 4rem;
+  }
+
+  .meals-header {
+    margin-bottom: 2rem;
+  }
+
+  .meals-header h1 {
+    font-size: 1.875rem;
+  }
+}
+
+
+@media (min-width: 1024px) {
+  .meals-page {
+    padding: 2rem;
+    padding-top: 2rem;
+  }
+
+  .meals-layout {
+    flex-direction: row;
+    gap: 2rem;
+  }
+
+  .meals-left-panel {
+    width: 20rem;
+    flex-shrink: 0;
+  }
+}

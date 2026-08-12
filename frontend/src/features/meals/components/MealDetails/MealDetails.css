@@ -1,0 +1,358 @@
+.meal-details {
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background: var(--card-bg);
+}
+
+
+.meal-details-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--accent-light);
+  border-radius: 1rem 1rem 0 0;
+}
+
+
+.meal-details-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 0.25rem;
+}
+
+
+.meal-details-header p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+
+.meal-details-section {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+
+.meal-details-section h3 {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+
+
+.meal-details-weights {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+
+.meal-details-images {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+
+.meal-details-actions {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--card-border);
+  display: flex;
+  gap: 1rem;
+  background: var(--card-bg);
+}
+
+
+.meal-details-delete-button {
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  background: #ef4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.meal-details-delete-button:not(:disabled):hover {
+  background: #b91c1c;
+}
+
+
+.meal-details-delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.meal-details-close-button {
+  padding: 0.75rem 2rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  font-weight: 600;
+  color: var(--foreground);
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.meal-details-close-button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+
+.meal-details-close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* Patient / Menu item row */
+
+.meal-details-row {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 5.5rem;
+}
+
+
+.meal-details-row-info h3 {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  margin-bottom: 0.25rem;
+}
+
+
+.meal-details-row-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+
+.meal-details-foods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+
+.meal-details-food-tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  background: var(--accent-light);
+  color: var(--accent-primary);
+}
+
+
+.meal-details-edit-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--accent-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.meal-details-edit-button:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+
+.meal-details-edit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.meal-details-row-error {
+  flex: 1;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+
+
+.meal-details-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+
+.meal-details-select {
+  flex: 1;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  background:
+    var(--background)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")
+    no-repeat right 0.75rem center;
+  background-size: 1rem;
+  color: var(--foreground);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+
+.meal-details-select:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px #3b82f6;
+}
+
+
+.meal-details-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.meal-details-save-button {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.meal-details-save-button:not(:disabled):hover {
+  background: var(--accent-primary-dim);
+}
+
+
+.meal-details-save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.meal-details-cancel-button {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  background: var(--card-bg);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.meal-details-cancel-button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+
+.meal-details-cancel-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* Weight Card */
+
+.meal-details-weight-card {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+
+.meal-details-weight-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.meal-details-weight-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+
+/* Image Column */
+
+.meal-details-image-col-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.meal-details-image-col-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.meal-details-image-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+
+/* Image Card */
+
+.meal-details-image-card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+}
+
+.meal-details-image-card-label {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--background);
+  color: var(--text-muted);
+}
+
+.meal-details-image-card img {
+  width: 100%;
+  height: 12rem;
+  object-fit: cover;
+  display: block;
+}
+
+
+/* Layout Overrides */
+
+@media (min-width: 640px) {
+  .meal-details-weights {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .meal-details-images {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

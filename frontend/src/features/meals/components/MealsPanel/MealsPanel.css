@@ -1,0 +1,243 @@
+.meals-panel {
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background: var(--card-bg);
+}
+
+
+.meals-panel-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.meals-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+.meals-panel-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--accent-primary);
+}
+
+
+.meals-panel-title > span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+
+.meals-panel-count {
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--accent-light);
+  color: var(--accent-primary);
+}
+
+
+.meals-panel-error {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+
+
+.meals-panel-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+
+.meals-panel-empty-icon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-light);
+}
+
+
+.meals-panel-empty-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--accent-primary);
+}
+
+
+.meals-panel-empty > p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+
+
+.meals-panel-tree {
+  padding: 0.5rem;
+  max-height: 37.5rem;
+  overflow-y: auto;
+}
+
+
+/* Patient/Date node */
+.meals-tree-node {
+  margin-bottom: 0.25rem;
+}
+
+
+.meals-tree-node-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.meals-tree-node-header:hover {
+  background: #eff6ff;
+}
+
+
+.meals-tree-chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.meals-tree-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+
+.meals-patient-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--accent-primary);
+  color: white;
+}
+
+
+.meals-patient-avatar svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+
+.meals-date-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+
+.meals-tree-label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--foreground);
+}
+
+
+.meals-tree-label.secondary {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+
+.meals-tree-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--accent-light);
+  color: var(--accent-primary);
+}
+
+
+.meals-tree-badge.amber {
+  background: #fde68a;
+  color: #d97706;
+}
+
+
+.meals-tree-children {
+  margin-left: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+
+.meals-tree-meal {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 0.25rem;
+  text-align: left;
+}
+
+
+.meals-tree-meal:hover:not(.selected) {
+  background: #eff6ff;
+}
+
+
+.meals-tree-meal.selected {
+  background: var(--accent-primary);
+  color: white;
+}
+
+
+.meals-tree-clock {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+
+.meals-tree-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #f59e0b;
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-right: 0.375rem;
+}
