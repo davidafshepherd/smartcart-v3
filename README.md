@@ -68,8 +68,6 @@ The frontend will run at [http://localhost:5173](http://localhost:5173). Press `
 
 ![image](https://github.com/user-attachments/assets/491c9584-9384-4ae3-b3b8-3caf33bee5cd)
 
-![image](https://github.com/user-attachments/assets/42b204ee-e75f-4066-aea3-f4110a4410ac)
-
 ![image](https://github.com/user-attachments/assets/1af5ec72-69fc-4ce5-9677-01c7f7f1411e)
 
 ![image](https://github.com/user-attachments/assets/c8c46d60-899c-4568-bd4a-101333167cb2)
