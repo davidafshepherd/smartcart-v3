@@ -1,0 +1,24 @@
+.number-badge {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+}
+
+
+.number-badge.sm {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+
+.number-badge.md {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}

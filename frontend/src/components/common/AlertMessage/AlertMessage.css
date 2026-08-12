@@ -1,0 +1,31 @@
+.alert-message {
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid;
+  margin-bottom: 1rem;
+}
+
+
+.alert-message-dismiss-text {
+  padding-right: 2rem;
+}
+
+
+.alert-message-dismiss-button {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.alert-message-dismiss-button-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
