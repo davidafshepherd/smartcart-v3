@@ -14,7 +14,7 @@ export function MaskOverlay({ masks, imageWidth, imageHeight }: Props) {
   // Return nothing if dimensions are not yet known.
   if (!imageWidth || !imageHeight) return null;
 
-  // Only masks with an assigned ID are ready to render.
+  // Return nothing if there are no masks with an assigned ID.
   const visibleMasks = masks.filter((mask) => mask.mask_id);
   if (visibleMasks.length === 0) return null;
 
