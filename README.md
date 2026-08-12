@@ -33,7 +33,7 @@ Next, set up the backend:
 cd backend
 conda create -n smartcart-v3 python=3.12
 conda activate smartcart-v3
-pip install -r requirements-conda.txt
+pip install -r requirements.txt
 ```
 
 Run the backend to verify it is set up:
